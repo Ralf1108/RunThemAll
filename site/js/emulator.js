@@ -1,7 +1,7 @@
 // Runs Windows programs with Boxedwine (Emscripten build). The user's files are
 // mounted as drive D:. Boxedwine itself is loaded unmodified from ./boxedwine/.
 
-import { Runner, fetchWithProgress, loadScript, splitPath } from './runner.js';
+import { Runner, loadScript, prefetch, splitPath } from './runner.js';
 
 const D_DRIVE = '/d_drive';
 const D_DRIVE_IN_WINE = '/home/username/.wine/dosdevices/d:';
@@ -43,23 +43,25 @@ export class WindowsRunner extends Runner {
     }
     const build = threaded ? 'mt' : 'st';
     const buildBase = new URL(`boxedwine/${build}/`, document.baseURI).href;
-    log(`Boxedwine: ${threaded ? 'Multithreaded' : 'Singlethreaded'}, Wine ${opts.wine === 'wine11' ? '11' : '6'}`, false);
+    const wineLabel = opts.wine === 'wine11' ? 'Wine 11' : 'Wine 6';
+    const info = `Boxedwine 26R1 · ${wineLabel} · ${threaded ? 'Multithreaded' : 'Singlethreaded'}`;
+    this.ui.emulatorInfo(info);
+    log(info, false);
+    this.ui.steps(['Emulator und Wine-Dateisystem herunterladen', 'Programmdateien einlesen', 'Wine starten']);
 
-    // 1. Read user files and the Wine root file system in parallel.
-    status('Lade Wine-Dateisystem …', 0);
-    const rootZipPromise = fetchWithProgress(`boxedwine/${opts.wine}/${ROOT_ZIP}`, (loaded, total) => {
-      const mb = (loaded / 1048576).toFixed(0);
-      status(`Lade Wine-Dateisystem … ${mb} MB`, total ? loaded / total : undefined);
-    });
+    // 1. Download emulator + Wine file system (progress bar), read the user's files.
+    this.ui.step(0);
+    const rootUrl = `boxedwine/${opts.wine}/${ROOT_ZIP}`;
+    const overlayUrls = OVERLAY_ZIPS[opts.wine].map((name) => `boxedwine/${opts.wine}/${name}`);
+    const downloaded = await prefetch(
+      [buildBase + 'boxedwine.js', buildBase + 'boxedwine.wasm', rootUrl, ...overlayUrls], this.ui);
+    const rootZip = downloaded.get(rootUrl);
+    const overlays = OVERLAY_ZIPS[opts.wine].map((name, i) => ({ name, data: downloaded.get(overlayUrls[i]) }));
+
+    this.ui.step(1);
     const userFiles = await Promise.all(
       workspace.files.map(async (f) => ({ path: f.path, data: await f.load() })),
     );
-    const overlays = await Promise.all(OVERLAY_ZIPS[opts.wine].map(async (name) => {
-      const res = await fetch(`boxedwine/${opts.wine}/${name}`);
-      if (!res.ok) throw new Error(`${name} konnte nicht geladen werden (HTTP ${res.status}).`);
-      return { name, data: new Uint8Array(await res.arrayBuffer()) };
-    }));
-    const rootZip = await rootZipPromise;
 
     // 2. Build emulator arguments.
     const rootDir = opts.wine === 'wine11' ? PERSISTENT_ROOTS[1] : PERSISTENT_ROOTS[0];
@@ -85,7 +87,14 @@ export class WindowsRunner extends Runner {
       mainScriptUrlOrBlob: buildBase + 'boxedwine.js',
       print: (...a) => log(a.join(' '), false),
       printErr: (...a) => log(a.join(' '), true),
-      setStatus: (text) => { if (text) status(text === 'Running...' ? 'Läuft' : text); },
+      setStatus: (text) => {
+        if (text === 'Running...') {
+          status('Läuft');
+          this.ui.ready();
+        } else if (text) {
+          status(text);
+        }
+      },
       preRun: [function setupFileSystem() {
         const { FS, IDBFS } = globalThis;
         const Module = window.Module;
@@ -103,7 +112,8 @@ export class WindowsRunner extends Runner {
         }
 
         const done = () => {
-          status('Starte Wine … (der erste Start kann etwas dauern)');
+          self.ui.step(2, 'Der erste Start kann etwas dauern.');
+          status('Starte Wine …');
           Module.removeRunDependency('webexe-fs');
         };
         if (opts.persistent) {
@@ -118,7 +128,7 @@ export class WindowsRunner extends Runner {
       }],
     };
 
-    status('Lade Emulator …');
+    this.ui.step(2);
     await loadScript(buildBase + 'boxedwine.js');
   }
 

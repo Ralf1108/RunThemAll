@@ -51,9 +51,30 @@ die unverändert eingebunden werden. WebExe liefert nur:
    - *Geänderte Dateien sichern*: neue und geänderte Dateien als ZIP herunterladen
    - *In Ordner zurückschreiben* (nur bei Ordnern mit Schreibrecht): neue und geänderte Dateien
      in den Originalordner schreiben. Es wird nie etwas gelöscht.
-   - *Vollbild*, *Beenden* (lädt die Seite neu)
+   - *Vollbild*: der Emulatorbereich (`#screen`) geht per Fullscreen-API über den ganzen Bildschirm;
+     Canvas bzw. Player werden dabei seitenverhältnistreu auf Bildschirmhöhe skaliert
+   - *Beenden* (lädt die Seite neu)
+   - Neben dem Titel zeigt ein Hinweis, welcher Emulator läuft (z. B. „Boxedwine 26R1 · Wine 6 ·
+     Multithreaded“, „js-dos 8.5.4 · DOSBox“, „EmulatorJS 4.2.3 · Commodore 64 · Core vice_x64sc“).
    - Bei EmulatorJS sind *Sichern* und *Zurückschreiben* ausgeblendet; Spielstände und Savestates
      verwaltet das Menü von EmulatorJS.
+
+### 3.1 Laden der Emulatoren
+
+Beim Aufruf lädt der Browser nur die Oberfläche. Die Emulator-Dateien werden erst beim Start geladen,
+und nur die des benötigten Emulators. Ein Ladebildschirm im Emulatorbereich zeigt die Schritte
+(z. B. „Emulator herunterladen“, „Programmdateien einlesen“, „Wine starten“) und einen Fortschrittsbalken
+mit Megabytes. Dazu lädt `prefetch()` (in `runner.js`) die Dateien des Emulators vorab per `fetch`
+(Gesamtgröße per `HEAD`), der Emulator bekommt sie danach aus dem HTTP-Cache. Getestet: Die zweite Anfrage
+überträgt nur ~300 Byte (Revalidierung). Der Ladebildschirm verschwindet, wenn der Emulator meldet,
+dass er läuft (Boxedwine `Running...`, js-dos `ci-ready`, EmulatorJS `EJS_onGameStart`).
+
+### 3.2 Demo-Starter
+
+`demos/demos.json` listet freie Programme (Quelle, Autor, Lizenz, Startdatei, System). Das Build-Skript lädt
+sie aus den Original-Releases nach `site/demos/` (optional einzelne Datei aus einem ZIP). Die Startseite zeigt
+sie als Karten; „Starten“ lädt die Datei, öffnet sie wie eine Nutzerdatei, wählt Programm und System vor und
+startet sofort. Kriterien und geprüfte, aber nicht aufgenommene Kandidaten: `demos/README.md`.
 
 ## 4. Erkennung
 
@@ -200,6 +221,7 @@ site/
   js/dos.js                 js-dos-Anbindung (DosRunner), 8.3-Kurznamen
   js/ejs.js                 EmulatorJS-Anbindung (EmulatorJsRunner), BIOS-Übergabe
   js/zip.js                 ZIP lesen (stored/deflate) und schreiben
+demos/demos.json            Demo-Programme (werden beim Build geladen)
 scripts/
   fetch-runtimes.mjs        Emulatoren, Lizenzen und Quellcode laden
   serve.mjs                 lokaler Testserver
@@ -219,6 +241,9 @@ THIRD_PARTY_NOTICES.md      Lizenzen und Herkunft aller fremden Komponenten
 | ZIP mit DOS- und Windows-Programmen gemischt | Typen korrekt erkannt |
 | Great Giana Sisters (`.d64`, C64) | als C64 erkannt, lädt mit Warp, Intro nach ca. 45–90 s |
 | Dogs of War (`.adf`, Amiga) | als Amiga erkannt, Titelbild mit freiem AROS-Kickstart |
+| Demos SkiFree, ZZT, T-Rex 64, Nova the Squirrel, µCity | starten aus dem Demo-Starter |
+| Ladebildschirm bei gedrosselter Verbindung (5 MB/s) | Schritte und „x von 38,5 MB“ sichtbar |
+| Vollbild (T-Rex 64) | Emulatorbereich füllt den Bildschirm |
 
 Nicht getestet: Drag & Drop, Zurückschreiben in Ordner, DOS/4GW-Programme, alle Konsolen und
 übrigen Heimcomputer, BIOS-Übergabe, CD-Abbilder mit `.cue`.
@@ -229,3 +254,5 @@ Nicht getestet: Drag & Drop, Zurückschreiben in Ordner, DOS/4GW-Programme, alle
 - Arcade-ROM-ZIPs: Ein einzeln geöffnetes ZIP wird derzeit immer entpackt; Arcade-Spiele brauchen das
   ZIP unverändert. Nur ZIPs innerhalb eines Ordners werden als Arcade-Kandidat erkannt.
 - Spielstände von EmulatorJS werden im Browser (IndexedDB) gespeichert, nicht in den geöffneten Ordner.
+- Amiga-Demo fehlt: Die geprüften freien Spiele laufen mit AROS nicht oder haben unklare Rechte an der Grafik
+  (siehe `demos/README.md`).

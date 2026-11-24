@@ -1,4 +1,5 @@
 import { fromDataTransfer, fromDirectoryHandle, fromFileList, findPrograms, totalSize } from './workspace.js';
+import { fetchWithProgress } from './runner.js';
 import { WindowsRunner, canUseThreads, clearPersistentStorage } from './emulator.js';
 import { DosRunner } from './dos.js';
 import { EmulatorJsRunner, findBiosInWorkspace } from './ejs.js';
@@ -36,7 +37,7 @@ function showError(message) {
 // ---------------------------------------------------------------------------
 // Step 1: picking files
 
-async function openWorkspace(loader) {
+async function openWorkspace(loader, autostart) {
   showError('');
   try {
     const ws = await loader();
@@ -46,6 +47,17 @@ async function openWorkspace(loader) {
     workspace = ws;
     programs = found;
     showChooser();
+    if (autostart) {
+      const radio = [...document.querySelectorAll('input[name="program"]')]
+        .find((r) => r.value.toLowerCase() === autostart.program.toLowerCase());
+      if (radio) radio.checked = true;
+      updateSystemPanel();
+      if (autostart.system) {
+        $('opt-system').value = autostart.system;
+        updateBiosInfo();
+      }
+      start();
+    }
   } catch (err) {
     if (err?.name === 'AbortError') return; // user cancelled a picker
     console.error(err);
@@ -130,6 +142,7 @@ function showChooser() {
   }));
 
   $('pick').hidden = true;
+  $('demos').hidden = true;
   $('choose').hidden = false;
   updateSystemPanel();
   $('btn-start').focus();
@@ -197,6 +210,7 @@ $('btn-reset').addEventListener('click', () => {
   workspace = null;
   $('choose').hidden = true;
   $('pick').hidden = false;
+  $('demos').hidden = demoCount === 0;
 });
 
 const threadsAvailable = canUseThreads();
@@ -256,6 +270,37 @@ function message(text) {
   $('run-message').textContent = text;
 }
 
+// Loading screen with steps and a progress bar
+let loaderSteps = [];
+function setSteps(labels) {
+  loaderSteps = labels.map((label) => Object.assign(document.createElement('li'), { textContent: label }));
+  $('loader-steps').replaceChildren(...loaderSteps);
+}
+function setStep(index, detail = '') {
+  loaderSteps.forEach((li, i) => {
+    li.classList.toggle('done', i < index);
+    li.classList.toggle('active', i === index);
+  });
+  $('loader-progress').hidden = true;
+  $('loader-detail').textContent = detail;
+}
+const mb = (n) => (n / 1048576).toFixed(1).replace('.', ',');
+function setProgress(loaded, total) {
+  const bar = $('loader-progress');
+  bar.hidden = false;
+  if (total > 0) {
+    bar.value = Math.min(1, loaded / total);
+    $('loader-detail').textContent = `${mb(loaded)} von ${mb(total)} MB`;
+  } else {
+    bar.removeAttribute('value');
+    $('loader-detail').textContent = `${mb(loaded)} MB`;
+  }
+}
+function hideLoader() {
+  loaderSteps.forEach((li) => { li.classList.remove('active'); li.classList.add('done'); });
+  $('loader').hidden = true;
+}
+
 async function start() {
   const program = selectedProgram();
   if (!workspace || !program) return;
@@ -270,7 +315,12 @@ async function start() {
   const what = program.kind === 'game' ? SYSTEM_BY_ID.get(opts.system).label : EMULATOR_NAMES[program.emulator];
   $('run-title').textContent = `${program.path} (${what})`;
 
-  const ui = { canvas: $('canvas'), dosContainer: $('dos-container'), ejsContainer: $('ejs-container'), status, log };
+  const ui = {
+    canvas: $('canvas'), dosContainer: $('dos-container'), ejsContainer: $('ejs-container'), status, log,
+    steps: setSteps, step: setStep, progress: setProgress, ready: hideLoader,
+    emulatorInfo: (text) => { $('run-emulator').textContent = text; },
+  };
+  $('loader').hidden = false;
   if (program.kind === 'win16' && opts.wine === 'wine11') {
     // The Wine 11 file system of the web release has no 16-bit Windows support.
     opts.wine = 'wine6';
@@ -285,6 +335,7 @@ async function start() {
   } catch (err) {
     console.error(err);
     status(`Fehler: ${err.message || err}`);
+    $('loader-detail').textContent = `Fehler: ${err.message || err}`;
     log(String(err?.stack || err), true);
   }
 }
@@ -309,7 +360,12 @@ $('btn-writeback').addEventListener('click', async () => {
   }
 });
 
-$('btn-fullscreen').addEventListener('click', () => emulator?.fullscreen());
+// Fullscreen: the whole emulator area (canvas or player) covers the screen.
+$('btn-fullscreen').addEventListener('click', () => {
+  const screen = $('screen');
+  if (screen.requestFullscreen) screen.requestFullscreen().catch(() => emulator?.fullscreen());
+  else emulator?.fullscreen();
+});
 
 $('btn-restart').addEventListener('click', () => {
   if (!confirm('Programm beenden? Nicht gesicherte Änderungen gehen verloren.')) return;
@@ -320,6 +376,55 @@ $('btn-restart').addEventListener('click', () => {
 window.addEventListener('beforeunload', (e) => {
   if (emulator?.running) e.preventDefault();
 });
+
+// ---------------------------------------------------------------------------
+// Demo launcher: free programs/games fetched at build time (see demos/demos.json)
+
+let demoCount = 0;
+
+async function launchDemo(demo, button) {
+  const label = button.textContent;
+  button.disabled = true;
+  try {
+    const data = await fetchWithProgress(`demos/${demo.file}`, (loaded, total) => {
+      button.textContent = total ? `Lade … ${Math.round((loaded / total) * 100)} %` : 'Lade …';
+    });
+    const file = new File([data], demo.file.split('/').pop());
+    await openWorkspace(() => fromFileList([file]), { program: demo.start, system: demo.system });
+  } catch (err) {
+    showError(`Demo konnte nicht geladen werden: ${err.message || err}`);
+  } finally {
+    button.disabled = false;
+    button.textContent = label;
+  }
+}
+
+fetch('demos/demos.json')
+  .then((r) => (r.ok ? r.json() : null))
+  .then((list) => {
+    if (!list?.length) return;
+    demoCount = list.length;
+    $('demo-list').replaceChildren(...list.map((demo) => {
+      const card = Object.assign(document.createElement('div'), { className: 'demo' });
+      const title = Object.assign(document.createElement('h3'), { textContent: demo.title });
+      const meta = Object.assign(document.createElement('p'), {
+        className: 'demo-meta', textContent: `${demo.platform} · ${demo.emulator}`,
+      });
+      const text = Object.assign(document.createElement('p'), { textContent: demo.description });
+      const credit = document.createElement('p');
+      credit.className = 'demo-meta';
+      const link = Object.assign(document.createElement('a'), { href: demo.homepage, textContent: demo.author, rel: 'noopener' });
+      credit.append('von ', link, ` · ${demo.license}`);
+      const button = Object.assign(document.createElement('button'), {
+        type: 'button', className: 'wx-btn wx-primary wx-small', textContent: 'Starten',
+      });
+      button.addEventListener('click', () => launchDemo(demo, button));
+      card.append(title, meta, text, credit, button);
+      return card;
+    }));
+    $('demos').hidden = $('pick').hidden;
+  })
+  .catch(() => {});
 
 // ---------------------------------------------------------------------------
 // Footer

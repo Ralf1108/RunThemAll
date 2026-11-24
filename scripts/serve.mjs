@@ -49,16 +49,28 @@ createServer(async (req, res) => {
       res.writeHead(404).end('Not found');
       return;
     }
+    const lastModified = new Date(Math.floor(info.mtimeMs / 1000) * 1000);
     const headers = {
       'Content-Type': TYPES[extname(path).toLowerCase()] || 'application/octet-stream',
       'Content-Length': info.size,
-      'Cache-Control': 'no-cache',
+      'Cache-Control': 'no-cache', // cache, but revalidate (like GitHub Pages after max-age)
+      'Last-Modified': lastModified.toUTCString(),
     };
     if (COI) {
       headers['Cross-Origin-Opener-Policy'] = 'same-origin';
       headers['Cross-Origin-Embedder-Policy'] = 'require-corp';
     }
+    const since = Date.parse(req.headers['if-modified-since'] || '');
+    if (since && since >= lastModified.getTime()) {
+      delete headers['Content-Length'];
+      res.writeHead(304, headers).end();
+      return;
+    }
     res.writeHead(200, headers);
+    if (req.method === 'HEAD') {
+      res.end();
+      return;
+    }
     createReadStream(path).pipe(res);
   } catch (err) {
     res.writeHead(500).end(String(err));

@@ -6,6 +6,7 @@ vendor/
 site/boxedwine/
 site/jsdos/
 site/emulatorjs/
+site/demos/
 site/coi-serviceworker.js
 *.wasm
 Boxedwine*Web.zip

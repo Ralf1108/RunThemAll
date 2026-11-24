@@ -7,8 +7,14 @@ import { crc32, createZip } from './zip.js';
  * @typedef {object} RunnerUi
  * @property {HTMLCanvasElement} canvas  canvas for Boxedwine
  * @property {HTMLElement} dosContainer  container element for js-dos
+ * @property {HTMLElement} ejsContainer  container element for EmulatorJS
  * @property {(text:string, fraction?:number)=>void} status
  * @property {(line:string, isError:boolean)=>void} log
+ * @property {(labels:string[])=>void} steps          defines the loading steps
+ * @property {(index:number, detail?:string)=>void} step marks a step as active
+ * @property {(loaded:number, total:number)=>void} progress download progress
+ * @property {()=>void} ready                          emulator is running, hide the loading screen
+ * @property {(text:string)=>void} emulatorInfo        which emulator/version is running
  */
 
 export class Runner {
@@ -109,6 +115,30 @@ export async function fetchWithProgress(url, onProgress) {
   let pos = 0;
   for (const c of chunks) { out.set(c, pos); pos += c.length; }
   return out;
+}
+
+/**
+ * Downloads the emulator files up front with a visible progress bar. The
+ * emulator then gets them from the browser cache when it loads them itself.
+ * Content-Length is read with HEAD requests first, so the bar shows the total.
+ * @param {string[]} urls
+ * @param {RunnerUi} ui
+ * @returns {Promise<Map<string, Uint8Array>>} downloaded bytes per URL
+ */
+export async function prefetch(urls, ui) {
+  const sizes = await Promise.all(urls.map(async (url) => {
+    try {
+      const res = await fetch(url, { method: 'HEAD' });
+      return Number(res.headers.get('Content-Length')) || 0;
+    } catch { return 0; }
+  }));
+  const total = sizes.reduce((a, b) => a + b, 0);
+  const loaded = new Array(urls.length).fill(0);
+  const report = () => ui.progress(loaded.reduce((a, b) => a + b, 0), total);
+  report();
+  const results = await Promise.all(urls.map((url, i) =>
+    fetchWithProgress(url, (n) => { loaded[i] = n; report(); })));
+  return new Map(urls.map((url, i) => [url, results[i]]));
 }
 
 export function loadScript(src) {

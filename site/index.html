@@ -36,6 +36,13 @@
       <p id="pick-error" class="error" hidden></p>
     </section>
 
+    <!-- Demo launcher -->
+    <section id="demos" class="wx-card" hidden>
+      <h2>Oder eine Demo starten</h2>
+      <p class="muted">Freie Programme und Spiele zum Ausprobieren, eines pro Emulator bzw. System.</p>
+      <div id="demo-list" class="demo-list"></div>
+    </section>
+
     <!-- Step 2: choose program + options -->
     <section id="choose" class="wx-card" hidden>
       <div class="choose-head">
@@ -121,6 +128,7 @@
     <section id="run" class="run" hidden>
       <div class="toolbar">
         <strong id="run-title"></strong>
+        <span id="run-emulator" class="emu-badge" title="Laufender Emulator"></span>
         <span class="spacer"></span>
         <button type="button" id="btn-writeback" class="wx-btn wx-small" hidden>In Ordner zurückschreiben</button>
         <button type="button" id="btn-download" class="wx-btn wx-small">Geänderte Dateien sichern</button>
@@ -131,7 +139,13 @@
         <span id="status-text">Vorbereiten …</span>
         <progress id="status-progress" max="1" hidden></progress>
       </div>
-      <div class="screen">
+      <div id="screen" class="screen">
+        <div id="loader" class="loader">
+          <h3>Umgebung wird vorbereitet</h3>
+          <ol id="loader-steps" class="loader-steps"></ol>
+          <progress id="loader-progress" max="1" hidden></progress>
+          <p id="loader-detail" class="loader-detail"></p>
+        </div>
         <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1" hidden></canvas>
         <div id="dos-container" class="dos-container" hidden></div>
         <div id="ejs-container" class="ejs-container" hidden></div>

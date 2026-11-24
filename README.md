@@ -44,6 +44,12 @@ Getestet sind bisher C64 und Amiga; die übrigen Systeme sind eingebunden, aber 
 
 ## Funktionen
 
+- **Demo-Starter** auf der Startseite: freie Programme und Spiele pro Emulator mit einem Klick starten
+  (SkiFree, ZZT, T-Rex 64, Nova the Squirrel, µCity; siehe [demos/](demos/README.md))
+- Emulatoren werden erst beim Start geladen, und nur der benötigte. Ein Ladebildschirm zeigt
+  die Schritte und den Download-Fortschritt („12,3 von 38,5 MB“); danach kommen die Dateien aus dem Browser-Cache.
+- Während des Laufs zeigt die Seite, welcher Emulator läuft (z. B. „EmulatorJS 4.2.3 · Commodore 64 · Core vice_x64sc“)
+- Vollbild: der Emulator füllt den ganzen Bildschirm
 - Öffnen per Dateiauswahl, Ordnerauswahl oder Drag & Drop
 - ZIP-Archive werden im Browser entpackt, startbare Dateien werden mit Typ aufgelistet
 - Lange Datei- und Ordnernamen werden für DOS in 8.3-Kurznamen umgesetzt
@@ -111,7 +117,8 @@ site/                  statische Webseite (wird veröffentlicht)
   js/systems.js        Konsolen/Heimcomputer: Systeme, Cores, BIOS, Erkennung
   js/ejs.js            Spiele mit EmulatorJS
   js/zip.js            ZIP lesen/schreiben (ohne Abhängigkeiten)
-  boxedwine/, jsdos/, emulatorjs/   werden von scripts/fetch-runtimes.mjs erzeugt (nicht im Git)
+  boxedwine/, jsdos/, emulatorjs/, demos/   werden von scripts/fetch-runtimes.mjs erzeugt (nicht im Git)
+demos/demos.json       Liste der Demo-Programme (Quelle, Autor, Lizenz)
 scripts/
   fetch-runtimes.mjs   lädt Emulatoren, Lizenzen und Quellcode
   serve.mjs            lokaler Testserver mit COOP/COEP-Headern
@@ -130,6 +137,7 @@ WebExe wäre ohne diese Projekte nicht möglich:
 | [EmulatorJS](https://emulatorjs.org) | Oberfläche und Laufzeit für libretro-Cores im Browser | GPL-3.0 |
 | [libretro](https://www.libretro.com)-Cores, u. a. [VICE](https://vice-emu.sourceforge.io), [PUAE](https://github.com/libretro/libretro-uae), FCEUmm, Snes9x, mGBA, Genesis Plus GX, PCSX ReARMed | die einzelnen Konsolen- und Heimcomputer-Emulatoren, vollständige Liste auf der Seite unter `emulatorjs/cores.html` | je Core, meist GPL; einige nur nichtkommerziell |
 | [AROS](https://aros.sourceforge.io) | freier Amiga-Kickstart-Ersatz (im PUAE-Core enthalten) | AROS Public License |
+| Demo-Programme: SkiFree (Chris Pirih), ZZT (Tim Sweeney, Rekonstruktion Adrian Siekierka), T-Rex 64 (Maciej Małecki), Nova the Squirrel (NovaSquirrel), µCity (Antonio Niño Díaz) | Demos auf der Startseite, siehe [demos/README.md](demos/README.md) | Freeware, MIT, GPL-3.0 |
 | [coi-serviceworker](https://github.com/gzuidhof/coi-serviceworker) von Guido Zuidhof | Cross-Origin-Isolation auf GitHub Pages | MIT |
 
 ## Lizenz

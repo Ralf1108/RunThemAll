@@ -56,6 +56,19 @@ Die Dateisystem-Archive enthalten Wine (LGPL-2.1 oder neuer) und Teile von Tiny 
   Versionen hinzuweisen (es werden keine Nutzerdaten gesendet). Alle Emulator-Dateien werden von dieser Seite
   geladen; Netplay ist ausgeblendet.
 
+## Demo-Programme
+
+Werden beim Build aus ihren Original-Releases geladen und unter `demos/` veröffentlicht.
+Details und Links: [demos/README.md](demos/README.md).
+
+| Demo | Autor | Lizenz | Quelle |
+|---|---|---|---|
+| SkiFree | Chris Pirih | Freeware | Beispiel im Boxedwine-Web-Release 26R1.0 |
+| ZZT (Reconstruction of ZZT 1.0) | Tim Sweeney / Epic MegaGames, Adrian Siekierka | MIT, ZZT-Code mit Erlaubnis von Epic MegaGames | github.com/asiekierka/reconstruction-of-zzt |
+| T-Rex 64 1.0.2 | Maciej Małecki | MIT | github.com/maciejmalecki/trex64 |
+| Nova the Squirrel 1.0.6a | NovaSquirrel | GPL-3.0 (Quellcode im verlinkten Repository) | github.com/NovaSquirrel/NovaTheSquirrel |
+| µCity 1.3 | Antonio Niño Díaz | GPL-3.0 (Quellcode im verlinkten Repository) | github.com/AntonioND/ucity |
+
 ## coi-serviceworker v0.1.7
 
 - Projekt: https://github.com/gzuidhof/coi-serviceworker

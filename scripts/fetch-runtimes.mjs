@@ -277,10 +277,38 @@ async function fetchCoi() {
   );
 }
 
+/**
+ * Demo programs (demos/demos.json): downloaded from their original release,
+ * optionally one entry taken out of a ZIP, and placed in site/demos/.
+ */
+async function fetchDemos() {
+  console.log('Demos');
+  const list = JSON.parse(await readFile(join(ROOT, 'demos', 'demos.json'), 'utf8'));
+  const published = [];
+  for (const demo of list) {
+    const cached = join(VENDOR, 'demos', demo.id, decodeURIComponent(demo.url.split('/').pop()));
+    // Reuse the Boxedwine release that is already cached.
+    const source = demo.url.endsWith('/Boxedwine26R1Web.zip') ? join(VENDOR, 'Boxedwine26R1Web.zip') : cached;
+    await download(demo.url, source);
+    let data = new Uint8Array(await readFile(source));
+    if (demo.entry) {
+      const entry = listZip(data).find((e) => e.name === demo.entry);
+      if (!entry) throw new Error(`Demo ${demo.id}: ${demo.entry} nicht im Archiv`);
+      data = await readZipEntry(data, entry);
+    }
+    await writeOut(join(SITE, 'demos', demo.file), data);
+    const { url, entry, ...rest } = demo;
+    published.push({ ...rest, source: url });
+    console.log(`  ${demo.file} (${demo.title})`);
+  }
+  await writeOut(join(SITE, 'demos', 'demos.json'), JSON.stringify(published, null, 2) + '\n');
+}
+
 async function main() {
   await fetchBoxedwine();
   await fetchJsDos();
   await fetchEmulatorJs();
+  await fetchDemos();
   await fetchCoi();
   console.log('Fertig.');
 }

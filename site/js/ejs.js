@@ -1,7 +1,7 @@
 // Runs console and home computer games with EmulatorJS (libretro cores).
 // EmulatorJS is loaded unmodified from ./emulatorjs/data/.
 
-import { Runner, loadScript, splitPath } from './runner.js';
+import { Runner, loadScript, prefetch, splitPath } from './runner.js';
 import { SYSTEM_BY_ID, extOf } from './systems.js';
 import { createZip } from './zip.js';
 
@@ -23,6 +23,20 @@ function cueReferences(cueText) {
   return [...cueText.matchAll(/^\s*FILE\s+"?([^"\r\n]+?)"?\s+\S+\s*$/gim)].map((m) => m[1]);
 }
 
+/**
+ * The core file EmulatorJS will request, using its own rules: "-legacy" unless the
+ * core report asks for WebGL 2 (and the browser has it); no threads (EJS_threads off).
+ */
+async function coreFile(dataUrl, core) {
+  let webgl2 = core === 'ppsspp';
+  try {
+    const report = await (await fetch(`${dataUrl}cores/reports/${core}.json`)).json();
+    webgl2 ||= report.options?.defaultWebGL2 === true;
+  } catch { /* no report: EmulatorJS falls back to legacy as well */ }
+  const supported = !!document.createElement('canvas').getContext('webgl2');
+  return `${core}${webgl2 && supported ? '' : '-legacy'}-wasm.data`;
+}
+
 export class EmulatorJsRunner extends Runner {
   /** EmulatorJS handles save games and states itself (menu in the player). */
   get supportsFileSync() { return false; }
@@ -40,7 +54,18 @@ export class EmulatorJsRunner extends Runner {
     const system = SYSTEM_BY_ID.get(opts.system);
     if (!system) throw new Error(`Unbekanntes System: ${opts.system}`);
 
-    // Game file. CD images with a .cue sheet are passed as ZIP together with their tracks.
+    const data = new URL('emulatorjs/data/', document.baseURI).href;
+    const ejsVersion = await fetch('emulatorjs/version.json').then((r) => r.json()).then((v) => v.version).catch(() => '');
+    this.ui.emulatorInfo(`EmulatorJS ${ejsVersion} · ${system.label} · Core ${system.core}`.replace('  ', ' '));
+    this.ui.steps([`Emulator herunterladen (EmulatorJS, Core ${system.core})`, 'Spiel einlesen', 'Emulator starten']);
+
+    // 1. Download EmulatorJS and the core with a progress bar (EmulatorJS then hits the cache).
+    this.ui.step(0);
+    await prefetch(['loader.js', 'emulator.min.js', 'emulator.min.css', `cores/${await coreFile(data, system.core)}`]
+      .map((f) => data + f), this.ui);
+
+    // 2. Game file. CD images with a .cue sheet are passed as ZIP together with their tracks.
+    this.ui.step(1);
     status('Lese Spiel …');
     const entry = workspace.files.find((f) => f.path === program);
     const [dir, name] = splitPath(program);
@@ -80,13 +105,14 @@ export class EmulatorJsRunner extends Runner {
     }
 
     log(`EmulatorJS: ${system.label}, Core ${system.core}, Spiel ${game.name}`, false);
+    this.ui.step(2);
     ejsContainer.hidden = false;
     ejsContainer.replaceChildren(Object.assign(document.createElement('div'), { id: 'ejs-player' }));
 
     Object.assign(window, {
       EJS_player: '#ejs-player',
       EJS_core: system.core,
-      EJS_pathtodata: new URL('emulatorjs/data/', document.baseURI).href,
+      EJS_pathtodata: data,
       EJS_gameUrl: game,
       EJS_gameName: name.replace(/\.[^.]+$/, ''),
       EJS_biosUrl: biosUrl,
@@ -95,12 +121,13 @@ export class EmulatorJsRunner extends Runner {
       EJS_volume: opts.sound ? 0.5 : 0,
       EJS_Buttons: { netplay: false },
       EJS_defaultOptions: system.options ?? {},
-      EJS_ready: () => status('Läuft'),
-      EJS_onGameStart: () => status('Läuft'),
+      EJS_onGameStart: () => {
+        status('Läuft');
+        this.ui.ready();
+      },
     });
 
-    status('Lade EmulatorJS …');
-    await loadScript(new URL('emulatorjs/data/loader.js', document.baseURI).href);
+    await loadScript(data + 'loader.js');
   }
 
   async readAllFiles() {

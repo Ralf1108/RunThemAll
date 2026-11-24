@@ -1,7 +1,7 @@
 // Runs DOS programs with js-dos (DOSBox compiled to WebAssembly).
 // js-dos is loaded unmodified from ./jsdos/. The user's files become drive C:.
 
-import { Runner, loadScript, loadStylesheet, splitPath } from './runner.js';
+import { Runner, loadScript, loadStylesheet, prefetch, splitPath } from './runner.js';
 
 /**
  * @typedef {object} DosOptions
@@ -124,10 +124,15 @@ export class DosRunner extends Runner {
     const { status, log, dosContainer } = this.ui;
     dosContainer.hidden = false;
 
-    status('Lade DOS-Emulator …');
+    this.ui.emulatorInfo('js-dos 8.5.4 · DOSBox');
+    this.ui.steps(['Emulator herunterladen (js-dos, DOSBox)', 'Programmdateien einlesen', 'DOSBox starten']);
+    this.ui.step(0);
+    const base = new URL('jsdos/', document.baseURI).href;
+    await prefetch(['js-dos.js', 'js-dos.css', 'emulators/emulators.js', 'emulators/wdosbox.js',
+      'emulators/wdosbox.wasm', 'emulators/wlibzip.js', 'emulators/wlibzip.wasm'].map((f) => base + f), this.ui);
     await Promise.all([loadStylesheet('jsdos/js-dos.css'), loadScript('jsdos/js-dos.js')]);
 
-    status('Lese Dateien …');
+    this.ui.step(1);
     const files = await Promise.all(
       workspace.files.map(async (f) => ({ path: f.path, data: await f.load() })),
     );
@@ -142,6 +147,7 @@ export class DosRunner extends Runner {
     const dosboxConf = buildDosboxConf(toDos.get(program), opts);
     log(`js-dos: DOSBox, Zyklen ${opts.cycles}\n${dosboxConf}`, false);
 
+    this.ui.step(2);
     status('Starte DOSBox …');
     this.props = window.Dos(dosContainer, {
       dosboxConf,
@@ -160,6 +166,7 @@ export class DosRunner extends Runner {
         if (event === 'ci-ready') {
           this.ci = arg;
           status('Läuft');
+          this.ui.ready();
         }
       },
     });

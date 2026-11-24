@@ -1,0 +1,73 @@
+[
+  {
+    "id": "skifree",
+    "title": "SkiFree",
+    "platform": "Windows (32 Bit)",
+    "emulator": "Boxedwine",
+    "description": "Der Klassiker von 1991: Skifahren, Hindernissen ausweichen und vor dem Yeti fliehen.",
+    "author": "Chris Pirih",
+    "homepage": "https://ski.ihoc.net/",
+    "license": "Freeware",
+    "url": "https://github.com/danoon2/Boxedwine/releases/download/26R1.0/Boxedwine26R1Web.zip",
+    "entry": "SingleThreaded/ski32.zip",
+    "note": "Liegt dem Boxedwine-Web-Release als Beispiel bei.",
+    "file": "windows/ski32.zip",
+    "start": "ski32.exe"
+  },
+  {
+    "id": "zzt",
+    "title": "ZZT",
+    "platform": "DOS",
+    "emulator": "js-dos (DOSBox)",
+    "description": "Tim Sweeneys Textmodus-Abenteuer von 1991 samt Demo-Welt, als quelloffene Rekonstruktion.",
+    "author": "Tim Sweeney / Epic MegaGames, Rekonstruktion: Adrian Siekierka",
+    "homepage": "https://github.com/asiekierka/reconstruction-of-zzt",
+    "license": "MIT (mit Erlaubnis von Epic MegaGames)",
+    "url": "https://github.com/asiekierka/reconstruction-of-zzt/releases/download/v1.0/RecOfZZT.zip",
+    "file": "dos/zzt.zip",
+    "start": "ZZT.EXE"
+  },
+  {
+    "id": "trex64",
+    "title": "T-Rex 64",
+    "platform": "Commodore 64",
+    "emulator": "EmulatorJS (VICE)",
+    "description": "Endlos-Läufer nach dem Vorbild des Chrome-Dinos, neu geschrieben für den C64.",
+    "author": "Maciej Małecki",
+    "homepage": "https://github.com/maciejmalecki/trex64",
+    "license": "MIT",
+    "url": "https://github.com/maciejmalecki/trex64/releases/download/1.0.2/trex.zip",
+    "entry": "rex.d64",
+    "file": "c64/rex.d64",
+    "start": "rex.d64",
+    "system": "c64"
+  },
+  {
+    "id": "nova",
+    "title": "Nova the Squirrel",
+    "platform": "NES",
+    "emulator": "EmulatorJS (FCEUmm)",
+    "description": "Jump'n'Run-Homebrew mit einem Eichhörnchen, das die Fähigkeiten seiner Gegner übernimmt.",
+    "author": "NovaSquirrel",
+    "homepage": "https://github.com/NovaSquirrel/NovaTheSquirrel",
+    "license": "GPL-3.0",
+    "url": "https://github.com/NovaSquirrel/NovaTheSquirrel/releases/download/v1.0.6a/nova.nes",
+    "file": "nes/nova.nes",
+    "start": "nova.nes",
+    "system": "nes"
+  },
+  {
+    "id": "ucity",
+    "title": "µCity",
+    "platform": "Game Boy Color",
+    "emulator": "EmulatorJS (Gambatte)",
+    "description": "Städtebau-Simulation im Stil von SimCity, geschrieben in Assembler für den Game Boy Color.",
+    "author": "Antonio Niño Díaz",
+    "homepage": "https://github.com/AntonioND/ucity",
+    "license": "GPL-3.0",
+    "url": "https://github.com/AntonioND/ucity/releases/download/v1.3/ucity.gbc",
+    "file": "gb/ucity.gbc",
+    "start": "ucity.gbc",
+    "system": "gb"
+  }
+]
