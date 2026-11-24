@@ -58,8 +58,8 @@ async function openWorkspace(loader, autostart) {
         $('opt-system').value = autostart.system;
         updateBiosInfo();
       }
-      // Options a demo needs only for this start (not saved as user settings).
-      start(Object.fromEntries(Object.entries({ wine: autostart.wine, args: autostart.args, cycles: autostart.cycles }).filter(([, v]) => v)));
+      // Options of a demo apply only to this start (not saved as general settings).
+      start(autostart.options ?? {});
     }
   } catch (err) {
     if (err?.name === 'AbortError') return; // user cancelled a picker
@@ -236,6 +236,11 @@ function readOptions() {
   const saved = {};
   for (const id of OPTION_IDS) saved[id] = $(id).type === 'checkbox' ? $(id).checked : $(id).value;
   localStorage.setItem('runthemall-options', JSON.stringify(saved));
+  return readCurrentOptions();
+}
+
+/** The general settings from the options form, without saving them. */
+function readCurrentOptions() {
   return {
     wine: $('opt-wine').value,
     threads: $('opt-threads').value,
@@ -439,7 +444,7 @@ async function launchDemo(demo, button) {
       button.textContent = total ? `Lade … ${Math.round((loaded / total) * 100)} %` : 'Lade …';
     });
     const file = new File([data], demo.file.split('/').pop());
-    await openWorkspace(() => fromFileList([file]), { program: demo.start, system: demo.system, wine: demo.wine, args: demo.args, cycles: demo.cycles });
+    await openWorkspace(() => fromFileList([file]), { program: demo.start, system: demo.system, options: demoOptions(demo) });
   } catch (err) {
     showError(`Demo konnte nicht geladen werden: ${err.message || err}`);
   } finally {
@@ -456,10 +461,93 @@ const el = (tag, props = {}, ...children) => {
 
 let demoAnchor = null; // tree entry the detail popover belongs to
 
+// ---------------------------------------------------------------------------
+// Options per demo: shown in the info popover, remembered per demo.
+
+const DEMO_OPTIONS_KEY = 'runthemall-demo-options';
+
+/** Which emulator runs a demo. */
+function demoEmulator(demo) {
+  if (demo.system) return SYSTEM_BY_ID.get(demo.system)?.emulator === 'v86' ? 'v86' : 'emulatorjs';
+  return /windows/i.test(demo.platform) ? 'windows' : 'dos';
+}
+
+/**
+ * Option fields per emulator: [option key, label, id of the general setting it copies its choices from].
+ * Start parameters (args) are a text field.
+ */
+const DEMO_OPTION_FIELDS = {
+  windows: [['wine', 'Wine-Version', 'opt-wine'], ['threads', 'Ausführung', 'opt-threads'],
+    ['resolution', 'Auflösung', 'opt-resolution'], ['bpp', 'Farbtiefe', 'opt-bpp']],
+  dos: [['cycles', 'CPU-Geschwindigkeit', 'opt-cycles'], ['args', 'Startparameter', null]],
+  v86: [['memory', 'Arbeitsspeicher', 'opt-memory']],
+  emulatorjs: [],
+};
+
+function savedDemoOptions() {
+  try { return JSON.parse(localStorage.getItem(DEMO_OPTIONS_KEY) || '{}'); } catch { return {}; }
+}
+
+/** Options for starting a demo: general settings < what the demo needs < what the user chose for it. */
+function demoOptions(demo) {
+  const own = savedDemoOptions()[demo.id] ?? {};
+  const fromDemo = Object.fromEntries(['wine', 'args', 'cycles', 'memory'].filter((k) => demo[k]).map((k) => [k, demo[k]]));
+  const merged = { ...fromDemo, ...own };
+  if ('bpp' in merged) merged.bpp = Number(merged.bpp);
+  if ('memory' in merged) merged.memory = Number(merged.memory);
+  return merged;
+}
+
+function storeDemoOption(demo, key, value) {
+  const all = savedDemoOptions();
+  all[demo.id] = { ...all[demo.id], [key]: value };
+  localStorage.setItem(DEMO_OPTIONS_KEY, JSON.stringify(all));
+}
+
+/** Builds the option form of a demo inside the popover. */
+function demoOptionsForm(demo) {
+  const current = { ...readCurrentOptions(), ...demoOptions(demo) };
+  const fields = [...DEMO_OPTION_FIELDS[demoEmulator(demo)]];
+  const rows = fields.map(([key, label, sourceId]) => {
+    let input;
+    if (sourceId) {
+      input = $(sourceId).cloneNode(true);
+      input.removeAttribute('id');
+      input.value = String(current[key]);
+      input.querySelectorAll('option').forEach((o) => { o.selected = o.value === String(current[key]); });
+    } else {
+      input = el('input', { type: 'text', value: current[key] ?? '', placeholder: 'z. B. s für Sound Blaster', spellcheck: false });
+    }
+    input.addEventListener('change', () => storeDemoOption(demo, key, input.value.trim()));
+    return el('label', {}, label, input);
+  });
+  const sound = el('input', { type: 'checkbox', checked: current.sound });
+  sound.addEventListener('change', () => storeDemoOption(demo, 'sound', sound.checked));
+  rows.push(el('label', { className: 'check' }, sound, ' Ton'));
+  const reset = el('button', { type: 'button', className: 'linklike', textContent: 'Auf Standard zurücksetzen' });
+  reset.addEventListener('click', () => {
+    const all = savedDemoOptions();
+    delete all[demo.id];
+    localStorage.setItem(DEMO_OPTIONS_KEY, JSON.stringify(all));
+    showDemoDetail(demo, demoAnchor, true);
+  });
+  return el('div', { className: 'demo-options' }, ...rows,
+    el('p', { className: 'hint' }, 'Gilt nur für diese Demo und wird gespeichert. ', reset));
+}
+
 /** Shows description, credits and the start button of a demo next to its tree entry. */
-function showDemoDetail(demo, anchor) {
+function showDemoDetail(demo, anchor, optionsOpen = false) {
   const start = el('button', { type: 'button', className: 'wx-btn wx-go wx-small', textContent: 'Starten' });
   start.addEventListener('click', () => launchDemo(demo, start));
+  const optionsButton = el('button', { type: 'button', className: 'wx-btn wx-small', textContent: 'Optionen' });
+  optionsButton.setAttribute('aria-expanded', String(optionsOpen));
+  const form = demoOptionsForm(demo);
+  form.hidden = !optionsOpen;
+  optionsButton.addEventListener('click', () => {
+    form.hidden = !form.hidden;
+    optionsButton.setAttribute('aria-expanded', String(!form.hidden));
+    placeDemoDetail();
+  });
   const close = el('button', { type: 'button', className: 'demo-close', title: 'Schließen', textContent: '×' });
   close.setAttribute('aria-label', 'Schließen');
   close.addEventListener('click', hideDemoDetail);
@@ -470,7 +558,8 @@ function showDemoDetail(demo, anchor) {
     el('p', { className: 'demo-meta', textContent: `${demo.platform} · ${demo.emulator}` }),
     el('p', { textContent: demo.description }),
     el('p', { className: 'demo-meta' }, 'von ', link, ` · ${demo.license}`),
-    start,
+    el('div', { className: 'demo-actions' }, start, optionsButton),
+    form,
   );
   $('demo-tree').querySelectorAll('[aria-current]').forEach((b) => b.removeAttribute('aria-current'));
   anchor.setAttribute('aria-current', 'true');

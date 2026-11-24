@@ -113,8 +113,7 @@
     "url": "https://classicdosgames.com/online/zip/fatetdt.zip",
     "file": "dos/fatetdt.zip",
     "start": "PLAYFATE.EXE",
-    "args": "s",
-    "cycles": "8000"
+    "args": "s"
   },
   {
     "id": "trex64",

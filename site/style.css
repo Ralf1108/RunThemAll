@@ -335,3 +335,17 @@ select {
 }
 .msg-files .more { list-style: none; margin-left: -1rem; color: var(--muted); font-family: inherit; }
 .msg-actions { margin-top: 1.25rem; text-align: right; }
+
+/* Demo popover: start/options buttons and per-demo options */
+.demo-actions { display: flex; gap: .5rem; margin-top: .35rem; }
+.demo-detail .demo-actions .wx-btn { margin-top: 0; }
+.demo-options {
+  display: grid; gap: .6rem; margin-top: .5rem; padding-top: .6rem; border-top: 1px solid var(--border);
+}
+.demo-options label { display: flex; flex-direction: column; gap: .25rem; font-size: .85rem; color: var(--muted); }
+.demo-options label.check { flex-direction: row; align-items: center; color: var(--text); }
+.demo-options select, .demo-options input[type="text"] {
+  font: inherit; font-size: .9rem; padding: .35rem .5rem; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+}
+.demo-options .hint { margin: 0; font-size: .8rem; }
