@@ -31,6 +31,13 @@
           <button type="button" id="btn-folder" class="wx-btn">Ordner öffnen …</button>
         </div>
         <p id="folder-hint" class="hint"></p>
+        <div class="own-os">
+          <p class="own-os-title">Oder ein komplettes Betriebssystem starten</p>
+          <button type="button" id="btn-own-os" class="wx-btn">Eigenes Betriebssystem starten …</button>
+          <p class="hint">CD-Image (.iso), Diskette oder Festplatte (.img, .vhd), z.&nbsp;B. von deiner eigenen
+            Windows-98-CD. Das Image bootet wie ein echter PC (mit v86).</p>
+          <input type="file" id="input-own-os" accept=".iso,.img,.ima,.vfd,.flp,.vhd,.raw" hidden>
+        </div>
       </div>
       <input type="file" id="input-files" multiple hidden>
       <input type="file" id="input-folder" webkitdirectory hidden>
@@ -171,11 +178,6 @@
     <h2 id="demos-title">Demos</h2>
     <p class="muted">Freie Programme und Spiele zum Ausprobieren.</p>
     <nav id="demo-tree" class="demo-tree" aria-label="Demos nach Plattform"></nav>
-    <div class="own-os">
-      <button type="button" id="btn-own-os" class="wx-btn wx-small">Eigenes Betriebssystem starten …</button>
-      <p class="hint">CD-Image (.iso), Diskette oder Festplatte (.img, .vhd), z.&nbsp;B. von deiner eigenen Windows-98-CD. Läuft als kompletter PC mit v86.</p>
-      <input type="file" id="input-own-os" accept=".iso,.img,.ima,.vfd,.flp,.vhd,.raw" hidden>
-    </div>
     <div id="demo-detail" class="demo-detail" hidden></div>
   </aside>
   </div>

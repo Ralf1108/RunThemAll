@@ -313,8 +313,9 @@ select {
 .screen:fullscreen .v86-canvas { height: 100vh; width: auto; max-width: 100vw; }
 
 /* Own operating system button below the demo tree */
-.own-os { margin-top: .75rem; padding-top: .75rem; border-top: 1px solid var(--border); }
-.own-os .hint { font-size: .8rem; margin-top: .4rem; }
+.own-os { margin: 1.5rem auto 0; padding-top: 1.25rem; border-top: 1px solid var(--border); max-width: 560px; }
+.own-os-title { margin: 0 0 .75rem; font-weight: 600; }
+.own-os .hint { margin-top: .6rem; }
 
 /* Message box */
 .msg-dialog {
