@@ -3,6 +3,7 @@ import { fetchWithProgress } from './runner.js';
 import { WindowsRunner, canUseThreads, clearPersistentStorage } from './emulator.js';
 import { DosRunner } from './dos.js';
 import { EmulatorJsRunner, findBiosInWorkspace } from './ejs.js';
+import { V86Runner } from './v86.js';
 import { KIND_LABELS } from './exe.js';
 import { SYSTEMS, SYSTEM_BY_ID } from './systems.js';
 
@@ -20,7 +21,7 @@ let emulator = null;
 /** BIOS files chosen by the user for the selected game. */
 let chosenBios = [];
 
-const EMULATOR_NAMES = { dos: 'DOSBox', windows: 'Boxedwine', emulatorjs: 'EmulatorJS' };
+const EMULATOR_NAMES = { dos: 'DOSBox', windows: 'Boxedwine', emulatorjs: 'EmulatorJS', v86: 'v86' };
 
 function formatSize(bytes) {
   if (bytes < 1024) return `${bytes} B`;
@@ -218,7 +219,7 @@ $('thread-info').textContent = threadsAvailable
 if (!threadsAvailable) $('opt-threads').querySelector('option[value="mt"]').disabled = true;
 
 // Remember options between visits.
-const OPTION_IDS = ['opt-wine', 'opt-threads', 'opt-resolution', 'opt-bpp', 'opt-sound', 'opt-persistent', 'opt-cycles'];
+const OPTION_IDS = ['opt-wine', 'opt-threads', 'opt-resolution', 'opt-bpp', 'opt-sound', 'opt-persistent', 'opt-cycles', 'opt-memory'];
 try {
   const saved = JSON.parse(localStorage.getItem('runthemall-options') || '{}');
   for (const id of OPTION_IDS) {
@@ -241,6 +242,7 @@ function readOptions() {
     sound: $('opt-sound').checked,
     persistent: $('opt-persistent').checked,
     cycles: $('opt-cycles').value,
+    memory: Number($('opt-memory').value),
   };
 }
 
@@ -316,7 +318,7 @@ async function start() {
   $('run-title').textContent = `${program.path} (${what})`;
 
   const ui = {
-    canvas: $('canvas'), dosContainer: $('dos-container'), ejsContainer: $('ejs-container'), status, log,
+    canvas: $('canvas'), dosContainer: $('dos-container'), ejsContainer: $('ejs-container'), v86Container: $('v86-container'), status, log,
     steps: setSteps, step: setStep, progress: setProgress, ready: hideLoader,
     emulatorInfo: (text) => { $('run-emulator').textContent = text; },
   };
@@ -326,7 +328,9 @@ async function start() {
     opts.wine = 'wine6';
     log('16-Bit-Programm: Wine 11 unterstützt hier kein Win16, verwende Wine 6.', false);
   }
-  const Runner = { dos: DosRunner, windows: WindowsRunner, emulatorjs: EmulatorJsRunner }[program.emulator];
+  const Runner = opts.system && SYSTEM_BY_ID.get(opts.system).emulator === 'v86'
+    ? V86Runner
+    : { dos: DosRunner, windows: WindowsRunner, emulatorjs: EmulatorJsRunner }[program.emulator];
   emulator = new Runner(ui);
   $('btn-download').hidden = !emulator.supportsFileSync;
   $('btn-writeback').hidden = !emulator.supportsFileSync || !workspace.dirHandle;
@@ -492,6 +496,14 @@ function renderDemoTree(list) {
   }));
 }
 
+// Own operating system: any disk image boots as a complete PC (v86).
+$('btn-own-os').addEventListener('click', () => $('input-own-os').click());
+$('input-own-os').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (file) openWorkspace(() => fromFileList([file]), { program: file.name, system: 'pc' });
+});
+
 fetch('demos/demos.json')
   .then((r) => (r.ok ? r.json() : null))
   .then((list) => {
@@ -546,5 +558,19 @@ fetch('boxedwine/version.json')
     if (!v) return;
     $('bw-version').textContent = v.tag;
     $('bw-source').href = `boxedwine/source/Boxedwine-${v.tag}-source.tar.gz`;
+  })
+  .catch(() => {});
+
+fetch('v86/version.json')
+  .then((r) => (r.ok ? r.json() : null))
+  .then((v) => {
+    if (!v) return;
+    $('v86-version').textContent = v.v86;
+    $('v86-sources').replaceChildren(...v.sources.flatMap((src, i) => {
+      const a = document.createElement('a');
+      a.href = `v86/${src}`;
+      a.textContent = src.replace(/^source\//, '').replace(/-source\.tar\.gz$/, '');
+      return i ? [', ', a] : [a];
+    }));
   })
   .catch(() => {});

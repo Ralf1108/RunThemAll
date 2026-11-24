@@ -69,5 +69,33 @@
     "file": "gb/ucity.gbc",
     "start": "ucity.gbc",
     "system": "gb"
+  },
+  {
+    "id": "tinycore",
+    "title": "Tiny Core Linux 17.1",
+    "platform": "Betriebssysteme",
+    "emulator": "v86",
+    "description": "Winziges Linux mit grafischer Oberfläche, bootet von CD. Programme lassen sich ohne Internet nicht nachinstallieren.",
+    "author": "Robert Shingledecker, Tiny Core Team",
+    "homepage": "http://tinycorelinux.net/",
+    "license": "GPL-2.0 (Quellcode auf der Projektseite)",
+    "url": "http://tinycorelinux.net/17.x/x86/release/TinyCore-17.1.iso",
+    "file": "os/TinyCore-17.1.iso",
+    "start": "TinyCore-17.1.iso",
+    "system": "pc"
+  },
+  {
+    "id": "kolibrios",
+    "title": "KolibriOS 0.7.7",
+    "platform": "Betriebssysteme",
+    "emulator": "v86",
+    "description": "Komplettes grafisches Betriebssystem in Assembler, passt auf eine einzige Diskette. Mit Spielen, Editor und Demos.",
+    "author": "KolibriOS-Team",
+    "homepage": "https://kolibrios.org/",
+    "license": "GPL-2.0 (Quellcode: git.kolibrios.org)",
+    "local": "local/os/kolibri.img",
+    "file": "os/kolibri.img",
+    "start": "kolibri.img",
+    "system": "pc"
   }
 ]

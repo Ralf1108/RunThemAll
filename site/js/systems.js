@@ -12,6 +12,7 @@
  * @property {string} id        Run Them All id (also EmulatorJS EJS_core value)
  * @property {string} label     shown in the program list
  * @property {string} core      libretro core used (npm package @emulatorjs/core-<core>)
+ * @property {'v86'} [emulator] runs with another emulator than EmulatorJS (no core)
  * @property {string[]} ext     file extensions that clearly belong to this system
  * @property {{required:boolean, files:string[], builtin?:string, note?:string}} [bios]
  * @property {Record<string,string>} [options] libretro core options (EJS_defaultOptions)
@@ -99,18 +100,21 @@ export const SYSTEMS = [
   { id: 'arcade', label: 'Arcade (FBNeo)', core: 'fbneo', ext: [],
     bios: { required: false, files: ['neogeo.zip'], note: 'neogeo.zip für Neo-Geo-Spiele' } },
   { id: 'mame', label: 'Arcade (MAME 2003-Plus)', core: 'mame2003_plus', ext: [] },
+
+  // Complete PC with its own operating system (CD, floppy or hard disk image)
+  { id: 'pc', label: 'PC (x86, v86)', core: '', emulator: 'v86', ext: ['vhd', 'ima', 'vfd', 'flp'] },
 ];
 
 export const SYSTEM_BY_ID = new Map(SYSTEMS.map((s) => [s.id, s]));
 
 /** All cores that must be downloaded. */
-export const CORES = [...new Set(SYSTEMS.map((s) => s.core))];
+export const CORES = [...new Set(SYSTEMS.map((s) => s.core).filter(Boolean))];
 
 const BY_EXT = new Map();
 for (const s of SYSTEMS) for (const e of s.ext) if (!BY_EXT.has(e)) BY_EXT.set(e, s.id);
 
 /** Extensions that need a look into the file (several systems possible). */
-const INSPECT_EXT = new Set(['bin', 'iso', 'img', 'rom', 'cue', 'chd', 'tap', 'dsk', 'sna', 'zip', '7z']);
+const INSPECT_EXT = new Set(['bin', 'iso', 'img', 'rom', 'cue', 'chd', 'tap', 'dsk', 'sna', 'zip', '7z', 'raw']);
 
 /** Is this file worth checking for a system at all? */
 export function isPossibleGame(path) {
@@ -190,6 +194,14 @@ export function detectSystems(path, size, head) {
   if (startsWith(b, 0x100, 'SEGA') && ext !== 'iso' && ext !== 'cue') return ['segaMD'];
   if (b[8] === 0xaa && b[9] === 0xbb && ext === 'smd') return ['segaMD'];
 
+  // Bootable PC images: El Torito CD (boot record in sector 17), floppy or
+  // hard disk with boot signature 0x55AA
+  if (ext === 'iso' && startsWith(b, 0x8801, 'CD001') && findText(b.subarray(0x8800, 0x8840), 'EL TORITO') >= 0) {
+    return ['pc', 'psx', 'segaCD', 'pce', '3do', 'pcfx'];
+  }
+  const bootSector = b[510] === 0x55 && b[511] === 0xaa;
+  if (['img', 'ima', 'vfd', 'flp', 'vhd', 'raw'].includes(ext) && bootSector) return ['pc'];
+
   // CD images: look for system identifiers in the first sectors
   if (['iso', 'bin', 'img', 'chd', 'cue'].includes(ext)) {
     if (findText(b, 'SEGADISCSYSTEM') >= 0) return ['segaCD'];
@@ -219,7 +231,8 @@ export function detectSystems(path, size, head) {
   if (BY_EXT.has(ext)) return [BY_EXT.get(ext)];
 
   // 4. Generic CD images without identifier
-  if (ext === 'cue' || ext === 'chd' || ext === 'iso') return ['psx', 'segaCD', 'segaSaturn', 'pce', '3do', 'pcfx'];
+  if (ext === 'iso') return ['psx', 'segaCD', 'segaSaturn', 'pce', '3do', 'pcfx', 'pc'];
+  if (ext === 'cue' || ext === 'chd') return ['psx', 'segaCD', 'segaSaturn', 'pce', '3do', 'pcfx'];
   if (ext === 'bin') return ['segaMD', 'atari2600', 'psx'];
   if (ext === 'zip' || ext === '7z') return ['arcade', 'mame'];
   return [];

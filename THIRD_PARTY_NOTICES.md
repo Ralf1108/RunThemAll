@@ -56,6 +56,17 @@ Die Dateisystem-Archive enthalten Wine (LGPL-2.1 oder neuer) und Teile von Tiny 
   Versionen hinzuweisen (es werden keine Nutzerdaten gesendet). Alle Emulator-Dateien werden von dieser Seite
   geladen; Netplay ist ausgeblendet.
 
+## v86 0.5.476 mit SeaBIOS 1.16.2
+
+- Projekt: https://github.com/copy/v86, https://copy.sh/v86/
+- Lizenz: BSD-2-Clause (v86), GNU Lesser General Public License v3.0 (SeaBIOS)
+- Verwendet: unveränderte Dateien aus dem npm-Paket `v86@0.5.476` (`libv86.mjs`, `v86.wasm`) sowie
+  die BIOS-Images `seabios.bin` und `vgabios.bin` aus dem Ordner `bios/` desselben v86-Commits
+  (`9457e7a`)
+- Lizenztexte: werden als `v86/LICENSE-BSD-2-Clause.txt` und `v86/bios/LICENSE-LGPL-3.0.txt` mit veröffentlicht
+- Quellcode: wird unter `v86/source/` neben den Binärdateien veröffentlicht: v86 (Commit `9457e7a`)
+  und SeaBIOS `rel-1.16.2`
+
 ## Demo-Programme
 
 Werden beim Build aus ihren Original-Releases geladen und unter `demos/` veröffentlicht.
@@ -66,6 +77,8 @@ aber nicht aufgenommenen Spielen: [demos/README.md](demos/README.md).
 |---|---|---|---|
 | SkiFree 1.04 | Chris Pirih | keine ausdrückliche Lizenz; vom Autor kostenlos angeboten | Beispiel im Boxedwine-Web-Release 26R1.0 |
 | ZZT (Reconstruction of ZZT 1.0) | Tim Sweeney / Epic MegaGames, Adrian Siekierka | MIT, ZZT-Code mit Erlaubnis von Epic MegaGames | github.com/asiekierka/reconstruction-of-zzt |
+| Tiny Core Linux 17.1 | Tiny-Core-Team | GPL-2.0 | tinycorelinux.net |
+| KolibriOS 0.7.7.0+8930 | KolibriOS-Team | GPL-2.0 | kolibrios.org (Datei im Repository, siehe demos/local/README.md) |
 | T-Rex 64 1.0.2 | Maciej Małecki | MIT | github.com/maciejmalecki/trex64 |
 | Nova the Squirrel 1.0.6a | NovaSquirrel | GPL-3.0 (Quellcode im verlinkten Repository) | github.com/NovaSquirrel/NovaTheSquirrel |
 | µCity 1.3 | Antonio Niño Díaz | GPL-3.0 (Quellcode im verlinkten Repository) | github.com/AntonioND/ucity |

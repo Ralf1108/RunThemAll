@@ -6,6 +6,7 @@ vendor/
 site/boxedwine/
 site/jsdos/
 site/emulatorjs/
+site/v86/
 site/demos/
 site/coi-serviceworker.js
 *.wasm

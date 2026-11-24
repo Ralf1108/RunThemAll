@@ -1,6 +1,6 @@
 # Demos und Quellenverzeichnis der Spiele
 
-`demos.json` listet freie Programme und Spiele, die auf der Startseite von Run Them All als Demo
+`demos.json` listet freie Programme, Spiele und Betriebssysteme, die auf der Startseite von Run Them All als Demo
 angeboten werden: mindestens eines pro Emulator (Boxedwine, js-dos, EmulatorJS) bzw. System.
 
 Die Dateien selbst liegen **nicht** in diesem Repository. `scripts/fetch-runtimes.mjs` lädt sie beim
@@ -82,6 +82,29 @@ Stand der Recherche: 24.11.2026.
 | Lizenztext | https://github.com/AntonioND/ucity/blob/master/gpl-3.0.txt |
 | Quellcode | Tag `v1.3` im Projekt-Repository |
 
+### Tiny Core Linux 17.1
+
+| | |
+|---|---|
+| System / Emulator | Betriebssystem (PC, bootet von CD) / v86 |
+| Autoren | Robert Shingledecker und das Tiny-Core-Team |
+| Projektseite | http://tinycorelinux.net/ |
+| Download | http://tinycorelinux.net/17.x/x86/release/TinyCore-17.1.iso |
+| Datei auf der Seite | `demos/os/TinyCore-17.1.iso` (27.262.976 Byte, unverändert) |
+| Lizenz | GPL-2.0 (Linux-Kernel, BusyBox u. a.), Quellcode unter http://tinycorelinux.net/17.x/x86/release/src/ |
+| Hinweis | Bootet in v86 mit 128 MB RAM bis zum grafischen Desktop (getestet am 24.11.2026). |
+
+### KolibriOS 0.7.7.0+8930
+
+| | |
+|---|---|
+| System / Emulator | Betriebssystem (PC, bootet von Diskette) / v86 |
+| Autoren | KolibriOS-Team |
+| Projektseite | https://kolibrios.org/ |
+| Datei auf der Seite | `demos/os/kolibri.img` (1.474.560 Byte), liegt im Repository unter `demos/local/os/`, Herkunft siehe [local/README.md](local/README.md) |
+| Lizenz | GPL-2.0, Quellcode https://git.kolibrios.org/KolibriOS/kolibrios (Commit `d50642c`) |
+| Hinweis | Bootet in v86 in wenigen Sekunden bis zum Desktop (getestet am 24.11.2026). |
+
 ## Geprüft und nicht aufgenommen
 
 | Kandidat | System | Lizenz | Quelle | Grund |
@@ -110,8 +133,9 @@ Stand der Recherche: 24.11.2026.
 | `title`, `platform`, `emulator`, `description` | Anzeige auf der Startseite |
 | `author`, `homepage`, `license` | Credits (werden auf der Karte angezeigt) |
 | `url` | Download aus dem Original-Release |
+| `local` | statt `url`: Datei unter `demos/local/` im Repository (siehe [local/README.md](local/README.md)) |
 | `entry` | optional: Datei innerhalb eines ZIP, die übernommen wird |
 | `note` | optional: Hinweis zur Herkunft |
 | `file` | Pfad unter `site/demos/` |
 | `start` | Programm bzw. Spieldatei, die gestartet wird |
-| `system` | optional: EmulatorJS-System (siehe `site/js/systems.js`) |
+| `system` | optional: System aus `site/js/systems.js`, z. B. ein EmulatorJS-System oder `pc` für v86 |

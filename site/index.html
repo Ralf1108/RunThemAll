@@ -107,6 +107,19 @@
           </label>
         </div>
 
+        <h3 class="option-head">Kompletter PC (v86)</h3>
+        <div class="option-grid">
+          <label>Arbeitsspeicher
+            <select id="opt-memory">
+              <option value="32">32 MB</option>
+              <option value="64">64 MB</option>
+              <option value="128" selected>128 MB</option>
+              <option value="256">256 MB</option>
+              <option value="512">512 MB</option>
+            </select>
+          </label>
+        </div>
+
         <h3 class="option-head">Allgemein</h3>
         <div class="option-grid">
           <label class="check"><input type="checkbox" id="opt-sound" checked> Ton</label>
@@ -143,6 +156,7 @@
         <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1" hidden></canvas>
         <div id="dos-container" class="dos-container" hidden></div>
         <div id="ejs-container" class="ejs-container" hidden></div>
+        <div id="v86-container" class="v86-container" hidden></div>
       </div>
       <p id="run-message" class="hint"></p>
       <details class="console">
@@ -157,6 +171,11 @@
     <h2 id="demos-title">Demos</h2>
     <p class="muted">Freie Programme und Spiele zum Ausprobieren.</p>
     <nav id="demo-tree" class="demo-tree" aria-label="Demos nach Plattform"></nav>
+    <div class="own-os">
+      <button type="button" id="btn-own-os" class="wx-btn wx-small">Eigenes Betriebssystem starten …</button>
+      <p class="hint">CD-Image (.iso), Diskette oder Festplatte (.img, .vhd), z.&nbsp;B. von deiner eigenen Windows-98-CD. Läuft als kompletter PC mit v86.</p>
+      <input type="file" id="input-own-os" accept=".iso,.img,.ima,.vfd,.flp,.vhd,.raw" hidden>
+    </div>
     <div id="demo-detail" class="demo-detail" hidden></div>
   </aside>
   </div>
@@ -171,6 +190,9 @@
         und Wine (LGPL), DOS-Programme mit <a href="https://js-dos.com" rel="noopener">js-dos</a>
         <span id="jsdos-version"></span> und DOSBox (GPL-2.0:
         <a href="jsdos/LICENSE-GPL-2.0.txt">Lizenz</a>, Quellcode: <span id="jsdos-sources"></span>),
+        komplette PCs mit <a href="https://github.com/copy/v86" rel="noopener">v86</a>
+        <span id="v86-version"></span> (BSD-2-Clause: <a href="v86/LICENSE-BSD-2-Clause.txt">Lizenz</a>,
+        Quellcode: <span id="v86-sources"></span>) und SeaBIOS (LGPL-3.0: <a href="v86/bios/LICENSE-LGPL-3.0.txt">Lizenz</a>),
         Konsolen und Heimcomputer mit <a href="https://emulatorjs.org" rel="noopener">EmulatorJS</a>
         <span id="ejs-version"></span> und den <a href="emulatorjs/cores.html">libretro-Cores</a> (GPL-3.0:
         <a href="emulatorjs/LICENSE-GPL-3.0.txt">Lizenz</a>, <a id="ejs-source" href="emulatorjs/">Quellcode</a>).

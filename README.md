@@ -20,6 +20,7 @@ die Emulatoren aus ihren offiziellen Releases ein.
 | Windows 95 bis XP (32 Bit) | PE-Kopf | Boxedwine mit Wine 6 oder 11 |
 | `.bat` | Windows, wenn Windows-Programme danebenliegen, sonst DOS | |
 | Konsolen und Heimcomputer (s. u.) | Dateiendung und Magic Bytes | [EmulatorJS](https://emulatorjs.org) mit libretro-Cores |
+| Komplette Betriebssysteme: CD-Images (`.iso`), Disketten und Festplatten (`.img`, `.ima`, `.vhd`) | Bootsektor bzw. El-Torito-Kennung, Button „Eigenes Betriebssystem starten“ | [v86](https://github.com/copy/v86) (x86-PC mit SeaBIOS) |
 
 ### Konsolen und Heimcomputer
 
@@ -137,8 +138,10 @@ Run Them All wäre ohne diese Projekte nicht möglich:
 | [DOSBox](https://www.dosbox.com) | DOS-Emulation in js-dos | GPL-2.0 |
 | [EmulatorJS](https://emulatorjs.org) | Oberfläche und Laufzeit für libretro-Cores im Browser | GPL-3.0 |
 | [libretro](https://www.libretro.com)-Cores, u. a. [VICE](https://vice-emu.sourceforge.io), [PUAE](https://github.com/libretro/libretro-uae), FCEUmm, Snes9x, mGBA, Genesis Plus GX, PCSX ReARMed | die einzelnen Konsolen- und Heimcomputer-Emulatoren, vollständige Liste auf der Seite unter `emulatorjs/cores.html` | je Core, meist GPL; einige nur nichtkommerziell |
+| [v86](https://github.com/copy/v86) von Fabian Hemmer | komplette x86-PCs (Betriebssysteme von CD, Diskette, Festplatte) | BSD-2-Clause |
+| [SeaBIOS](https://www.seabios.org) | PC-BIOS in v86 | LGPL-3.0 |
 | [AROS](https://aros.sourceforge.io) | freier Amiga-Kickstart-Ersatz (im PUAE-Core enthalten) | AROS Public License |
-| Demo-Programme: SkiFree (Chris Pirih), ZZT (Tim Sweeney, Rekonstruktion Adrian Siekierka), T-Rex 64 (Maciej Małecki), Nova the Squirrel (NovaSquirrel), µCity (Antonio Niño Díaz) | Demos auf der Startseite, Quellenverzeichnis in [demos/README.md](demos/README.md) | MIT, GPL-3.0; SkiFree ohne ausdrückliche Lizenz |
+| Demo-Programme: SkiFree (Chris Pirih), ZZT (Tim Sweeney, Rekonstruktion Adrian Siekierka), T-Rex 64 (Maciej Małecki), Nova the Squirrel (NovaSquirrel), µCity (Antonio Niño Díaz), Tiny Core Linux, KolibriOS | Demos auf der Startseite, Quellenverzeichnis in [demos/README.md](demos/README.md) | MIT, GPL-2.0, GPL-3.0; SkiFree ohne ausdrückliche Lizenz |
 | [coi-serviceworker](https://github.com/gzuidhof/coi-serviceworker) von Guido Zuidhof | Cross-Origin-Isolation auf GitHub Pages | MIT |
 
 ## Lizenz

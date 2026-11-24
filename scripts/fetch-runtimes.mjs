@@ -3,6 +3,7 @@
 //   site/boxedwine/    Boxedwine web release (Windows programs)
 //   site/jsdos/        js-dos player + DOSBox backend (DOS programs)
 //   site/emulatorjs/   EmulatorJS + libretro cores (consoles, home computers)
+//   site/v86/          v86 x86 PC emulator + SeaBIOS (complete operating systems)
 // Each folder also gets the GPL license text and the matching source archives.
 // Additionally fetches the coi-serviceworker helper (MIT).
 //
@@ -59,6 +60,19 @@ const EJS_REGISTRY = 'https://registry.npmjs.org/@emulatorjs%2f';
 // because the npm package ships only the unminified sources.
 const EJS_SCRIPTS = ['emulator.js', 'nipplejs.js', 'shaders.js', 'storage.js', 'gamepad.js',
   'GameManager.js', 'socket.io.min.js', 'compression.js'];
+
+// --- v86 ---------------------------------------------------------------------
+// x86 PC emulator (BSD-2-Clause) from npm; the BIOS images (SeaBIOS, LGPL-3.0)
+// come from the bios/ folder of the same v86 commit.
+const V86_VERSION = '0.5.476';
+const V86_COMMIT = '9457e7a2f6890f3133bb6ac0f749e588f63c4c36';
+const V86_TARBALL = `https://registry.npmjs.org/v86/-/v86-${V86_VERSION}.tgz`;
+const V86_FILES = {
+  'package/build/libv86.mjs': 'libv86.mjs',
+  'package/build/v86.wasm': 'v86.wasm',
+  'package/LICENSE': 'LICENSE-BSD-2-Clause.txt',
+};
+const SEABIOS_VERSION = '1.16.2';
 
 // --- coi-serviceworker -----------------------------------------------------
 const COI_COMMIT = '7b1d2a092d0d2dd2b7270b6f12f13605de26f214'; // v0.1.7
@@ -182,6 +196,38 @@ async function fetchJsDos() {
   }, null, 2) + '\n');
 }
 
+async function fetchV86() {
+  console.log(`v86 ${V86_VERSION}`);
+  const out = join(SITE, 'v86');
+  const tarball = join(VENDOR, `v86-${V86_VERSION}.tgz`);
+  await download(V86_TARBALL, tarball);
+  const files = readTar(gunzipSync(await readFile(tarball)));
+  for (const [from, to] of Object.entries(V86_FILES)) {
+    const data = files.get(from);
+    if (!data) throw new Error(`Im v86-Paket fehlt: ${from}`);
+    await writeOut(join(out, to), data);
+    console.log(`  ${to}`);
+  }
+  const raw = `https://raw.githubusercontent.com/copy/v86/${V86_COMMIT}/bios/`;
+  for (const name of ['seabios.bin', 'vgabios.bin', 'COPYING.LESSER']) {
+    const target = join(VENDOR, 'v86', name);
+    await download(raw + name, target);
+    await writeOut(join(out, 'bios', name === 'COPYING.LESSER' ? 'LICENSE-LGPL-3.0.txt' : name), await readFile(target));
+  }
+  const sources = {
+    [`v86-${V86_COMMIT.slice(0, 7)}-source.tar.gz`]: `https://github.com/copy/v86/archive/${V86_COMMIT}.tar.gz`,
+    [`seabios-${SEABIOS_VERSION}-source.tar.gz`]:
+      `https://github.com/coreboot/seabios/archive/refs/tags/rel-${SEABIOS_VERSION}.tar.gz`,
+  };
+  for (const [name, url] of Object.entries(sources)) await download(url, join(out, 'source', name));
+  await writeOut(join(out, 'version.json'), JSON.stringify({
+    v86: V86_VERSION,
+    commit: V86_COMMIT,
+    seabios: SEABIOS_VERSION,
+    sources: Object.keys(sources).map((n) => `source/${n}`),
+  }, null, 2) + '\n');
+}
+
 async function npmPackage(name, version = 'latest') {
   const res = await fetch(`${EJS_REGISTRY}${name}/${version}`);
   if (!res.ok) throw new Error(`npm: @emulatorjs/${name}@${version} nicht gefunden (${res.status})`);
@@ -279,13 +325,22 @@ async function fetchCoi() {
 
 /**
  * Demo programs (demos/demos.json): downloaded from their original release,
- * optionally one entry taken out of a ZIP, and placed in site/demos/.
+ * optionally one entry taken out of a ZIP, and placed in site/demos/. Entries
+ * with `local` are copied from demos/local/ instead (built from source by us).
  */
 async function fetchDemos() {
   console.log('Demos');
   const list = JSON.parse(await readFile(join(ROOT, 'demos', 'demos.json'), 'utf8'));
   const published = [];
   for (const demo of list) {
+    if (demo.local) {
+      // Built by us from source (see demos/local/README.md), stored in the repository.
+      await writeOut(join(SITE, 'demos', demo.file), new Uint8Array(await readFile(join(ROOT, 'demos', demo.local))));
+      const { local, ...rest } = demo;
+      published.push(rest);
+      console.log(`  ${demo.file} (${demo.title}, aus demos/local)`);
+      continue;
+    }
     const cached = join(VENDOR, 'demos', demo.id, decodeURIComponent(demo.url.split('/').pop()));
     // Reuse the Boxedwine release that is already cached.
     const source = demo.url.endsWith('/Boxedwine26R1Web.zip') ? join(VENDOR, 'Boxedwine26R1Web.zip') : cached;
@@ -308,6 +363,7 @@ async function main() {
   await fetchBoxedwine();
   await fetchJsDos();
   await fetchEmulatorJs();
+  await fetchV86();
   await fetchDemos();
   await fetchCoi();
   console.log('Fertig.');
