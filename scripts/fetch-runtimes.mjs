@@ -11,7 +11,7 @@ import { mkdir, readFile, writeFile, stat } from 'node:fs/promises';
 import { gunzipSync } from 'node:zlib';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { listZip, readZipEntry } from '../site/js/zip.js';
+import { createZip, listZip, readZipEntry } from '../site/js/zip.js';
 
 // --- Boxedwine -------------------------------------------------------------
 const BOXEDWINE_TAG = '26R1.0';
@@ -25,6 +25,12 @@ const BOXEDWINE_FILES = {
   'Wine11/boxedwine.zip': 'wine11/boxedwine.zip',
   'readme.txt': 'README-boxedwine.txt',
 };
+// The Wine 6 file system in the web release is stripped down and lacks most
+// 16-bit Windows modules (e.g. WinG, toolhelp, lzexpand, ole2). They are taken
+// from the full Boxedwine Wine 6.0 file system (identical build) and shipped as
+// an overlay zip that Boxedwine mounts on top of the root file system.
+const WINE6_FULL_FS = 'http://boxedwine.org/v2/2/TinyCore15Wine6.0.zip';
+const WIN16_MODULE = /^opt\/wine\/lib\/wine\/[^/]+16\.so$/;
 
 // --- js-dos ----------------------------------------------------------------
 // js-dos 8.5.4 bundles emulators 8.5.3, which builds DOSBox from js-dos/dosbox.
@@ -103,12 +109,31 @@ async function fetchBoxedwine() {
     console.log(`  ${to}`);
   }
 
+  await buildWin16Overlay(entries.get('SingleThreaded/boxedwine.zip'), archive, join(out, 'wine6', 'win16-extras.zip'));
+
   const source = `https://github.com/danoon2/Boxedwine/archive/refs/tags/${BOXEDWINE_TAG}.tar.gz`;
   await download(`https://raw.githubusercontent.com/danoon2/Boxedwine/${BOXEDWINE_TAG}/license.txt`,
     join(out, 'LICENSE-GPL-2.0.txt'));
   await download(source, join(out, 'source', `Boxedwine-${BOXEDWINE_TAG}-source.tar.gz`));
   await writeOut(join(out, 'version.json'),
     JSON.stringify({ tag: BOXEDWINE_TAG, source }, null, 2) + '\n');
+}
+
+async function buildWin16Overlay(webRootEntry, releaseArchive, target) {
+  console.log('Wine 6: 16-Bit-Module ergänzen ...');
+  const fullPath = join(VENDOR, 'TinyCore15Wine6.0.zip');
+  await download(WINE6_FULL_FS, fullPath); // ~140 MB, slow server
+
+  const webRoot = await readZipEntry(releaseArchive, webRootEntry);
+  const present = new Set(listZip(webRoot).map((e) => e.name));
+  const full = new Uint8Array(await readFile(fullPath));
+  const missing = listZip(full).filter((e) => WIN16_MODULE.test(e.name) && !present.has(e.name));
+  if (missing.length === 0) throw new Error('Keine fehlenden 16-Bit-Module gefunden – Dateisystem geändert?');
+
+  const files = [];
+  for (const e of missing) files.push({ name: e.name, data: await readZipEntry(full, e) });
+  await writeOut(target, new Uint8Array(await createZip(files).arrayBuffer()));
+  console.log(`  wine6/win16-extras.zip (${files.length} Module)`);
 }
 
 async function fetchJsDos() {

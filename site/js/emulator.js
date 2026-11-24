@@ -6,6 +6,8 @@ import { Runner, fetchWithProgress, loadScript, splitPath } from './runner.js';
 const D_DRIVE = '/d_drive';
 const D_DRIVE_IN_WINE = '/home/username/.wine/dosdevices/d:';
 const ROOT_ZIP = 'boxedwine.zip';
+/** Extra 16-bit Windows modules for the stripped Wine 6 file system (see fetch script). */
+const OVERLAY_ZIPS = { wine6: ['win16-extras.zip'], wine11: [] };
 
 /** IndexedDB names used for the persistent C: drive (one per Wine version). */
 export const PERSISTENT_ROOTS = ['/root-wine6', '/root-wine11'];
@@ -52,12 +54,19 @@ export class WindowsRunner extends Runner {
     const userFiles = await Promise.all(
       workspace.files.map(async (f) => ({ path: f.path, data: await f.load() })),
     );
+    const overlays = await Promise.all(OVERLAY_ZIPS[opts.wine].map(async (name) => {
+      const res = await fetch(`boxedwine/${opts.wine}/${name}`);
+      if (!res.ok) throw new Error(`${name} konnte nicht geladen werden (HTTP ${res.status}).`);
+      return { name, data: new Uint8Array(await res.arrayBuffer()) };
+    }));
     const rootZip = await rootZipPromise;
 
     // 2. Build emulator arguments.
     const rootDir = opts.wine === 'wine11' ? PERSISTENT_ROOTS[1] : PERSISTENT_ROOTS[0];
     const [progDir, progName] = splitPath(program);
-    const args = ['-root', rootDir, '-zip', ROOT_ZIP, '-mount_drive', D_DRIVE, 'd'];
+    const args = ['-root', rootDir, '-zip', ROOT_ZIP];
+    for (const o of overlays) args.push('-zip', o.name);
+    args.push('-mount_drive', D_DRIVE, 'd');
     if (opts.resolution) args.push('-resolution', opts.resolution);
     if (opts.bpp !== 32) args.push('-bpp', String(opts.bpp));
     if (!opts.sound) args.push('-nosound');
@@ -85,6 +94,7 @@ export class WindowsRunner extends Runner {
         FS.mkdir(rootDir);
         FS.mkdir(D_DRIVE);
         FS.createDataFile('/', ROOT_ZIP, rootZip, true, true);
+        for (const o of overlays) FS.createDataFile('/', o.name, o.data, true, true);
         for (const f of userFiles) {
           const [dir, name] = splitPath(f.path);
           if (dir) FS.createPath(D_DRIVE, dir, true, true);

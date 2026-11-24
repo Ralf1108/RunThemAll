@@ -9,6 +9,9 @@ Diese Komponenten sind nicht Teil dieses Repositorys. Sie werden von
 - Lizenz: GNU General Public License v2.0
 - Verwendet: unveränderte Dateien aus dem offiziellen Release `Boxedwine26R1Web.zip`
   (`boxedwine.js`, `boxedwine.wasm` sowie die Dateisysteme `boxedwine.zip` mit Wine 6.0 und Wine 11.0)
+- Zusätzlich: `boxedwine/wine6/win16-extras.zip` enthält 16-Bit-Module von Wine 6.0 (z. B. WinG,
+  toolhelp, ole2), die im Web-Dateisystem fehlen. Sie stammen unverändert aus dem vollständigen
+  Boxedwine-Dateisystem http://boxedwine.org/v2/2/TinyCore15Wine6.0.zip (Wine, LGPL-2.1+).
 - Lizenztext: wird als `boxedwine/LICENSE-GPL-2.0.txt` mit veröffentlicht
 - Quellcode: der vollständige Quellcode dieser Version wird als
   `boxedwine/source/Boxedwine-26R1.0-source.tar.gz` neben den Binärdateien veröffentlicht

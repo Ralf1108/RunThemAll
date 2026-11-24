@@ -20,7 +20,9 @@ und startet den passenden Emulator:
 - ZIP-Archive werden im Browser entpackt, ausführbare Dateien (`.exe`, `.com`, `.bat`) werden mit Typ aufgelistet
 - Lange Datei- und Ordnernamen werden für DOS automatisch in 8.3-Kurznamen umgesetzt
   (z. B. `Mein Spiel` → `MEINSP~1`) und beim Sichern wieder zurückübersetzt
-- Wine 6.0 (kompatibler) oder Wine 11.0 (schneller), DOS-CPU-Geschwindigkeit einstellbar
+- Wine 6.0 (kompatibler) oder Wine 11.0 (schneller, nur 32-Bit), DOS-CPU-Geschwindigkeit einstellbar.
+  Das Wine-6-Dateisystem des Web-Releases wird um fehlende 16-Bit-Module (z. B. WinG) ergänzt,
+  16-Bit-Programme laufen immer mit Wine 6.
 - Multithreaded-Build, wenn der Browser es erlaubt, sonst Singlethreaded
 - Geänderte Dateien (z. B. Spielstände) als ZIP sichern oder, in Chrome/Edge,
   direkt in den geöffneten Ordner zurückschreiben
@@ -37,7 +39,8 @@ und startet den passenden Emulator:
 Voraussetzung: Node.js 22 oder neuer. Weitere Abhängigkeiten gibt es nicht.
 
 ```sh
-npm run fetch   # lädt Boxedwine 26R1 und js-dos 8.5.4 nach site/ (ca. 130 MB, einmalig)
+npm run fetch   # lädt Boxedwine 26R1 und js-dos 8.5.4 nach site/ (einmalig ca. 270 MB, der
+                # Server von boxedwine.org ist langsam, das kann ~10 Minuten dauern)
 npm run serve   # http://localhost:8080
 ```
 

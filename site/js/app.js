@@ -198,6 +198,11 @@ async function start() {
   $('btn-writeback').hidden = !workspace.dirHandle;
 
   const ui = { canvas: $('canvas'), dosContainer: $('dos-container'), status, log };
+  if (program.kind === 'win16' && opts.wine === 'wine11') {
+    // The Wine 11 file system of the web release has no 16-bit Windows support.
+    opts.wine = 'wine6';
+    log('16-Bit-Programm: Wine 11 unterstützt hier kein Win16, verwende Wine 6.', false);
+  }
   emulator = program.emulator === 'dos' ? new DosRunner(ui) : new WindowsRunner(ui);
   try {
     await emulator.start(workspace, program.path, opts);
