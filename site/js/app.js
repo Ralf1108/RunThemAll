@@ -142,7 +142,6 @@ function showChooser() {
   }));
 
   $('pick').hidden = true;
-  $('demos').hidden = true;
   $('choose').hidden = false;
   updateSystemPanel();
   $('btn-start').focus();
@@ -210,7 +209,6 @@ $('btn-reset').addEventListener('click', () => {
   workspace = null;
   $('choose').hidden = true;
   $('pick').hidden = false;
-  $('demos').hidden = demoCount === 0;
 });
 
 const threadsAvailable = canUseThreads();
@@ -311,6 +309,8 @@ async function start() {
   }
 
   $('choose').hidden = true;
+  hideDemoDetail();
+  $('demos').hidden = true;
   $('run').hidden = false;
   const what = program.kind === 'game' ? SYSTEM_BY_ID.get(opts.system).label : EMULATOR_NAMES[program.emulator];
   $('run-title').textContent = `${program.path} (${what})`;
@@ -380,8 +380,6 @@ window.addEventListener('beforeunload', (e) => {
 // ---------------------------------------------------------------------------
 // Demo launcher: free programs/games fetched at build time (see demos/demos.json)
 
-let demoCount = 0;
-
 async function launchDemo(demo, button) {
   const label = button.textContent;
   button.disabled = true;
@@ -399,30 +397,107 @@ async function launchDemo(demo, button) {
   }
 }
 
+const el = (tag, props = {}, ...children) => {
+  const node = Object.assign(document.createElement(tag), props);
+  node.append(...children);
+  return node;
+};
+
+let demoAnchor = null; // tree entry the detail popover belongs to
+
+/** Shows description, credits and the start button of a demo next to its tree entry. */
+function showDemoDetail(demo, anchor) {
+  const start = el('button', { type: 'button', className: 'wx-btn wx-go wx-small', textContent: 'Starten' });
+  start.addEventListener('click', () => launchDemo(demo, start));
+  const close = el('button', { type: 'button', className: 'demo-close', title: 'Schließen', textContent: '×' });
+  close.setAttribute('aria-label', 'Schließen');
+  close.addEventListener('click', hideDemoDetail);
+  const link = el('a', { href: demo.homepage, textContent: demo.author, rel: 'noopener' });
+  $('demo-detail').replaceChildren(
+    close,
+    el('h3', { textContent: demo.title }),
+    el('p', { className: 'demo-meta', textContent: `${demo.platform} · ${demo.emulator}` }),
+    el('p', { textContent: demo.description }),
+    el('p', { className: 'demo-meta' }, 'von ', link, ` · ${demo.license}`),
+    start,
+  );
+  $('demo-tree').querySelectorAll('[aria-current]').forEach((b) => b.removeAttribute('aria-current'));
+  anchor.setAttribute('aria-current', 'true');
+  demoAnchor = anchor;
+  $('demo-detail').hidden = false;
+  placeDemoDetail();
+  return start;
+}
+
+function hideDemoDetail() {
+  $('demo-detail').hidden = true;
+  demoAnchor?.removeAttribute('aria-current');
+  demoAnchor = null;
+}
+
+/** Places the popover left of the selected entry (below it when the menu sits under the main column). */
+function placeDemoDetail() {
+  const pop = $('demo-detail');
+  if (pop.hidden || !demoAnchor) return;
+  const item = demoAnchor.getBoundingClientRect();
+  const side = $('demos').getBoundingClientRect();
+  const gap = 12;
+  const narrow = side.left - 320 - gap < 8;
+  pop.classList.toggle('below', narrow);
+  pop.style.width = narrow ? `${side.width}px` : '';
+  const { width, height } = pop.getBoundingClientRect();
+  const maxTop = window.innerHeight - height - 8;
+  const top = narrow ? Math.min(item.bottom + 6, maxTop) : Math.min(Math.max(item.top - 8, 8), maxTop);
+  pop.style.left = `${narrow ? side.left : side.left - width - gap}px`;
+  pop.style.top = `${Math.max(top, 8)}px`;
+  // Arrow points at the middle of the entry.
+  pop.style.setProperty('--arrow', `${Math.min(Math.max(item.top + item.height / 2 - top, 16), height - 16)}px`);
+}
+
+window.addEventListener('resize', placeDemoDetail);
+window.addEventListener('scroll', placeDemoDetail, { passive: true });
+$('demos').addEventListener('scroll', placeDemoDetail, { passive: true });
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !$('demo-detail').hidden) {
+    demoAnchor?.focus();
+    hideDemoDetail();
+  }
+});
+document.addEventListener('pointerdown', (e) => {
+  if (!$('demo-detail').hidden && !e.target.closest('#demo-detail, .demo-item')) hideDemoDetail();
+});
+
+/** Builds the tree: one group per platform (in order of first appearance), demos below. */
+function renderDemoTree(list) {
+  const groups = new Map();
+  for (const demo of list) {
+    if (!groups.has(demo.platform)) groups.set(demo.platform, []);
+    groups.get(demo.platform).push(demo);
+  }
+  $('demo-tree').replaceChildren(...[...groups].map(([platform, demos]) => {
+    const items = demos.map((demo) => {
+      const button = el('button', { type: 'button', className: 'demo-item', title: demo.description },
+        el('span', { className: 'demo-name', textContent: demo.title }),
+        el('span', { className: 'demo-file', textContent: demo.start }));
+      button.addEventListener('click', () => {
+        if (demoAnchor === button) hideDemoDetail();
+        else showDemoDetail(demo, button);
+      });
+      button.addEventListener('dblclick', () => showDemoDetail(demo, button).click());
+      return el('li', {}, button);
+    });
+    return el('details', { className: 'demo-group', open: true },
+      el('summary', {}, platform, el('span', { className: 'demo-count', textContent: String(demos.length) })),
+      el('ul', {}, ...items));
+  }));
+}
+
 fetch('demos/demos.json')
   .then((r) => (r.ok ? r.json() : null))
   .then((list) => {
     if (!list?.length) return;
-    demoCount = list.length;
-    $('demo-list').replaceChildren(...list.map((demo) => {
-      const card = Object.assign(document.createElement('div'), { className: 'demo' });
-      const title = Object.assign(document.createElement('h3'), { textContent: demo.title });
-      const meta = Object.assign(document.createElement('p'), {
-        className: 'demo-meta', textContent: `${demo.platform} · ${demo.emulator}`,
-      });
-      const text = Object.assign(document.createElement('p'), { textContent: demo.description });
-      const credit = document.createElement('p');
-      credit.className = 'demo-meta';
-      const link = Object.assign(document.createElement('a'), { href: demo.homepage, textContent: demo.author, rel: 'noopener' });
-      credit.append('von ', link, ` · ${demo.license}`);
-      const button = Object.assign(document.createElement('button'), {
-        type: 'button', className: 'wx-btn wx-primary wx-small', textContent: 'Starten',
-      });
-      button.addEventListener('click', () => launchDemo(demo, button));
-      card.append(title, meta, text, credit, button);
-      return card;
-    }));
-    $('demos').hidden = $('pick').hidden;
+    renderDemoTree(list);
+    $('demos').hidden = !$('run').hidden;
   })
   .catch(() => {});
 
@@ -434,9 +509,12 @@ $('btn-clear').addEventListener('click', async () => {
     alert('Bitte zuerst das laufende Programm beenden.');
     return;
   }
-  if (!confirm('Gespeichertes Laufwerk C: (Wine-Einstellungen und installierte Programme) löschen?')) return;
+  if (!confirm('Virtuelles Laufwerk C: zurücksetzen?\n\n'
+    + 'Das betrifft nur Daten, die Windows-Programme hier im Browser abgelegt haben: '
+    + 'Wine-Einstellungen, darin installierte Programme und Spielstände, die auf C: gespeichert wurden.\n\n'
+    + 'Dateien auf deinem Computer bleiben unberührt. Beim nächsten Start wird C: neu eingerichtet.')) return;
   await clearPersistentStorage();
-  alert('Gespeichertes Laufwerk C: wurde gelöscht.');
+  alert('Das virtuelle Laufwerk C: wurde zurückgesetzt. Beim nächsten Start eines Windows-Programms wird es neu eingerichtet.');
 });
 
 fetch('jsdos/version.json')

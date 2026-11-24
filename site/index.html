@@ -18,7 +18,8 @@
     </div>
   </header>
 
-  <main class="wrap">
+  <div class="wrap layout">
+  <main>
     <!-- Step 1: choose files -->
     <section id="pick" class="wx-card">
       <h2>1. Programm öffnen</h2>
@@ -34,13 +35,6 @@
       <input type="file" id="input-files" multiple hidden>
       <input type="file" id="input-folder" webkitdirectory hidden>
       <p id="pick-error" class="error" hidden></p>
-    </section>
-
-    <!-- Demo launcher -->
-    <section id="demos" class="wx-card" hidden>
-      <h2>Oder eine Demo starten</h2>
-      <p class="muted">Freie Programme und Spiele zum Ausprobieren, eines pro Emulator bzw. System.</p>
-      <div id="demo-list" class="demo-list"></div>
     </section>
 
     <!-- Step 2: choose program + options -->
@@ -96,7 +90,7 @@
               <option value="8">8 Bit (256 Farben)</option>
             </select>
           </label>
-          <label class="check"><input type="checkbox" id="opt-persistent" checked> Laufwerk C: im Browser behalten</label>
+          <label class="check"><input type="checkbox" id="opt-persistent" checked> Virtuelles Laufwerk C: im Browser speichern</label>
         </div>
         <p id="thread-info" class="hint"></p>
 
@@ -158,6 +152,15 @@
     </section>
   </main>
 
+  <!-- Demo menu: platforms as groups, demos below -->
+  <aside id="demos" class="sidebar" aria-labelledby="demos-title" hidden>
+    <h2 id="demos-title">Demos</h2>
+    <p class="muted">Freie Programme und Spiele zum Ausprobieren.</p>
+    <nav id="demo-tree" class="demo-tree" aria-label="Demos nach Plattform"></nav>
+    <div id="demo-detail" class="demo-detail" hidden></div>
+  </aside>
+  </div>
+
   <footer class="site-footer">
     <div class="wrap">
       <p>
@@ -174,7 +177,8 @@
       </p>
       <p>
         Alles läuft lokal in deinem Browser, es werden keine Dateien hochgeladen.
-        <button type="button" id="btn-clear" class="linklike">Gespeichertes Laufwerk C: löschen</button>
+        Windows-Programme bekommen ein virtuelles Laufwerk C:, das nur hier im Browser gespeichert ist.
+        <button type="button" id="btn-clear" class="linklike">Virtuelles Laufwerk C: zurücksetzen</button>
       </p>
     </div>
   </footer>

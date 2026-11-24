@@ -60,7 +60,7 @@ Getestet sind bisher C64 und Amiga; die übrigen Systeme sind eingebunden, aber 
   Single- oder Multithreaded, Auflösung und Farbtiefe einstellbar
 - DOS: CPU-Geschwindigkeit einstellbar (automatisch, maximal, 286/386/486)
 - Konsolen/Heimcomputer: Spielstände, Savestates, Steuerung und Gamepads über das Menü von EmulatorJS
-- Laufwerk C: (Wine-Einstellungen) bleibt auf Wunsch im Browser gespeichert
+- Das virtuelle Laufwerk C: (Wine-Einstellungen) bleibt auf Wunsch im Browser gespeichert und lässt sich unten auf der Seite zurücksetzen
 
 ## Grenzen
 
