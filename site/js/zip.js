@@ -22,7 +22,7 @@ function decodeName(bytes, utf8) {
 /**
  * Lists the entries of a ZIP archive.
  * @param {Uint8Array} data
- * @returns {{name:string, isDir:boolean, method:number, flags:number,
+ * @returns {{name:string, isDir:boolean, method:number, flags:number, crc:number,
  *            compressedSize:number, size:number, localOffset:number}[]}
  */
 export function listZip(data) {
@@ -46,6 +46,7 @@ export function listZip(data) {
     }
     const flags = view.getUint16(offset + 8, true);
     const method = view.getUint16(offset + 10, true);
+    const crc = view.getUint32(offset + 16, true);
     const compressedSize = view.getUint32(offset + 20, true);
     const size = view.getUint32(offset + 24, true);
     const nameLen = view.getUint16(offset + 28, true);
@@ -59,6 +60,7 @@ export function listZip(data) {
       isDir: name.endsWith('/'),
       method,
       flags,
+      crc,
       compressedSize,
       size,
       localOffset,
@@ -90,6 +92,23 @@ export async function readZipEntry(data, entry) {
   throw new Error(`Kompressionsverfahren ${entry.method} nicht unterstützt: ${entry.name}`);
 }
 
+/**
+ * Returns an entry exactly as stored (still compressed), for copying it into
+ * another archive with createZip() without recompressing.
+ */
+export function readZipEntryRaw(data, entry) {
+  const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+  const lo = entry.localOffset;
+  if (view.getUint32(lo, true) !== SIG_LOCAL) throw new Error(`Beschädigter Eintrag: ${entry.name}`);
+  const start = lo + 30 + view.getUint16(lo + 26, true) + view.getUint16(lo + 28, true);
+  return {
+    method: entry.method,
+    crc: entry.crc,
+    size: entry.size,
+    compressed: data.slice(start, start + entry.compressedSize),
+  };
+}
+
 // ---------------------------------------------------------------------------
 // CRC32 + writer
 
@@ -110,8 +129,9 @@ export function crc32(bytes) {
 }
 
 /**
- * Builds an uncompressed ZIP archive.
- * @param {{name:string, data:Uint8Array}[]} files
+ * Builds a ZIP archive. Entries given as `data` are stored uncompressed;
+ * entries given as `raw` (from readZipEntryRaw) are copied as they are.
+ * @param {({name:string, data:Uint8Array} | {name:string, raw:ReturnType<typeof readZipEntryRaw>})[]} files
  * @returns {Blob}
  */
 export function createZip(files) {
@@ -120,17 +140,22 @@ export function createZip(files) {
   const central = [];
   let offset = 0;
 
-  for (const { name, data } of files) {
-    const nameBytes = enc.encode(name);
-    const crc = crc32(data);
+  for (const file of files) {
+    const nameBytes = enc.encode(file.name);
+    const raw = file.raw;
+    const method = raw ? raw.method : 0;
+    const crc = raw ? raw.crc : crc32(file.data);
+    const size = raw ? raw.size : file.data.length;
+    const data = raw ? raw.compressed : file.data;
 
     const local = new DataView(new ArrayBuffer(30));
     local.setUint32(0, SIG_LOCAL, true);
     local.setUint16(4, 20, true);
     local.setUint16(6, 0x800, true); // UTF-8 names
+    local.setUint16(8, method, true);
     local.setUint32(14, crc, true);
     local.setUint32(18, data.length, true);
-    local.setUint32(22, data.length, true);
+    local.setUint32(22, size, true);
     local.setUint16(26, nameBytes.length, true);
     parts.push(local, nameBytes, data);
 
@@ -139,9 +164,10 @@ export function createZip(files) {
     cd.setUint16(4, 20, true);
     cd.setUint16(6, 20, true);
     cd.setUint16(8, 0x800, true);
+    cd.setUint16(10, method, true);
     cd.setUint32(16, crc, true);
     cd.setUint32(20, data.length, true);
-    cd.setUint32(24, data.length, true);
+    cd.setUint32(24, size, true);
     cd.setUint16(28, nameBytes.length, true);
     cd.setUint32(42, offset, true);
     central.push(cd, nameBytes);

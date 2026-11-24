@@ -11,7 +11,7 @@ import { mkdir, readFile, writeFile, stat } from 'node:fs/promises';
 import { gunzipSync } from 'node:zlib';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createZip, listZip, readZipEntry } from '../site/js/zip.js';
+import { createZip, listZip, readZipEntry, readZipEntryRaw } from '../site/js/zip.js';
 
 // --- Boxedwine -------------------------------------------------------------
 const BOXEDWINE_TAG = '26R1.0';
@@ -130,10 +130,11 @@ async function buildWin16Overlay(webRootEntry, releaseArchive, target) {
   const missing = listZip(full).filter((e) => WIN16_MODULE.test(e.name) && !present.has(e.name));
   if (missing.length === 0) throw new Error('Keine fehlenden 16-Bit-Module gefunden – Dateisystem geändert?');
 
-  const files = [];
-  for (const e of missing) files.push({ name: e.name, data: await readZipEntry(full, e) });
-  await writeOut(target, new Uint8Array(await createZip(files).arrayBuffer()));
-  console.log(`  wine6/win16-extras.zip (${files.length} Module)`);
+  // Copy the entries still compressed, exactly as in the full file system.
+  const files = missing.map((e) => ({ name: e.name, raw: readZipEntryRaw(full, e) }));
+  const zip = new Uint8Array(await createZip(files).arrayBuffer());
+  await writeOut(target, zip);
+  console.log(`  wine6/win16-extras.zip (${files.length} Module, ${(zip.length / 1024).toFixed(0)} KB)`);
 }
 
 async function fetchJsDos() {
