@@ -243,7 +243,7 @@ THIRD_PARTY_NOTICES.md      Lizenzen und Herkunft aller fremden Komponenten
 | ZIP mit DOS- und Windows-Programmen gemischt | Typen korrekt erkannt |
 | Great Giana Sisters (`.d64`, C64) | als C64 erkannt, lädt mit Warp, Intro nach ca. 45–90 s |
 | Dogs of War (`.adf`, Amiga) | als Amiga erkannt, Titelbild mit freiem AROS-Kickstart |
-| Demos SkiFree, ZZT, T-Rex 64, Nova the Squirrel, µCity | starten aus dem Demo-Starter |
+| Demos (Liste in demos/README.md) | starten aus dem Demo-Menü |
 | Ladebildschirm bei gedrosselter Verbindung (5 MB/s) | Schritte und „x von 38,5 MB“ sichtbar |
 | Vollbild (T-Rex 64) | Emulatorbereich füllt den Bildschirm |
 

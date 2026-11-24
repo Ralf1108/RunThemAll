@@ -63,19 +63,6 @@
     "start": "CASTLE2.EXE"
   },
   {
-    "id": "zzt",
-    "title": "ZZT",
-    "platform": "DOS",
-    "emulator": "js-dos (DOSBox)",
-    "description": "Tim Sweeneys Textmodus-Abenteuer von 1991 samt Demo-Welt, als quelloffene Rekonstruktion.",
-    "author": "Tim Sweeney / Epic MegaGames, Rekonstruktion: Adrian Siekierka",
-    "homepage": "https://github.com/asiekierka/reconstruction-of-zzt",
-    "license": "MIT (mit Erlaubnis von Epic MegaGames)",
-    "url": "https://github.com/asiekierka/reconstruction-of-zzt/releases/download/v1.0/RecOfZZT.zip",
-    "file": "dos/zzt.zip",
-    "start": "ZZT.EXE"
-  },
-  {
     "id": "keendreams",
     "title": "Keen Dreams",
     "platform": "DOS",
@@ -114,6 +101,19 @@
     "file": "dos/fatetdt.zip",
     "start": "PLAYFATE.EXE",
     "args": "s"
+  },
+  {
+    "id": "boppin",
+    "title": "Boppin’ (Shareware)",
+    "platform": "DOS",
+    "emulator": "js-dos (DOSBox)",
+    "description": "Knobelspiel von 1994: Blöcke auf passende Gegenstücke werfen. Shareware-Episode, bereits installiert und auf Sound Blaster eingestellt.",
+    "author": "Accursed Toys, Vertrieb Apogee",
+    "homepage": "https://classicdosgames.com/game/Boppin%27.html",
+    "license": "Shareware, Weitergabe ohne Gebühr erlaubt (VENDOR.DOC im ZIP)",
+    "file": "dos/boppin-sw11.zip",
+    "start": "BOPSW.EXE",
+    "local": "local/dos/boppin-sw11.zip"
   },
   {
     "id": "trex64",

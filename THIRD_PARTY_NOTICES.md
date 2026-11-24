@@ -78,12 +78,12 @@ aber nicht aufgenommenen Spielen: [demos/README.md](demos/README.md).
 | SkiFree 1.04 | Chris Pirih | keine ausdrückliche Lizenz; vom Autor kostenlos angeboten | Beispiel im Boxedwine-Web-Release 26R1.0 |
 | OpenTTD 15.3 mit OpenGFX 8.0 | OpenTTD-Team | GPL-2.0 | openttd.org |
 | Castle of the Winds 1.1A | Rick Saada (SaadaSoft) | keine ausdrückliche Lizenz; vom Autor als Freeware freigegeben | classicdosgames.com |
-| ZZT (Reconstruction of ZZT 1.0) | Tim Sweeney / Epic MegaGames, Adrian Siekierka | MIT, ZZT-Code mit Erlaubnis von Epic MegaGames | github.com/asiekierka/reconstruction-of-zzt |
 | Tiny Core Linux 17.1 | Tiny-Core-Team | GPL-2.0 | tinycorelinux.net |
 | KolibriOS 0.7.7.0+8930 | KolibriOS-Team | GPL-2.0 | kolibrios.org (Datei im Repository, siehe demos/local/README.md) |
 | Keen Dreams 1.13 | id Software / Softdisk | Shareware, frei weitergebbar | classicdosgames.com |
 | Star Wars: Dark Forces (Demo) | LucasArts | Demo, kostenlose Weitergabe erlaubt | classicdosgames.com |
 | Indiana Jones and the Fate of Atlantis (Demo) | LucasArts | Demo, kostenlose Weitergabe erlaubt | classicdosgames.com |
+| Boppin’ 1.1 (Shareware-Episode) | Accursed Toys / Apogee | Shareware, Weitergabe ohne Gebühr erlaubt (VENDOR.DOC) | classicdosgames.com, vorinstalliert in demos/local |
 | T-Rex 64 1.0.2 | Maciej Małecki | MIT | github.com/maciejmalecki/trex64 |
 | Nova the Squirrel 1.0.6a | NovaSquirrel | GPL-3.0 (Quellcode im verlinkten Repository) | github.com/NovaSquirrel/NovaTheSquirrel |
 | µCity 1.3 | Antonio Niño Díaz | GPL-3.0 (Quellcode im verlinkten Repository) | github.com/AntonioND/ucity |

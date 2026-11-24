@@ -55,19 +55,6 @@ Stand der Recherche: 24.11.2026.
 | Lizenz | **keine ausdrückliche Lizenz.** Laut classicdosgames.com hat der Autor das Spiel als Freeware freigegeben („Author Rick Saada has generously released this game as freeware“). Für dieses Spiel gibt es dort keine eigene Lizenzdatei. Der Startdialog im Spiel enthält noch den alten Shareware-Text von 1993. |
 | Hinweis | Erfüllt Kriterium 1 nicht streng, aber ähnlich wie SkiFree vom Autor freigegeben. Bei einem Einwand des Rechteinhabers wird die Demo entfernt. Läuft in Boxedwine (getestet am 24.11.2026). |
 
-### ZZT (Reconstruction of ZZT 1.0)
-
-| | |
-|---|---|
-| System / Emulator | DOS / js-dos (DOSBox) |
-| Autoren | Tim Sweeney / Epic MegaGames (Original 1991), Adrian Siekierka (Rekonstruktion des Quellcodes 2020) |
-| Projektseite | https://github.com/asiekierka/reconstruction-of-zzt |
-| Download | https://github.com/asiekierka/reconstruction-of-zzt/releases/download/v1.0/RecOfZZT.zip |
-| Inhalt | `ZZT.EXE`, `ZZT.DAT`, `ZZT.CFG`, `DEMO.ZZT` (Demo-Welt), `LICENSE.TXT` |
-| Datei auf der Seite | `demos/dos/zzt.zip` (69.695 Byte, unverändert), gestartet wird `ZZT.EXE` |
-| Lizenz | MIT, „Based on a reconstruction of code from ZZT, Copyright 1991 Epic MegaGames, used with permission“ |
-| Lizenztext | https://github.com/asiekierka/reconstruction-of-zzt/blob/master/LICENSE.TXT (liegt auch im ZIP) |
-
 ### Keen Dreams 1.13 (Shareware)
 
 | | |
@@ -103,6 +90,18 @@ Stand der Recherche: 24.11.2026.
 | Datei auf der Seite | `demos/dos/fatetdt.zip` (659.362 Byte), gestartet wird `PLAYFATE.EXE s` (Sound Blaster; ohne Parameter erwartet die Demo eine Roland-MT-32, die es in DOSBox hier nicht gibt, und bleibt stumm). |
 | Lizenz | Demo. `READ.ME` (v2 der Demo): „You may freely copy and distribute this disk provided you do not alter or eliminate any copyright or trademark notices.“ |
 | Hinweis | Läuft (getestet am 25.11.2026). |
+
+### Boppin’ 1.1 (Shareware-Episode)
+
+| | |
+|---|---|
+| System / Emulator | DOS / js-dos (DOSBox) |
+| Autoren | Accursed Toys (Jennifer Diane Reitz, Michael Lee Reitz), Vertrieb Apogee Software (1994) |
+| Projektseite | https://classicdosgames.com/game/Boppin%27.html |
+| Download | https://classicdosgames.com/files/games/accursed/1bop11.zip (Apogee-Installationspaket) |
+| Datei auf der Seite | `demos/dos/boppin-sw11.zip`, liegt im Repository unter `demos/local/dos/`: das Paket einmal in DOSBox installiert und mit `SETUP.EXE` auf Sound Blaster (Effekte und Musik) eingestellt, Herkunft siehe [local/README.md](local/README.md). Gestartet wird `BOPSW.EXE`. |
+| Lizenz | Shareware. `VENDOR.DOC`: „Everyone can -- and is encouraged! -- to copy, upload and generally pass around this Program without charging for it.“ |
+| Hinweis | Die Vollversion ist nicht aufgenommen: classicdosgames nennt sie Freeware, ihre `LICENSE.DOC` verbietet aber die Weitergabe ohne Erlaubnis von Apogee, und die Seite der Autorin (jenniverse.com) erwähnt keine Freigabe. Läuft (getestet am 25.11.2026). |
 
 ### T-Rex 64 1.0.2
 
