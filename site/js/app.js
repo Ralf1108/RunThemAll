@@ -509,12 +509,12 @@ $('btn-clear').addEventListener('click', async () => {
     alert('Bitte zuerst das laufende Programm beenden.');
     return;
   }
-  if (!confirm('Virtuelles Laufwerk C: zurücksetzen?\n\n'
+  if (!confirm('Virtuelle Umgebung zurücksetzen?\n\n'
     + 'Das betrifft nur Daten, die Windows-Programme hier im Browser abgelegt haben: '
-    + 'Wine-Einstellungen, darin installierte Programme und Spielstände, die auf C: gespeichert wurden.\n\n'
-    + 'Dateien auf deinem Computer bleiben unberührt. Beim nächsten Start wird C: neu eingerichtet.')) return;
+    + 'Einstellungen, dort installierte Programme und Spielstände.\n\n'
+    + 'Dateien auf deinem Computer bleiben unberührt. Beim nächsten Start wird die Umgebung neu eingerichtet.')) return;
   await clearPersistentStorage();
-  alert('Das virtuelle Laufwerk C: wurde zurückgesetzt. Beim nächsten Start eines Windows-Programms wird es neu eingerichtet.');
+  alert('Die virtuelle Umgebung wurde zurückgesetzt. Beim nächsten Start eines Windows-Programms wird sie neu eingerichtet.');
 });
 
 fetch('jsdos/version.json')
