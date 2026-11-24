@@ -39,7 +39,7 @@ Stand der Recherche: 24.11.2026.
 | Projektseite | https://classicdosgames.com/game/castle_of_the_winds.html |
 | Download | https://classicdosgames.com/files/games/saadasoft/castl11a.zip |
 | Inhalt | `CASTLE1.EXE` (Teil 1 „A Question of Vengeance“), `CASTLE2.EXE` (Teil 2 „Lifthransir's Bane“), je eine `.HLP`-Hilfedatei |
-| Datei auf der Seite | `demos/win16/castl11a.zip` (695.273 Byte, unverändert), gestartet wird `CASTLE1.EXE` |
+| Datei auf der Seite | `demos/win16/castl11a.zip` (695.273 Byte, unverändert). Zwei Demo-Einträge: „Castle of the Winds 1“ startet `CASTLE1.EXE`, „Castle of the Winds 2“ startet `CASTLE2.EXE` |
 | Lizenz | **keine ausdrückliche Lizenz.** Laut classicdosgames.com hat der Autor das Spiel als Freeware freigegeben („Author Rick Saada has generously released this game as freeware“). Für dieses Spiel gibt es dort keine eigene Lizenzdatei. Der Startdialog im Spiel enthält noch den alten Shareware-Text von 1993. |
 | Hinweis | Erfüllt Kriterium 1 nicht streng, aber ähnlich wie SkiFree vom Autor freigegeben. Bei einem Einwand des Rechteinhabers wird die Demo entfernt. Läuft in Boxedwine (getestet am 24.11.2026). |
 

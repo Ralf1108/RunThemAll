@@ -16,16 +16,29 @@
   },
   {
     "id": "cotw",
-    "title": "Castle of the Winds",
+    "title": "Castle of the Winds 1",
     "platform": "Windows 3.x (16 Bit)",
     "emulator": "Boxedwine (Wine 6)",
-    "description": "Rollenspiel-Klassiker von 1992 mit nordischer Mythologie, Vollversion mit beiden Teilen (CASTLE1.EXE und CASTLE2.EXE).",
+    "description": "Rollenspiel-Klassiker von 1992 mit nordischer Mythologie. Teil 1: „A Question of Vengeance“.",
     "author": "Rick Saada (SaadaSoft), Vertrieb Epic MegaGames",
     "homepage": "https://classicdosgames.com/game/castle_of_the_winds.html",
     "license": "Freeware, vom Autor freigegeben (keine ausdrückliche Lizenz)",
     "url": "https://classicdosgames.com/files/games/saadasoft/castl11a.zip",
     "file": "win16/castl11a.zip",
     "start": "CASTLE1.EXE"
+  },
+  {
+    "id": "cotw2",
+    "title": "Castle of the Winds 2",
+    "platform": "Windows 3.x (16 Bit)",
+    "emulator": "Boxedwine (Wine 6)",
+    "description": "Fortsetzung „Lifthransir’s Bane“. Eine Figur aus Teil 1 lässt sich übernehmen.",
+    "author": "Rick Saada (SaadaSoft), Vertrieb Epic MegaGames",
+    "homepage": "https://classicdosgames.com/game/castle_of_the_winds.html",
+    "license": "Freeware, vom Autor freigegeben (keine ausdrückliche Lizenz)",
+    "url": "https://classicdosgames.com/files/games/saadasoft/castl11a.zip",
+    "file": "win16/castl11a.zip",
+    "start": "CASTLE2.EXE"
   },
   {
     "id": "zzt",
