@@ -24,14 +24,14 @@ jobs:
         with:
           node-version: 22
 
-      - name: Cache Boxedwine release
+      - name: Cache downloaded runtimes
         uses: actions/cache@v4
         with:
           path: vendor
-          key: boxedwine-${{ hashFiles('scripts/fetch-boxedwine.mjs') }}
+          key: runtimes-${{ hashFiles('scripts/fetch-runtimes.mjs') }}
 
-      - name: Fetch Boxedwine runtime, GPL license and source
-        run: node scripts/fetch-boxedwine.mjs
+      - name: Fetch Boxedwine and js-dos runtimes, GPL licenses and sources
+        run: node scripts/fetch-runtimes.mjs
 
       - uses: actions/configure-pages@v5
 

@@ -1,5 +1,7 @@
 import { fromDataTransfer, fromDirectoryHandle, fromFileList, findPrograms, totalSize } from './workspace.js';
-import { Emulator, canUseThreads, clearPersistentStorage } from './emulator.js';
+import { WindowsRunner, canUseThreads, clearPersistentStorage } from './emulator.js';
+import { DosRunner } from './dos.js';
+import { KIND_LABELS } from './exe.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -8,6 +10,9 @@ const hasDirectoryPicker = typeof window.showDirectoryPicker === 'function';
 
 /** @type {import('./workspace.js').Workspace|null} */
 let workspace = null;
+/** @type {import('./workspace.js').Program[]} */
+let programs = [];
+/** @type {import('./runner.js').Runner|null} */
 let emulator = null;
 
 function formatSize(bytes) {
@@ -30,10 +35,11 @@ async function openWorkspace(loader) {
   try {
     const ws = await loader();
     if (!ws || ws.files.length === 0) throw new Error('Keine Dateien gefunden.');
-    const programs = findPrograms(ws);
-    if (programs.length === 0) throw new Error('Keine ausführbare Datei (.exe oder .bat) gefunden.');
+    const found = await findPrograms(ws);
+    if (found.length === 0) throw new Error('Keine ausführbare Datei (.exe, .com oder .bat) gefunden.');
     workspace = ws;
-    showChooser(programs);
+    programs = found;
+    showChooser();
   } catch (err) {
     if (err?.name === 'AbortError') return; // user cancelled a picker
     console.error(err);
@@ -81,7 +87,7 @@ window.addEventListener('drop', (e) => e.preventDefault());
 // ---------------------------------------------------------------------------
 // Step 2: choosing the program and options
 
-function showChooser(programs) {
+function showChooser() {
   $('ws-summary').textContent =
     `${workspace.name}: ${workspace.files.length} Datei(en), ${formatSize(totalSize(workspace))}`;
 
@@ -100,7 +106,13 @@ function showChooser(programs) {
     const size = document.createElement('span');
     size.className = 'prog-size';
     size.textContent = formatSize(p.size);
-    label.append(radio, name, size);
+    const kind = document.createElement('span');
+    kind.className = `kind ${p.emulator}`;
+    kind.textContent = p.kind === 'bat' || p.kind === 'unknown'
+      ? `${KIND_LABELS[p.kind]} (${p.emulator === 'dos' ? 'DOS' : 'Windows'})`
+      : KIND_LABELS[p.kind];
+    kind.title = p.emulator === 'dos' ? 'Läuft mit DOSBox' : 'Läuft mit Boxedwine';
+    label.append(radio, name, kind, size);
     label.addEventListener('dblclick', () => start());
     li.append(label);
     return li;
@@ -124,7 +136,7 @@ $('thread-info').textContent = threadsAvailable
 if (!threadsAvailable) $('opt-threads').querySelector('option[value="mt"]').disabled = true;
 
 // Remember options between visits.
-const OPTION_IDS = ['opt-wine', 'opt-threads', 'opt-resolution', 'opt-bpp', 'opt-sound', 'opt-persistent'];
+const OPTION_IDS = ['opt-wine', 'opt-threads', 'opt-resolution', 'opt-bpp', 'opt-sound', 'opt-persistent', 'opt-cycles'];
 try {
   const saved = JSON.parse(localStorage.getItem('webexe-options') || '{}');
   for (const id of OPTION_IDS) {
@@ -146,6 +158,7 @@ function readOptions() {
     bpp: Number($('opt-bpp').value),
     sound: $('opt-sound').checked,
     persistent: $('opt-persistent').checked,
+    cycles: $('opt-cycles').value,
   };
 }
 
@@ -175,17 +188,19 @@ function message(text) {
 
 async function start() {
   const selected = document.querySelector('input[name="program"]:checked');
-  if (!workspace || !selected) return;
+  const program = programs.find((p) => p.path === selected?.value);
+  if (!workspace || !program) return;
   const opts = readOptions();
 
   $('choose').hidden = true;
   $('run').hidden = false;
-  $('run-title').textContent = selected.value;
+  $('run-title').textContent = `${program.path} (${program.emulator === 'dos' ? 'DOSBox' : 'Boxedwine'})`;
   $('btn-writeback').hidden = !workspace.dirHandle;
 
-  emulator = new Emulator({ canvas: $('canvas'), status, log });
+  const ui = { canvas: $('canvas'), dosContainer: $('dos-container'), status, log };
+  emulator = program.emulator === 'dos' ? new DosRunner(ui) : new WindowsRunner(ui);
   try {
-    await emulator.start(workspace, selected.value, opts);
+    await emulator.start(workspace, program.path, opts);
   } catch (err) {
     console.error(err);
     status(`Fehler: ${err.message || err}`);
@@ -195,9 +210,9 @@ async function start() {
 
 $('btn-start').addEventListener('click', start);
 
-$('btn-download').addEventListener('click', () => {
+$('btn-download').addEventListener('click', async () => {
   try {
-    const n = emulator?.downloadChanges() ?? 0;
+    const n = (await emulator?.downloadChanges()) ?? 0;
     message(n ? `${n} geänderte Datei(en) als ZIP gesichert.` : 'Keine geänderten Dateien gefunden.');
   } catch (err) {
     message(`Sichern fehlgeschlagen: ${err.message || err}`);
@@ -213,10 +228,7 @@ $('btn-writeback').addEventListener('click', async () => {
   }
 });
 
-$('btn-fullscreen').addEventListener('click', () => {
-  if (window.Module?.requestFullscreen) window.Module.requestFullscreen(false, true);
-  else $('canvas').requestFullscreen?.();
-});
+$('btn-fullscreen').addEventListener('click', () => emulator?.fullscreen());
 
 $('btn-restart').addEventListener('click', () => {
   if (!confirm('Programm beenden? Nicht gesicherte Änderungen gehen verloren.')) return;
@@ -240,6 +252,20 @@ $('btn-clear').addEventListener('click', async () => {
   await clearPersistentStorage();
   alert('Gespeichertes Laufwerk C: wurde gelöscht.');
 });
+
+fetch('jsdos/version.json')
+  .then((r) => (r.ok ? r.json() : null))
+  .then((v) => {
+    if (!v) return;
+    $('jsdos-version').textContent = v.jsdos;
+    $('jsdos-sources').replaceChildren(...v.sources.flatMap((src, i) => {
+      const a = document.createElement('a');
+      a.href = `jsdos/${src}`;
+      a.textContent = src.replace(/^source\//, '').replace(/-source\.tar\.gz$/, '');
+      return i ? [', ', a] : [a];
+    }));
+  })
+  .catch(() => {});
 
 fetch('boxedwine/version.json')
   .then((r) => (r.ok ? r.json() : null))

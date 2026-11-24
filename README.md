@@ -1,17 +1,26 @@
 # WebExe
 
-Alte 16- und 32-Bit-Windows-Programme direkt im Browser ausführen.
+Alte DOS-Programme und 16-/32-Bit-Windows-Programme direkt im Browser ausführen.
 
 Man öffnet eine **EXE**, ein **ZIP-Archiv** oder einen **Ordner**, wählt das Programm aus
 und startet es. Alles läuft lokal im Browser, es werden keine Dateien hochgeladen.
-Die Emulation übernimmt [Boxedwine](https://github.com/danoon2/Boxedwine)
-(Wine auf einer emulierten x86-CPU, kompiliert nach WebAssembly).
+WebExe erkennt am Programm-Header, ob es sich um ein DOS- oder ein Windows-Programm handelt,
+und startet den passenden Emulator:
+
+| Programmtyp | Erkennung | Emulator |
+|---|---|---|
+| DOS (`.com`, `.exe` nur mit MZ-Header, DOS-Extender mit LE/LX) | Header | [js-dos](https://js-dos.com) (DOSBox in WebAssembly) |
+| Windows 3.x (16 Bit, NE-Header) | Header | [Boxedwine](https://github.com/danoon2/Boxedwine) (Wine auf emulierter x86-CPU) |
+| Windows 32 Bit (PE-Header) | Header | Boxedwine |
+| `.bat` | Windows, wenn im Ordner Windows-Programme liegen, sonst DOS | |
 
 ## Funktionen
 
 - Öffnen per Dateiauswahl, Ordnerauswahl oder Drag & Drop
-- ZIP-Archive werden im Browser entpackt, ausführbare Dateien (`.exe`, `.bat`) werden aufgelistet
-- Wine 6.0 (kompatibler) oder Wine 11.0 (schneller)
+- ZIP-Archive werden im Browser entpackt, ausführbare Dateien (`.exe`, `.com`, `.bat`) werden mit Typ aufgelistet
+- Lange Datei- und Ordnernamen werden für DOS automatisch in 8.3-Kurznamen umgesetzt
+  (z. B. `Mein Spiel` → `MEINSP~1`) und beim Sichern wieder zurückübersetzt
+- Wine 6.0 (kompatibler) oder Wine 11.0 (schneller), DOS-CPU-Geschwindigkeit einstellbar
 - Multithreaded-Build, wenn der Browser es erlaubt, sonst Singlethreaded
 - Geänderte Dateien (z. B. Spielstände) als ZIP sichern oder, in Chrome/Edge,
   direkt in den geöffneten Ordner zurückschreiben
@@ -19,7 +28,7 @@ Die Emulation übernimmt [Boxedwine](https://github.com/danoon2/Boxedwine)
 
 ## Grenzen
 
-- Unterstützt werden GDI- und DirectDraw-Programme. **OpenGL und Direct3D gehen im Web-Build nicht.**
+- Windows: unterstützt werden GDI- und DirectDraw-Programme. **OpenGL und Direct3D gehen im Web-Build nicht.**
 - .NET- und Java-Programme laufen nicht.
 - Die Web-Version ist deutlich langsamer als ein echter PC, gedacht ist sie für ältere Software.
 
@@ -28,7 +37,7 @@ Die Emulation übernimmt [Boxedwine](https://github.com/danoon2/Boxedwine)
 Voraussetzung: Node.js 22 oder neuer. Weitere Abhängigkeiten gibt es nicht.
 
 ```sh
-npm run fetch   # lädt Boxedwine 26R1 nach site/boxedwine/ (ca. 120 MB, einmalig)
+npm run fetch   # lädt Boxedwine 26R1 und js-dos 8.5.4 nach site/ (ca. 130 MB, einmalig)
 npm run serve   # http://localhost:8080
 ```
 
@@ -38,10 +47,10 @@ npm run serve   # http://localhost:8080
 
 1. Repository auf GitHub anlegen und pushen.
 2. Unter *Settings → Pages → Build and deployment* als Quelle **GitHub Actions** wählen.
-3. Der Workflow `.github/workflows/pages.yml` lädt bei jedem Push auf `main` das
-   Boxedwine-Release herunter und veröffentlicht `site/`.
+3. Der Workflow `.github/workflows/pages.yml` lädt bei jedem Push auf `main` Boxedwine
+   und js-dos herunter und veröffentlicht `site/`.
 
-Die Boxedwine-Dateien liegen nicht im Repository, sie werden beim Deploy geladen.
+Die Emulator-Dateien liegen nicht im Repository, sie werden beim Deploy geladen.
 
 ### Warum der Service Worker?
 
@@ -58,12 +67,15 @@ der Singlethreaded-Build.
 site/                  statische Webseite (wird veröffentlicht)
   index.html, style.css
   js/app.js            Oberfläche
-  js/workspace.js      Dateien, ZIPs und Ordner einlesen
-  js/emulator.js       Boxedwine starten, Änderungen sichern/zurückschreiben
+  js/workspace.js      Dateien, ZIPs und Ordner einlesen, Programme finden
+  js/exe.js            DOS/Windows-Erkennung anhand des EXE-Headers
+  js/runner.js         gemeinsame Logik: Änderungen sichern/zurückschreiben
+  js/emulator.js       Windows-Programme mit Boxedwine
+  js/dos.js            DOS-Programme mit js-dos, 8.3-Kurznamen
   js/zip.js            ZIP lesen/schreiben (ohne Abhängigkeiten)
-  boxedwine/           wird von scripts/fetch-boxedwine.mjs erzeugt (nicht im Git)
+  boxedwine/, jsdos/   werden von scripts/fetch-runtimes.mjs erzeugt (nicht im Git)
 scripts/
-  fetch-boxedwine.mjs  lädt Release, GPL-Lizenz und Quellcode
+  fetch-runtimes.mjs   lädt Emulatoren, GPL-Lizenzen und Quellcode
   serve.mjs            lokaler Testserver mit COOP/COEP-Headern
 ```
 

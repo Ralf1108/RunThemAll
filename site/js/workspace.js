@@ -2,15 +2,23 @@
 // workspace: a flat list of relative paths with lazy loaders for their bytes.
 
 import { listZip, readZipEntry } from './zip.js';
+import { detectKind, emulatorFor } from './exe.js';
 
 /**
- * @typedef {{ path: string, size: number, load: () => Promise<Uint8Array> }} WorkspaceFile
+ * @typedef {{ path: string, size: number, load: () => Promise<Uint8Array>,
+ *             read?: (offset:number, length:number) => Promise<Uint8Array> }} WorkspaceFile
+ * @typedef {WorkspaceFile & { kind: import('./exe.js').ProgramKind, emulator: 'dos'|'windows' }} Program
  * @typedef {{ name: string, files: WorkspaceFile[], dirHandle?: FileSystemDirectoryHandle }} Workspace
  */
 
-const RUNNABLE = /\.(exe|bat)$/i;
+const RUNNABLE = /\.(exe|com|bat)$/i;
 
 const fileLoader = (file) => async () => new Uint8Array(await file.arrayBuffer());
+const fileRangeReader = (file) => async (offset, length) =>
+  new Uint8Array(await file.slice(offset, offset + length).arrayBuffer());
+
+/** Creates a workspace file backed by a browser File object. */
+const fromFile = (path, file) => ({ path, size: file.size, load: fileLoader(file), read: fileRangeReader(file) });
 
 function cleanPath(path) {
   return path
@@ -50,11 +58,7 @@ export async function fromFileList(fileList) {
   const list = [...fileList];
   if (list.length === 1 && /\.zip$/i.test(list[0].name)) return fromZip(list[0]);
 
-  const files = list.map((f) => ({
-    path: cleanPath(f.webkitRelativePath || f.name),
-    size: f.size,
-    load: fileLoader(f),
-  }));
+  const files = list.map((f) => fromFile(cleanPath(f.webkitRelativePath || f.name), f));
   const isFolder = list.some((f) => f.webkitRelativePath);
   const name = isFolder ? list[0].webkitRelativePath.split('/')[0] : list.map((f) => f.name).join(', ');
   return { name, files: isFolder ? stripCommonRoot(files) : files };
@@ -74,8 +78,7 @@ export async function fromDirectoryHandle(dirHandle) {
       if (child.kind === 'directory') {
         await walk(child, path + '/');
       } else {
-        const file = await child.getFile();
-        files.push({ path, size: file.size, load: fileLoader(file) });
+        files.push(fromFile(path, await child.getFile()));
       }
     }
   }
@@ -105,8 +108,7 @@ export async function fromDataTransfer(dataTransfer) {
 
   async function walk(entry, prefix) {
     if (entry.isFile) {
-      const file = await getFile(entry);
-      files.push({ path: cleanPath(prefix + entry.name), size: file.size, load: fileLoader(file) });
+      files.push(fromFile(cleanPath(prefix + entry.name), await getFile(entry)));
       return;
     }
     const reader = entry.createReader();
@@ -121,22 +123,37 @@ export async function fromDataTransfer(dataTransfer) {
 }
 
 /**
- * Lists runnable programs, most likely candidates first:
- * shallow paths before deep ones, installers/uninstallers last.
+ * Lists runnable programs with their type (DOS / Windows), most likely
+ * candidates first: shallow paths before deep ones, installers last.
  * @param {Workspace} ws
+ * @returns {Promise<Program[]>}
  */
-export function findPrograms(ws) {
-  const unlikely = /(^|\/)(unins\w*|uninst\w*|setup|install\w*|config\w*|readme)\.(exe|bat)$/i;
-  return ws.files
-    .filter((f) => RUNNABLE.test(f.path))
-    .sort((a, b) => {
-      const ua = unlikely.test(a.path), ub = unlikely.test(b.path);
-      if (ua !== ub) return ua ? 1 : -1;
-      const da = a.path.split('/').length, db = b.path.split('/').length;
-      if (da !== db) return da - db;
-      if (/\.exe$/i.test(a.path) !== /\.exe$/i.test(b.path)) return /\.exe$/i.test(a.path) ? -1 : 1;
-      return a.path.localeCompare(b.path);
-    });
+export async function findPrograms(ws) {
+  const unlikely = /(^|\/)(unins\w*|uninst\w*|setup|install\w*|config\w*|readme)\.(exe|com|bat)$/i;
+  const candidates = ws.files.filter((f) => RUNNABLE.test(f.path));
+
+  const programs = await Promise.all(candidates.map(async (f) => {
+    let read = f.read;
+    if (!read) { // e.g. ZIP entries: decompress once
+      let bytes;
+      read = async (offset, length) => (bytes ??= await f.load()).subarray(offset, offset + length);
+    }
+    let kind;
+    try { kind = await detectKind(f.path, read); } catch { kind = 'unknown'; }
+    return { ...f, kind };
+  }));
+  const kinds = programs.map((p) => p.kind);
+  for (const p of programs) p.emulator = emulatorFor(p.kind, kinds);
+
+  const rank = (p) => (/\.exe$/i.test(p.path) ? 0 : /\.com$/i.test(p.path) ? 1 : 2);
+  return programs.sort((a, b) => {
+    const ua = unlikely.test(a.path), ub = unlikely.test(b.path);
+    if (ua !== ub) return ua ? 1 : -1;
+    const da = a.path.split('/').length, db = b.path.split('/').length;
+    if (da !== db) return da - db;
+    if (rank(a) !== rank(b)) return rank(a) - rank(b);
+    return a.path.localeCompare(b.path);
+  });
 }
 
 export function totalSize(ws) {

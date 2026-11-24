@@ -28,6 +28,13 @@
 
 * { box-sizing: border-box; }
 
+/* js-dos ships daisyUI/Tailwind styles; keep our basics stable. */
+[hidden] { display: none !important; }
+h1, h2, h3 { font-weight: 600; }
+.site-header h1 { font-size: 1.75rem; }
+.wx-card h2 { font-size: 1.15rem; }
+.option-head { font-size: .95rem; }
+
 body {
   margin: 0;
   font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -53,14 +60,14 @@ a { color: var(--accent); }
 
 main { flex: 1; padding-bottom: 2rem; }
 
-.card {
+.wx-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 1.5rem;
   margin-top: 1rem;
 }
-.card h2 { margin: 0 0 1rem; font-size: 1.15rem; }
+.wx-card h2 { margin: 0 0 1rem; font-size: 1.15rem; }
 
 .dropzone {
   border: 2px dashed var(--border);
@@ -75,7 +82,7 @@ main { flex: 1; padding-bottom: 2rem; }
 
 .buttons { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
 
-.btn {
+.wx-btn {
   font: inherit;
   padding: .55rem 1.1rem;
   border-radius: 8px;
@@ -84,13 +91,13 @@ main { flex: 1; padding-bottom: 2rem; }
   color: var(--text);
   cursor: pointer;
 }
-.btn:hover { border-color: var(--accent); }
-.btn:disabled { opacity: .5; cursor: default; }
-.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-.btn.primary:hover { background: var(--accent-hover); }
-.btn.large { padding: .7rem 2rem; font-size: 1.05rem; font-weight: 600; }
-.btn.small { padding: .3rem .75rem; font-size: .9rem; }
-.btn.ghost { background: transparent; }
+.wx-btn:hover { border-color: var(--accent); }
+.wx-btn:disabled { opacity: .5; cursor: default; }
+.wx-btn.wx-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.wx-btn.wx-primary:hover { background: var(--accent-hover); }
+.wx-btn.wx-large { padding: .7rem 2rem; font-size: 1.05rem; font-weight: 600; }
+.wx-btn.wx-small { padding: .3rem .75rem; font-size: .9rem; }
+.wx-btn.wx-ghost { background: transparent; }
 
 .linklike {
   font: inherit; color: var(--accent); background: none; border: 0; padding: 0;
@@ -160,3 +167,17 @@ select {
 
 .site-footer { border-top: 1px solid var(--border); padding: 1rem 0; color: var(--muted); font-size: .85rem; }
 .site-footer p { margin: .35rem 0; }
+
+.option-head { font-size: .95rem; margin: 1.25rem 0 0; }
+
+.kind {
+  font-size: .75rem; font-weight: 600; white-space: nowrap;
+  padding: .1rem .5rem; border-radius: 999px;
+  background: var(--accent-soft); color: var(--accent);
+}
+.kind.dos { background: #fdf0d5; color: #8a5a00; }
+@media (prefers-color-scheme: dark) {
+  .kind.dos { background: #3a2f17; color: #f0c060; }
+}
+
+.dos-container { position: relative; width: 100%; height: min(75vh, 720px); }

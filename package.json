@@ -2,16 +2,16 @@
   "name": "webexe",
   "version": "0.1.0",
   "private": true,
-  "description": "Run old 16/32-bit Windows programs in the browser using Boxedwine.",
+  "description": "Run old DOS and 16/32-bit Windows programs in the browser using Boxedwine and js-dos.",
   "license": "MIT",
   "type": "module",
   "engines": {
     "node": ">=22"
   },
   "scripts": {
-    "fetch": "node scripts/fetch-boxedwine.mjs",
+    "fetch": "node scripts/fetch-runtimes.mjs",
     "serve": "node scripts/serve.mjs",
     "serve:no-coi": "node scripts/serve.mjs --no-coi",
-    "start": "node scripts/fetch-boxedwine.mjs && node scripts/serve.mjs"
+    "start": "node scripts/fetch-runtimes.mjs && node scripts/serve.mjs"
   }
 }
