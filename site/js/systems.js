@@ -4,12 +4,12 @@
 //
 // bios.required: the system does not start without the original BIOS/firmware.
 // bios.files:    file names EmulatorJS/the core looks for (case-insensitive match
-//                against the user's files). Nothing of this is shipped by WebExe.
+//                against the user's files). Nothing of this is shipped by Run Them All.
 // bios.builtin:  free replacement already contained in the core.
 
 /**
  * @typedef {object} SystemInfo
- * @property {string} id        WebExe id (also EmulatorJS EJS_core value)
+ * @property {string} id        Run Them All id (also EmulatorJS EJS_core value)
  * @property {string} label     shown in the program list
  * @property {string} core      libretro core used (npm package @emulatorjs/core-<core>)
  * @property {string[]} ext     file extensions that clearly belong to this system

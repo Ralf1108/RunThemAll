@@ -76,5 +76,5 @@ createServer(async (req, res) => {
     res.writeHead(500).end(String(err));
   }
 }).listen(PORT, () => {
-  console.log(`WebExe läuft auf http://localhost:${PORT}/  (COOP/COEP: ${COI ? 'an' : 'aus'})`);
+  console.log(`Run Them All läuft auf http://localhost:${PORT}/  (COOP/COEP: ${COI ? 'an' : 'aus'})`);
 });

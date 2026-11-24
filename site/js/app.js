@@ -222,7 +222,7 @@ if (!threadsAvailable) $('opt-threads').querySelector('option[value="mt"]').disa
 // Remember options between visits.
 const OPTION_IDS = ['opt-wine', 'opt-threads', 'opt-resolution', 'opt-bpp', 'opt-sound', 'opt-persistent', 'opt-cycles'];
 try {
-  const saved = JSON.parse(localStorage.getItem('webexe-options') || '{}');
+  const saved = JSON.parse(localStorage.getItem('runthemall-options') || '{}');
   for (const id of OPTION_IDS) {
     const el = $(id);
     if (!(id in saved)) continue;
@@ -234,7 +234,7 @@ try {
 function readOptions() {
   const saved = {};
   for (const id of OPTION_IDS) saved[id] = $(id).type === 'checkbox' ? $(id).checked : $(id).value;
-  localStorage.setItem('webexe-options', JSON.stringify(saved));
+  localStorage.setItem('runthemall-options', JSON.stringify(saved));
   return {
     wine: $('opt-wine').value,
     threads: $('opt-threads').value,

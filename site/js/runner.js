@@ -56,7 +56,7 @@ export class Runner {
     const blob = createZip(files.map((f) => ({ name: f.path, data: f.data })));
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `${(this.workspace?.name || 'webexe').replace(/[^\w.-]+/g, '_')}-aenderungen.zip`;
+    a.download = `${(this.workspace?.name || 'runthemall').replace(/[^\w.-]+/g, '_')}-aenderungen.zip`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 10000);
     return files.length;

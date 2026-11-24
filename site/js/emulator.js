@@ -98,7 +98,7 @@ export class WindowsRunner extends Runner {
       preRun: [function setupFileSystem() {
         const { FS, IDBFS } = globalThis;
         const Module = window.Module;
-        Module.addRunDependency('webexe-fs');
+        Module.addRunDependency('runthemall-fs');
 
         FS.mkdir(rootDir);
         FS.mkdir(D_DRIVE);
@@ -114,7 +114,7 @@ export class WindowsRunner extends Runner {
         const done = () => {
           self.ui.step(2, 'Der erste Start kann etwas dauern.');
           status('Starte Wine …');
-          Module.removeRunDependency('webexe-fs');
+          Module.removeRunDependency('runthemall-fs');
         };
         if (opts.persistent) {
           FS.mount(IDBFS, { autoPersist: true }, rootDir);

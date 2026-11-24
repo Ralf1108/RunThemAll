@@ -1,6 +1,6 @@
 # Demos und Quellenverzeichnis der Spiele
 
-`demos.json` listet freie Programme und Spiele, die auf der Startseite von WebExe als Demo
+`demos.json` listet freie Programme und Spiele, die auf der Startseite von Run Them All als Demo
 angeboten werden: mindestens eines pro Emulator (Boxedwine, js-dos, EmulatorJS) bzw. System.
 
 Die Dateien selbst liegen **nicht** in diesem Repository. `scripts/fetch-runtimes.mjs` lädt sie beim

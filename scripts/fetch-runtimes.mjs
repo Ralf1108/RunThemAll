@@ -248,13 +248,13 @@ function coresPage(version, source, cores) {
     + `<td>${esc(c.version)}</td><td><a href="${esc(c.repo)}">${esc(c.repo.replace('https://github.com/', ''))}</a></td>`
     + `<td>${esc(c.license)}</td></tr>`).join('\n');
   return `<!doctype html>
-<html lang="de"><head><meta charset="utf-8"><title>WebExe – EmulatorJS-Cores</title>
+<html lang="de"><head><meta charset="utf-8"><title>Run Them All – EmulatorJS-Cores</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>body{font:15px/1.5 system-ui,sans-serif;margin:2rem auto;max-width:1000px;padding:0 1rem}
 table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #ccc;padding:.35rem .5rem;text-align:left}
 code{font-size:.9em}</style></head><body>
 <h1>Konsolen- und Heimcomputer-Emulation</h1>
-<p>WebExe nutzt <a href="https://emulatorjs.org">EmulatorJS</a> ${esc(version)}
+<p>Run Them All nutzt <a href="https://emulatorjs.org">EmulatorJS</a> ${esc(version)}
 (<a href="https://github.com/EmulatorJS/EmulatorJS">GitHub</a>, GPL-3.0,
 <a href="LICENSE-GPL-3.0.txt">Lizenz</a>, <a href="source/EmulatorJS-${esc(version)}-source.tar.gz">Quellcode</a>)
 mit den folgenden libretro-Cores. Sie werden unverändert aus den npm-Paketen <code>@emulatorjs/core-*</code>
@@ -264,7 +264,7 @@ Einige Cores (z. B. Snes9x, Genesis Plus GX, PicoDrive, FBNeo, MAME 2003-Plus) e
 <tbody>
 ${rows}
 </tbody></table>
-<p><a href="../">Zurück zu WebExe</a></p>
+<p><a href="../">Zurück zu Run Them All</a></p>
 </body></html>
 `;
 }

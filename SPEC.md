@@ -1,16 +1,16 @@
-# WebExe – Spezifikation
+# Run Them All – Spezifikation
 
 Stand: 24.11.2026
 
 ## 1. Ziel
 
-WebExe ist eine statische Webseite, mit der man alte Software und Spiele direkt im Browser startet:
+Run Them All ist eine statische Webseite, mit der man alte Software und Spiele direkt im Browser startet:
 DOS- und Windows-Programme sowie Spiele für Heimcomputer (C64, Amiga, …) und Konsolen.
 Datei, ZIP oder Ordner öffnen, Programm oder Spiel auswählen, starten. Der Nutzer soll so wenig
 wie möglich tun müssen: keine Installation, keine Konfiguration, keine Konten.
 
-WebExe ist ein **Aggregator**. Die Emulation stammt vollständig aus fremden Open-Source-Projekten,
-die unverändert eingebunden werden. WebExe liefert nur:
+Run Them All ist ein **Aggregator**. Die Emulation stammt vollständig aus fremden Open-Source-Projekten,
+die unverändert eingebunden werden. Run Them All liefert nur:
 
 - eine gemeinsame Oberfläche zum Öffnen, Auswählen und Starten,
 - die automatische Erkennung, welcher Emulator für eine Datei zuständig ist,
@@ -25,9 +25,9 @@ die unverändert eingebunden werden. WebExe liefert nur:
 | Kein Backend | Reine statische Seite, lauffähig auf GitHub Pages. |
 | Keine fremden Binärdateien im Repository | Emulatoren werden beim Build aus den offiziellen Releases bzw. npm-Paketen geladen (`scripts/fetch-runtimes.mjs`). |
 | Upstream unverändert | Emulator-Dateien werden nicht verändert. Fehlende Teile werden nur ergänzt (z. B. Overlay mit Wine-16-Bit-Modulen). |
-| Lizenzen einhalten | Zu jeder Komponente werden Lizenztext und Quellcode (bzw. Quellcode-Verweis) der verwendeten Version mit veröffentlicht. WebExe selbst ist MIT-lizenziert. |
+| Lizenzen einhalten | Zu jeder Komponente werden Lizenztext und Quellcode (bzw. Quellcode-Verweis) der verwendeten Version mit veröffentlicht. Run Them All selbst ist MIT-lizenziert. |
 | Keine Datenweitergabe | Emulatoren werden so konfiguriert, dass sie ihre Dateien von der eigenen Seite laden und keine Nutzerdaten an Dritte senden. |
-| Keine geschützten BIOS-Dateien | WebExe liefert keine Original-BIOS aus. Freie Ersatz-BIOS werden genutzt, wo es sie gibt. |
+| Keine geschützten BIOS-Dateien | Run Them All liefert keine Original-BIOS aus. Freie Ersatz-BIOS werden genutzt, wo es sie gibt. |
 | Keine Abhängigkeiten | Kein Framework und kein Build-Schritt für die Seite selbst. Node.js wird nur für die Skripte gebraucht. |
 
 ## 3. Nutzerablauf

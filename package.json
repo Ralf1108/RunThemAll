@@ -1,5 +1,5 @@
 {
-  "name": "webexe",
+  "name": "run-them-all",
   "version": "0.1.0",
   "private": true,
   "description": "Run old DOS and Windows programs and console/home computer games in the browser using Boxedwine, js-dos and EmulatorJS.",

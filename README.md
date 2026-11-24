@@ -1,14 +1,14 @@
-# WebExe
+# Run Them All
 
 **Alte DOS- und Windows-Programme, C64-, Amiga- und Konsolenspiele direkt im Browser starten.
 Ohne Installation, ohne Upload.**
 
-Datei, ZIP oder Ordner öffnen, Programm oder Spiel auswählen, starten. WebExe erkennt selbst, welcher
+Datei, ZIP oder Ordner öffnen, Programm oder Spiel auswählen, starten. Run Them All erkennt selbst, welcher
 Emulator gebraucht wird, und lädt ihn. Alles läuft lokal im Browser: Deine Dateien verlassen
 deinen Rechner nicht.
 
-WebExe ist ein **Aggregator**: Die eigentliche Emulation stammt aus großartigen Open-Source-Projekten
-(siehe [Credits](#credits)). WebExe sorgt nur für eine gemeinsame, einfache Oberfläche und bindet
+Run Them All ist ein **Aggregator**: Die eigentliche Emulation stammt aus großartigen Open-Source-Projekten
+(siehe [Credits](#credits)). Run Them All sorgt nur für eine gemeinsame, einfache Oberfläche und bindet
 die Emulatoren aus ihren offiziellen Releases ein.
 
 ## Was läuft?
@@ -37,7 +37,7 @@ die Emulatoren aus ihren offiziellen Releases ein.
 
 Ist die Erkennung nicht eindeutig (z. B. `.bin`, `.iso`, `.tap`), wird das wahrscheinlichste System
 vorgeschlagen und lässt sich ändern. BIOS-Dateien werden automatisch benutzt, wenn sie mit im ZIP
-oder Ordner liegen, oder lassen sich vor dem Start hinzufügen. WebExe liefert selbst keine
+oder Ordner liegen, oder lassen sich vor dem Start hinzufügen. Run Them All liefert selbst keine
 urheberrechtlich geschützten BIOS-Dateien aus.
 
 Getestet sind bisher C64 und Amiga; die übrigen Systeme sind eingebunden, aber noch ungetestet.
@@ -127,7 +127,7 @@ scripts/
 
 ## Credits
 
-WebExe wäre ohne diese Projekte nicht möglich:
+Run Them All wäre ohne diese Projekte nicht möglich:
 
 | Projekt | Wofür | Lizenz |
 |---|---|---|
@@ -143,5 +143,5 @@ WebExe wäre ohne diese Projekte nicht möglich:
 
 ## Lizenz
 
-WebExe selbst steht unter der [MIT-Lizenz](LICENSE). Die eingebundenen Komponenten haben ihre
+Run Them All selbst steht unter der [MIT-Lizenz](LICENSE). Die eingebundenen Komponenten haben ihre
 eigenen Lizenzen, siehe [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
