@@ -76,6 +76,45 @@
     "start": "ZZT.EXE"
   },
   {
+    "id": "keendreams",
+    "title": "Keen Dreams",
+    "platform": "DOS",
+    "emulator": "js-dos (DOSBox)",
+    "description": "Jump-’n’-Run von id Software (1991): Commander Keen kämpft im Traum gegen das Gemüse von König Boobus Tuber. Im Startmenü mit 5 das Spiel starten.",
+    "author": "id Software, Vertrieb Softdisk",
+    "homepage": "https://classicdosgames.com/game/Keen_Dreams.html",
+    "license": "Shareware, frei weitergebbar (LICENSE.DOC im ZIP)",
+    "url": "https://classicdosgames.com/online/zip/keendr13.zip",
+    "file": "dos/keendr13.zip",
+    "start": "START.EXE"
+  },
+  {
+    "id": "darkforces",
+    "title": "Star Wars: Dark Forces (Demo)",
+    "platform": "DOS",
+    "emulator": "js-dos (DOSBox)",
+    "description": "Shooter von LucasArts (1994) mit Kyle Katarn, englische Shareware-Demo mit dem ersten Level.",
+    "author": "LucasArts",
+    "homepage": "https://classicdosgames.com/game/Star_Wars:_Dark_Forces.html",
+    "license": "Shareware-Demo, kostenlos weitergebbar (README.TXT im ZIP)",
+    "url": "https://classicdosgames.com/files/games/lucasarts/dforces1.zip",
+    "file": "dos/dforces1.zip",
+    "start": "DF.EXE"
+  },
+  {
+    "id": "fateofatlantis",
+    "title": "Indiana Jones and the Fate of Atlantis (Demo)",
+    "platform": "DOS",
+    "emulator": "js-dos (DOSBox)",
+    "description": "Adventure von LucasArts (1992), englische spielbare Demo. Mit der Maus spielen, Tastenkürzel stehen in READ.ME.",
+    "author": "LucasArts",
+    "homepage": "https://classicdosgames.com/game/Indiana_Jones_and_the_Fate_of_Atlantis.html",
+    "license": "Demo, kostenlos weitergebbar (READ.ME im ZIP)",
+    "url": "https://classicdosgames.com/online/zip/fatetdt.zip",
+    "file": "dos/fatetdt.zip",
+    "start": "PLAYFATE.EXE"
+  },
+  {
     "id": "trex64",
     "title": "T-Rex 64",
     "platform": "Commodore 64",

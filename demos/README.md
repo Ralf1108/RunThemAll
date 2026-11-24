@@ -68,6 +68,42 @@ Stand der Recherche: 24.11.2026.
 | Lizenz | MIT, „Based on a reconstruction of code from ZZT, Copyright 1991 Epic MegaGames, used with permission“ |
 | Lizenztext | https://github.com/asiekierka/reconstruction-of-zzt/blob/master/LICENSE.TXT (liegt auch im ZIP) |
 
+### Keen Dreams 1.13 (Shareware)
+
+| | |
+|---|---|
+| System / Emulator | DOS / js-dos (DOSBox) |
+| Autoren | id Software, Vertrieb Softdisk (1991/1992) |
+| Projektseite | https://classicdosgames.com/game/Keen_Dreams.html |
+| Download | https://classicdosgames.com/online/zip/keendr13.zip (dieselben 24 Dateien wie das Original-ZIP https://classicdosgames.com/files/games/id/keendr13.zip, aber mit Deflate statt dem alten PKZIP-Verfahren „Implode“ gepackt, das Run Them All nicht entpacken kann) |
+| Datei auf der Seite | `demos/dos/keendr13.zip` (358.813 Byte), gestartet wird `START.EXE` (das Spiel selbst verlangt den Start über dieses Menü) |
+| Lizenz | Shareware, voll spielbar. `LICENSE.DOC` im ZIP erlaubt die Weitergabe, solange keine Dateien hinzugefügt oder entfernt werden. |
+| Hinweis | Läuft (getestet am 25.11.2026). |
+
+### Star Wars: Dark Forces 0.163D (englische Shareware-Demo)
+
+| | |
+|---|---|
+| System / Emulator | DOS / js-dos (DOSBox) |
+| Autor | LucasArts (1994) |
+| Projektseite | https://classicdosgames.com/game/Star_Wars:_Dark_Forces.html |
+| Download | https://classicdosgames.com/files/games/lucasarts/dforces1.zip |
+| Datei auf der Seite | `demos/dos/dforces1.zip` (3.331.130 Byte, unverändert), gestartet wird `DF.EXE` |
+| Lizenz | Demo mit einem spielbaren Level. `README.TXT` im ZIP: LucasArts erlaubt Kopien und elektronische Weitergabe, solange kein Geld dafür verlangt wird. |
+| Hinweis | Läuft (getestet am 25.11.2026). |
+
+### Indiana Jones and the Fate of Atlantis (englische Demo)
+
+| | |
+|---|---|
+| System / Emulator | DOS / js-dos (DOSBox) |
+| Autor | LucasArts (1992) |
+| Projektseite | https://classicdosgames.com/game/Indiana_Jones_and_the_Fate_of_Atlantis.html |
+| Download | https://classicdosgames.com/online/zip/fatetdt.zip, die bereits installierte Fassung der „Interactive Demonstration“ (das Original-ZIP https://classicdosgames.com/files/games/lucasarts/fatetdt.zip enthält nur ein DOS-Installationsprogramm mit gepackten Daten) |
+| Datei auf der Seite | `demos/dos/fatetdt.zip` (659.362 Byte), gestartet wird `PLAYFATE.EXE` |
+| Lizenz | Demo. `READ.ME` (v2 der Demo): „You may freely copy and distribute this disk provided you do not alter or eliminate any copyright or trademark notices.“ |
+| Hinweis | Läuft (getestet am 25.11.2026). |
+
 ### T-Rex 64 1.0.2
 
 | | |
