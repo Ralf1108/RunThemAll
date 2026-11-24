@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Boxedwine runtime (downloaded from upstream release, not committed)
+vendor/
+public/boxedwine/
+*.wasm
+Boxedwine*Web.zip
+
+# Build output
+dist/
+build/
+.cache/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Claude Code local settings
+.claude/settings.local.json
