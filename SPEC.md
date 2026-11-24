@@ -175,7 +175,7 @@ CD-Spuren (`bin`/`img`/`iso`) in Ordnern mit `.cue` werden nicht einzeln geliste
 - EmulatorJS wird immer in der neuesten stabilen Version geladen. Boxedwine (26R1.0) und js-dos
   (8.5.4) sind fest eingetragen, weil die Integration von ihrem Aufbau abhängt (Dateinamen im
   Release, Win16-Overlay, js-dos-API).
-- Größe der veröffentlichten Seite: ca. 400 MB (Boxedwine ~130 MB, EmulatorJS ~200 MB, js-dos ~6 MB,
+- Größe der veröffentlichten Seite: ca. 320 MB (Boxedwine ~105 MB, EmulatorJS ~205 MB, js-dos ~6 MB,
   Quellcode-Archive). Das Limit von GitHub Pages liegt bei 1 GB.
 
 ### Cross-Origin-Isolation
