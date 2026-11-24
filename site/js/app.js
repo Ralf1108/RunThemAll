@@ -346,21 +346,57 @@ async function start() {
 
 $('btn-start').addEventListener('click', start);
 
+/**
+ * Message box (modal dialog) with a title, text and an optional list of files.
+ * @param {string} title
+ * @param {string} text
+ * @param {string[]} [files]
+ * @param {boolean} [error]
+ */
+function showDialog(title, text, files = [], error = false) {
+  const dialog = $('msg-dialog');
+  $('msg-title').textContent = title;
+  $('msg-text').textContent = text;
+  const max = 20;
+  $('msg-files').replaceChildren(...files.slice(0, max).map((f) => Object.assign(document.createElement('li'), { textContent: f })),
+    ...(files.length > max ? [Object.assign(document.createElement('li'), { className: 'more', textContent: `… und ${files.length - max} weitere` })] : []));
+  $('msg-files').hidden = files.length === 0;
+  dialog.classList.toggle('error', error);
+  dialog.showModal();
+  $('msg-ok').focus();
+}
+$('msg-ok').addEventListener('click', () => $('msg-dialog').close());
+
+const NOTHING_CHANGED = 'Seit dem Start hat das Programm keine Dateien geändert oder neu angelegt. '
+  + 'Spielstände entstehen meist erst, wenn du im Programm speicherst.';
+
 $('btn-download').addEventListener('click', async () => {
   try {
-    const n = (await emulator?.downloadChanges()) ?? 0;
-    message(n ? `${n} geänderte Datei(en) als ZIP gesichert.` : 'Keine geänderten Dateien gefunden.');
+    const files = (await emulator?.downloadChanges()) ?? [];
+    message('');
+    if (files.length) {
+      showDialog('Geänderte Dateien gesichert',
+        `${files.length === 1 ? 'Eine Datei wurde' : `${files.length} Dateien wurden`} als ZIP in deinen Downloads gespeichert:`, files);
+    } else {
+      showDialog('Nichts zu sichern', NOTHING_CHANGED);
+    }
   } catch (err) {
-    message(`Sichern fehlgeschlagen: ${err.message || err}`);
+    showDialog('Sichern fehlgeschlagen', String(err.message || err), [], true);
   }
 });
 
 $('btn-writeback').addEventListener('click', async () => {
   try {
-    const n = await emulator.writeBack();
-    message(n ? `${n} Datei(en) in den Ordner zurückgeschrieben.` : 'Keine geänderten Dateien gefunden.');
+    const files = await emulator.writeBack();
+    message('');
+    if (files.length) {
+      showDialog('In Ordner zurückgeschrieben',
+        `${files.length === 1 ? 'Eine Datei wurde' : `${files.length} Dateien wurden`} in den geöffneten Ordner „${workspace.name}“ geschrieben:`, files);
+    } else {
+      showDialog('Nichts zurückzuschreiben', NOTHING_CHANGED);
+    }
   } catch (err) {
-    message(`Zurückschreiben fehlgeschlagen: ${err.message || err}`);
+    showDialog('Zurückschreiben fehlgeschlagen', String(err.message || err), [], true);
   }
 });
 

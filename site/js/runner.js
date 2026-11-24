@@ -49,23 +49,23 @@ export class Runner {
     });
   }
 
-  /** Downloads all new/changed files as a ZIP. Returns the count. */
+  /** Downloads all new/changed files as a ZIP. Returns their paths. */
   async downloadChanges() {
     const files = await this.changedFiles();
-    if (files.length === 0) return 0;
+    if (files.length === 0) return [];
     const blob = createZip(files.map((f) => ({ name: f.path, data: f.data })));
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = `${(this.workspace?.name || 'runthemall').replace(/[^\w.-]+/g, '_')}-aenderungen.zip`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 10000);
-    return files.length;
+    return files.map((f) => f.path);
   }
 
   /**
    * Writes new/changed files back into the folder the user opened (Chromium only).
    * Files are never deleted from the user's folder.
-   * @returns {Promise<number>} number of written files
+   * @returns {Promise<string[]>} paths of the written files
    */
   async writeBack() {
     const root = this.workspace?.dirHandle;
@@ -85,7 +85,7 @@ export class Runner {
       await writable.close();
       this.remember(f.path, f.data);
     }
-    return files.length;
+    return files.map((f) => f.path);
   }
 
   /** Enters fullscreen mode. */

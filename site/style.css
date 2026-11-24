@@ -315,3 +315,22 @@ select {
 /* Own operating system button below the demo tree */
 .own-os { margin-top: .75rem; padding-top: .75rem; border-top: 1px solid var(--border); }
 .own-os .hint { font-size: .8rem; margin-top: .4rem; }
+
+/* Message box */
+.msg-dialog {
+  width: min(480px, 100vw - 2rem); padding: 1.25rem 1.5rem;
+  background: var(--surface); color: var(--text);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: 0 20px 50px rgb(0 0 0 / .35);
+}
+.msg-dialog::backdrop { background: rgb(0 0 0 / .45); }
+.msg-dialog h3 { margin: 0 0 .5rem; font-size: 1.1rem; }
+.msg-dialog.error h3 { color: var(--error); }
+.msg-dialog p { margin: 0; }
+.msg-files {
+  margin: .75rem 0 0; padding: .5rem .75rem .5rem 1.75rem; max-height: 220px; overflow: auto;
+  border: 1px solid var(--border); border-radius: 8px;
+  font-family: ui-monospace, Consolas, monospace; font-size: .85rem;
+}
+.msg-files .more { list-style: none; margin-left: -1rem; color: var(--muted); font-family: inherit; }
+.msg-actions { margin-top: 1.25rem; text-align: right; }
