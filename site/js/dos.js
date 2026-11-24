@@ -7,6 +7,7 @@ import { Runner, loadScript, loadStylesheet, prefetch, splitPath } from './runne
  * @typedef {object} DosOptions
  * @property {string} cycles "auto", "max" or a fixed number of cycles
  * @property {boolean} sound
+ * @property {string} [args] command line arguments for the program (e.g. sound card choice of a demo)
  */
 
 // Characters allowed in DOS 8.3 file names (besides letters and digits).
@@ -100,7 +101,7 @@ function buildDosboxConf(dosProgram, opts) {
     'c:',
   ];
   if (dir) lines.push(`cd \\${dir.replace(/\//g, '\\')}`);
-  lines.push(name);
+  lines.push(opts.args ? `${name} ${opts.args}` : name);
   return lines.join('\n') + '\n';
 }
 

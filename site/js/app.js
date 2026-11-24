@@ -58,7 +58,8 @@ async function openWorkspace(loader, autostart) {
         $('opt-system').value = autostart.system;
         updateBiosInfo();
       }
-      start(autostart.wine ? { wine: autostart.wine } : {});
+      // Options a demo needs only for this start (not saved as user settings).
+      start(Object.fromEntries(Object.entries({ wine: autostart.wine, args: autostart.args }).filter(([, v]) => v)));
     }
   } catch (err) {
     if (err?.name === 'AbortError') return; // user cancelled a picker
@@ -438,7 +439,7 @@ async function launchDemo(demo, button) {
       button.textContent = total ? `Lade … ${Math.round((loaded / total) * 100)} %` : 'Lade …';
     });
     const file = new File([data], demo.file.split('/').pop());
-    await openWorkspace(() => fromFileList([file]), { program: demo.start, system: demo.system, wine: demo.wine });
+    await openWorkspace(() => fromFileList([file]), { program: demo.start, system: demo.system, wine: demo.wine, args: demo.args });
   } catch (err) {
     showError(`Demo konnte nicht geladen werden: ${err.message || err}`);
   } finally {

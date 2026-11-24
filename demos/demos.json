@@ -112,7 +112,8 @@
     "license": "Demo, kostenlos weitergebbar (READ.ME im ZIP)",
     "url": "https://classicdosgames.com/online/zip/fatetdt.zip",
     "file": "dos/fatetdt.zip",
-    "start": "PLAYFATE.EXE"
+    "start": "PLAYFATE.EXE",
+    "args": "s"
   },
   {
     "id": "trex64",
