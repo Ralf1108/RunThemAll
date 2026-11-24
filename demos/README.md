@@ -100,7 +100,7 @@ Stand der Recherche: 24.11.2026.
 | Autor | LucasArts (1992) |
 | Projektseite | https://classicdosgames.com/game/Indiana_Jones_and_the_Fate_of_Atlantis.html |
 | Download | https://classicdosgames.com/online/zip/fatetdt.zip, die bereits installierte Fassung der „Interactive Demonstration“ (das Original-ZIP https://classicdosgames.com/files/games/lucasarts/fatetdt.zip enthält nur ein DOS-Installationsprogramm mit gepackten Daten) |
-| Datei auf der Seite | `demos/dos/fatetdt.zip` (659.362 Byte), gestartet wird `PLAYFATE.EXE s` (Sound Blaster; ohne Parameter erwartet die Demo eine Roland-MT-32, die es in DOSBox hier nicht gibt, und bleibt stumm) |
+| Datei auf der Seite | `demos/dos/fatetdt.zip` (659.362 Byte), gestartet wird `PLAYFATE.EXE s` (Sound Blaster; ohne Parameter erwartet die Demo eine Roland-MT-32, die es in DOSBox hier nicht gibt, und bleibt stumm). Feste Geschwindigkeit 8000 Zyklen (386er), damit Musik und Ton gleichmäßig laufen. |
 | Lizenz | Demo. `READ.ME` (v2 der Demo): „You may freely copy and distribute this disk provided you do not alter or eliminate any copyright or trademark notices.“ |
 | Hinweis | Läuft (getestet am 25.11.2026). |
 
@@ -208,6 +208,7 @@ Stand der Recherche: 24.11.2026.
 | `add` | optional: weitere Dateien aus anderen Downloads, die ins ZIP kommen (`url`, `entry`, `path`) |
 | `wine` | optional: Wine-Version, die die Demo braucht (`wine6` oder `wine11`) |
 | `args` | optional: Parameter für das DOS-Programm, z. B. die Soundkarte |
+| `cycles` | optional: feste DOSBox-Geschwindigkeit (Zyklen) für diese Demo |
 | `note` | optional: Hinweis zur Herkunft |
 | `file` | Pfad unter `site/demos/` |
 | `start` | Programm bzw. Spieldatei, die gestartet wird |
