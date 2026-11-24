@@ -102,6 +102,7 @@ Ohne Service Worker (z. B. im privaten Modus von Firefox) läuft automatisch der
 
 - [SPEC.md](SPEC.md): Spezifikation mit Architektur, Erkennung, Build und Teststand
 - [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md): Herkunft und Lizenzen aller eingebundenen Komponenten
+- [demos/README.md](demos/README.md): Quellenverzeichnis aller Demo-Spiele (Herkunft, Version, Lizenz, geprüfte Kandidaten)
 
 ## Projektstruktur
 
@@ -137,7 +138,7 @@ WebExe wäre ohne diese Projekte nicht möglich:
 | [EmulatorJS](https://emulatorjs.org) | Oberfläche und Laufzeit für libretro-Cores im Browser | GPL-3.0 |
 | [libretro](https://www.libretro.com)-Cores, u. a. [VICE](https://vice-emu.sourceforge.io), [PUAE](https://github.com/libretro/libretro-uae), FCEUmm, Snes9x, mGBA, Genesis Plus GX, PCSX ReARMed | die einzelnen Konsolen- und Heimcomputer-Emulatoren, vollständige Liste auf der Seite unter `emulatorjs/cores.html` | je Core, meist GPL; einige nur nichtkommerziell |
 | [AROS](https://aros.sourceforge.io) | freier Amiga-Kickstart-Ersatz (im PUAE-Core enthalten) | AROS Public License |
-| Demo-Programme: SkiFree (Chris Pirih), ZZT (Tim Sweeney, Rekonstruktion Adrian Siekierka), T-Rex 64 (Maciej Małecki), Nova the Squirrel (NovaSquirrel), µCity (Antonio Niño Díaz) | Demos auf der Startseite, siehe [demos/README.md](demos/README.md) | Freeware, MIT, GPL-3.0 |
+| Demo-Programme: SkiFree (Chris Pirih), ZZT (Tim Sweeney, Rekonstruktion Adrian Siekierka), T-Rex 64 (Maciej Małecki), Nova the Squirrel (NovaSquirrel), µCity (Antonio Niño Díaz) | Demos auf der Startseite, Quellenverzeichnis in [demos/README.md](demos/README.md) | MIT, GPL-3.0; SkiFree ohne ausdrückliche Lizenz |
 | [coi-serviceworker](https://github.com/gzuidhof/coi-serviceworker) von Guido Zuidhof | Cross-Origin-Isolation auf GitHub Pages | MIT |
 
 ## Lizenz

@@ -74,7 +74,8 @@ dass er läuft (Boxedwine `Running...`, js-dos `ci-ready`, EmulatorJS `EJS_onGam
 `demos/demos.json` listet freie Programme (Quelle, Autor, Lizenz, Startdatei, System). Das Build-Skript lädt
 sie aus den Original-Releases nach `site/demos/` (optional einzelne Datei aus einem ZIP). Die Startseite zeigt
 sie als Karten; „Starten“ lädt die Datei, öffnet sie wie eine Nutzerdatei, wählt Programm und System vor und
-startet sofort. Kriterien und geprüfte, aber nicht aufgenommene Kandidaten: `demos/README.md`.
+startet sofort. Quellenverzeichnis (Herkunft, Version, Download-Link, Lizenz) sowie geprüfte, aber nicht aufgenommene
+Kandidaten: `demos/README.md`.
 
 ## 4. Erkennung
 

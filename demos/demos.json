@@ -7,7 +7,7 @@
     "description": "Der Klassiker von 1991: Skifahren, Hindernissen ausweichen und vor dem Yeti fliehen.",
     "author": "Chris Pirih",
     "homepage": "https://ski.ihoc.net/",
-    "license": "Freeware",
+    "license": "kostenlos vom Autor angeboten (keine ausdrückliche Lizenz)",
     "url": "https://github.com/danoon2/Boxedwine/releases/download/26R1.0/Boxedwine26R1Web.zip",
     "entry": "SingleThreaded/ski32.zip",
     "note": "Liegt dem Boxedwine-Web-Release als Beispiel bei.",
