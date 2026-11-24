@@ -30,6 +30,19 @@ Stand der Recherche: 24.11.2026.
 | Lizenz | **keine ausdrückliche Lizenz.** Der Autor bietet die 32-Bit-Version auf seiner Seite kostenlos zum Download an, Boxedwine legt sie seinem Release als Beispiel bei. SkiFree erschien 1991 ursprünglich als Microsoft-Produkt (Microsoft Entertainment Pack), das Microsoft beim Autor lizenziert hatte. |
 | Hinweis | Erfüllt Kriterium 1 nicht streng. **Bewusst beibehalten** (Entscheidung vom 24.11.2026), weil der Autor die Datei selbst kostenlos anbietet und Boxedwine sie mit seinem Release verteilt. Bei einem Einwand des Rechteinhabers wird die Demo entfernt. |
 
+### Castle of the Winds 1.1A (Vollversion, 16 Bit)
+
+| | |
+|---|---|
+| System / Emulator | Windows 3.x (16 Bit) / Boxedwine mit Wine 6 |
+| Autor | Rick Saada (SaadaSoft), Vertrieb 1993 durch Epic MegaGames |
+| Projektseite | https://classicdosgames.com/game/castle_of_the_winds.html |
+| Download | https://classicdosgames.com/files/games/saadasoft/castl11a.zip |
+| Inhalt | `CASTLE1.EXE` (Teil 1 „A Question of Vengeance“), `CASTLE2.EXE` (Teil 2 „Lifthransir's Bane“), je eine `.HLP`-Hilfedatei |
+| Datei auf der Seite | `demos/win16/castl11a.zip` (695.273 Byte, unverändert), gestartet wird `CASTLE1.EXE` |
+| Lizenz | **keine ausdrückliche Lizenz.** Laut classicdosgames.com hat der Autor das Spiel als Freeware freigegeben („Author Rick Saada has generously released this game as freeware“). Für dieses Spiel gibt es dort keine eigene Lizenzdatei. Der Startdialog im Spiel enthält noch den alten Shareware-Text von 1993. |
+| Hinweis | Erfüllt Kriterium 1 nicht streng, aber ähnlich wie SkiFree vom Autor freigegeben. Bei einem Einwand des Rechteinhabers wird die Demo entfernt. Läuft in Boxedwine (getestet am 24.11.2026). |
+
 ### ZZT (Reconstruction of ZZT 1.0)
 
 | | |
@@ -122,7 +135,7 @@ Stand der Recherche: 24.11.2026.
 
 ## Offene Fragen
 
-- **Windows-3.x-Demo (16 Bit)**: fehlt noch. Kandidat mit freier Lizenz und fertigem Build war nur der Calculator (siehe oben), der unter Boxedwine abstürzt.
+- **Mit Open Watcom gebaute Win16-Programme** (Calculator, selbst kompiliertes WineMine) stürzen in Boxedwine beim Start ab, Castle of the Winds (anderer Compiler) läuft. Ursache noch offen.
 - **Amiga-Demo**: fehlt noch. Blocky Skies wäre technisch geeignet, braucht aber die Zustimmung des Autors.
 
 ## Format von `demos.json`

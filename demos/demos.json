@@ -15,6 +15,19 @@
     "start": "ski32.exe"
   },
   {
+    "id": "cotw",
+    "title": "Castle of the Winds",
+    "platform": "Windows 3.x (16 Bit)",
+    "emulator": "Boxedwine (Wine 6)",
+    "description": "Rollenspiel-Klassiker von 1992 mit nordischer Mythologie, Vollversion mit beiden Teilen (CASTLE1.EXE und CASTLE2.EXE).",
+    "author": "Rick Saada (SaadaSoft), Vertrieb Epic MegaGames",
+    "homepage": "https://classicdosgames.com/game/castle_of_the_winds.html",
+    "license": "Freeware, vom Autor freigegeben (keine ausdrückliche Lizenz)",
+    "url": "https://classicdosgames.com/files/games/saadasoft/castl11a.zip",
+    "file": "win16/castl11a.zip",
+    "start": "CASTLE1.EXE"
+  },
+  {
     "id": "zzt",
     "title": "ZZT",
     "platform": "DOS",

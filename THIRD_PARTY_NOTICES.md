@@ -76,6 +76,7 @@ aber nicht aufgenommenen Spielen: [demos/README.md](demos/README.md).
 | Demo | Autor | Lizenz | Quelle |
 |---|---|---|---|
 | SkiFree 1.04 | Chris Pirih | keine ausdrückliche Lizenz; vom Autor kostenlos angeboten | Beispiel im Boxedwine-Web-Release 26R1.0 |
+| Castle of the Winds 1.1A | Rick Saada (SaadaSoft) | keine ausdrückliche Lizenz; vom Autor als Freeware freigegeben | classicdosgames.com |
 | ZZT (Reconstruction of ZZT 1.0) | Tim Sweeney / Epic MegaGames, Adrian Siekierka | MIT, ZZT-Code mit Erlaubnis von Epic MegaGames | github.com/asiekierka/reconstruction-of-zzt |
 | Tiny Core Linux 17.1 | Tiny-Core-Team | GPL-2.0 | tinycorelinux.net |
 | KolibriOS 0.7.7.0+8930 | KolibriOS-Team | GPL-2.0 | kolibrios.org (Datei im Repository, siehe demos/local/README.md) |
