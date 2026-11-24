@@ -141,7 +141,7 @@ Run Them All wäre ohne diese Projekte nicht möglich:
 | [v86](https://github.com/copy/v86) von Fabian Hemmer | komplette x86-PCs (Betriebssysteme von CD, Diskette, Festplatte) | BSD-2-Clause |
 | [SeaBIOS](https://www.seabios.org) | PC-BIOS in v86 | LGPL-3.0 |
 | [AROS](https://aros.sourceforge.io) | freier Amiga-Kickstart-Ersatz (im PUAE-Core enthalten) | AROS Public License |
-| Demo-Programme: SkiFree (Chris Pirih), Castle of the Winds (Rick Saada), ZZT (Tim Sweeney, Rekonstruktion Adrian Siekierka), T-Rex 64 (Maciej Małecki), Nova the Squirrel (NovaSquirrel), µCity (Antonio Niño Díaz), Tiny Core Linux, KolibriOS | Demos auf der Startseite, Quellenverzeichnis in [demos/README.md](demos/README.md) | MIT, GPL-2.0, GPL-3.0; SkiFree und Castle of the Winds ohne ausdrückliche Lizenz, vom Autor freigegeben |
+| Demo-Programme: SkiFree (Chris Pirih), OpenTTD mit OpenGFX (OpenTTD-Team), Castle of the Winds (Rick Saada), ZZT (Tim Sweeney, Rekonstruktion Adrian Siekierka), T-Rex 64 (Maciej Małecki), Nova the Squirrel (NovaSquirrel), µCity (Antonio Niño Díaz), Tiny Core Linux, KolibriOS | Demos auf der Startseite, Quellenverzeichnis in [demos/README.md](demos/README.md) | MIT, GPL-2.0, GPL-3.0; SkiFree und Castle of the Winds ohne ausdrückliche Lizenz, vom Autor freigegeben |
 | [coi-serviceworker](https://github.com/gzuidhof/coi-serviceworker) von Guido Zuidhof | Cross-Origin-Isolation auf GitHub Pages | MIT |
 
 ## Lizenz

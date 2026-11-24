@@ -57,7 +57,7 @@ async function openWorkspace(loader, autostart) {
         $('opt-system').value = autostart.system;
         updateBiosInfo();
       }
-      start();
+      start(autostart.wine ? { wine: autostart.wine } : {});
     }
   } catch (err) {
     if (err?.name === 'AbortError') return; // user cancelled a picker
@@ -301,10 +301,11 @@ function hideLoader() {
   $('loader').hidden = true;
 }
 
-async function start() {
+/** @param {object} [overrides] options a demo needs, e.g. a Wine version (not saved as user setting) */
+async function start(overrides = {}) {
   const program = selectedProgram();
   if (!workspace || !program) return;
-  const opts = readOptions();
+  const opts = { ...readOptions(), ...overrides };
   if (program.kind === 'game') {
     opts.system = $('opt-system').value;
     opts.biosFiles = chosenBios;
@@ -344,7 +345,7 @@ async function start() {
   }
 }
 
-$('btn-start').addEventListener('click', start);
+$('btn-start').addEventListener('click', () => start());
 
 /**
  * Message box (modal dialog) with a title, text and an optional list of files.
@@ -428,7 +429,7 @@ async function launchDemo(demo, button) {
       button.textContent = total ? `Lade … ${Math.round((loaded / total) * 100)} %` : 'Lade …';
     });
     const file = new File([data], demo.file.split('/').pop());
-    await openWorkspace(() => fromFileList([file]), { program: demo.start, system: demo.system });
+    await openWorkspace(() => fromFileList([file]), { program: demo.start, system: demo.system, wine: demo.wine });
   } catch (err) {
     showError(`Demo konnte nicht geladen werden: ${err.message || err}`);
   } finally {

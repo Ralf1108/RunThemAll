@@ -34,6 +34,9 @@ const BOXEDWINE_FILES = {
 // an overlay zip that Boxedwine mounts on top of the root file system.
 const WINE6_FULL_FS = 'http://boxedwine.org/v2/2/TinyCore15Wine6.0.zip';
 const WIN16_MODULE = /^opt\/wine\/lib\/wine\/[^/]+16\.so$/;
+// Further Wine modules missing in the web file system that demos need
+// (OpenTTD imports winhttp.dll).
+const EXTRA_MODULES = ['winhttp.dll.so', 'jsproxy.dll.so'].map((m) => `opt/wine/lib/wine/${m}`);
 
 // --- js-dos ----------------------------------------------------------------
 // js-dos 8.5.4 bundles emulators 8.5.3, which builds DOSBox from js-dos/dosbox.
@@ -153,7 +156,8 @@ async function buildWin16Overlay(webRootEntry, releaseArchive, target) {
   const webRoot = await readZipEntry(releaseArchive, webRootEntry);
   const present = new Set(listZip(webRoot).map((e) => e.name));
   const full = new Uint8Array(await readFile(fullPath));
-  const missing = listZip(full).filter((e) => WIN16_MODULE.test(e.name) && !present.has(e.name));
+  const missing = listZip(full)
+    .filter((e) => (WIN16_MODULE.test(e.name) || EXTRA_MODULES.includes(e.name)) && !present.has(e.name));
   if (missing.length === 0) throw new Error('Keine fehlenden 16-Bit-Module gefunden – Dateisystem geändert?');
 
   // Copy the entries still compressed, exactly as in the full file system.
@@ -328,6 +332,27 @@ async function fetchCoi() {
  * optionally one entry taken out of a ZIP, and placed in site/demos/. Entries
  * with `local` are copied from demos/local/ instead (built from source by us).
  */
+/**
+ * Repacks a demo ZIP: removes a leading folder (`strip`) and adds files from
+ * other downloads (`add`: [{ url, entry, path }], e.g. OpenGFX for OpenTTD).
+ * Entries are copied still compressed.
+ */
+async function bundleDemo(demo, data) {
+  const files = listZip(data)
+    .filter((e) => !e.isDir)
+    .map((e) => ({ name: demo.strip && e.name.startsWith(demo.strip) ? e.name.slice(demo.strip.length) : e.name,
+      raw: readZipEntryRaw(data, e) }));
+  for (const extra of demo.add ?? []) {
+    const cached = join(VENDOR, 'demos', demo.id, decodeURIComponent(extra.url.split('/').pop()));
+    await download(extra.url, cached);
+    const archive = new Uint8Array(await readFile(cached));
+    const entry = listZip(archive).find((e) => e.name === extra.entry);
+    if (!entry) throw new Error(`Demo ${demo.id}: ${extra.entry} nicht in ${extra.url}`);
+    files.push({ name: extra.path, raw: readZipEntryRaw(archive, entry) });
+  }
+  return new Uint8Array(await createZip(files).arrayBuffer());
+}
+
 async function fetchDemos() {
   console.log('Demos');
   const list = JSON.parse(await readFile(join(ROOT, 'demos', 'demos.json'), 'utf8'));
@@ -346,13 +371,14 @@ async function fetchDemos() {
     const source = demo.url.endsWith('/Boxedwine26R1Web.zip') ? join(VENDOR, 'Boxedwine26R1Web.zip') : cached;
     await download(demo.url, source);
     let data = new Uint8Array(await readFile(source));
+    if (demo.strip || demo.add) data = await bundleDemo(demo, data);
     if (demo.entry) {
       const entry = listZip(data).find((e) => e.name === demo.entry);
       if (!entry) throw new Error(`Demo ${demo.id}: ${demo.entry} nicht im Archiv`);
       data = await readZipEntry(data, entry);
     }
     await writeOut(join(SITE, 'demos', demo.file), data);
-    const { url, entry, ...rest } = demo;
+    const { url, entry, strip, add, ...rest } = demo;
     published.push({ ...rest, source: url });
     console.log(`  ${demo.file} (${demo.title})`);
   }

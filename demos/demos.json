@@ -15,6 +15,28 @@
     "start": "ski32.exe"
   },
   {
+    "id": "openttd",
+    "title": "OpenTTD 15.3",
+    "platform": "Windows (32 Bit)",
+    "emulator": "Boxedwine (Wine 6)",
+    "description": "Freier Nachbau von Transport Tycoon Deluxe: Eisenbahnen, Straßen, Schiffe und Flugzeuge bauen. Mit den freien Grafiken von OpenGFX. Braucht etwas Geduld beim Start.",
+    "author": "OpenTTD-Team",
+    "homepage": "https://www.openttd.org/",
+    "license": "GPL-2.0 (OpenGFX ebenfalls GPL-2.0)",
+    "url": "https://cdn.openttd.org/openttd-releases/15.3/openttd-15.3-windows-win32.zip",
+    "strip": "openttd-15.3-windows-win32/",
+    "add": [
+      {
+        "url": "https://cdn.openttd.org/opengfx-releases/8.0/opengfx-8.0-all.zip",
+        "entry": "opengfx-8.0.tar",
+        "path": "baseset/opengfx-8.0.tar"
+      }
+    ],
+    "file": "windows/openttd-15.3.zip",
+    "start": "openttd.exe",
+    "wine": "wine6"
+  },
+  {
     "id": "cotw",
     "title": "Castle of the Winds 1",
     "platform": "Windows 3.x (16 Bit)",

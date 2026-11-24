@@ -129,8 +129,9 @@ CD-Spuren (`bin`/`img`/`iso`) in Ordnern mit `.cue` werden nicht einzeln geliste
 - **Win16-Overlay**: Dem Wine-6-Dateisystem fehlen 34 16-Bit-Module (u. a. WinG, toolhelp,
   lzexpand, ole2). Das Build-Skript nimmt sie unverändert aus dem vollständigen Boxedwine-Dateisystem
   `TinyCore15Wine6.0.zip` (gleicher Build, gemeinsame Dateien sind byte-identisch) und legt sie als
-  `wine6/win16-extras.zip` ab (komprimiert, 272 KB). Boxedwine bindet es mit `-zip` über dem
-  Wurzeldateisystem ein.
+  `wine6/win16-extras.zip` ab (komprimiert, ca. 385 KB). Boxedwine bindet es mit `-zip` über dem
+  Wurzeldateisystem ein. Dazu kommen einzelne weitere fehlende Module, die Demos brauchen
+  (`winhttp`, `jsproxy` für OpenTTD; Liste `EXTRA_MODULES` im Build-Skript).
 - Nutzerdateien: im Emscripten-Dateisystem unter `/d_drive`, in Wine als Laufwerk D:
 - Laufwerk C: (Wine-Prefix) optional in IndexedDB (`/root-wine6`, `/root-wine11`)
 - Grenzen: kein OpenGL/Direct3D im Web-Build, kein .NET/Java

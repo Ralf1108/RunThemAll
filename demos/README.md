@@ -30,6 +30,18 @@ Stand der Recherche: 24.11.2026.
 | Lizenz | **keine ausdrückliche Lizenz.** Der Autor bietet die 32-Bit-Version auf seiner Seite kostenlos zum Download an, Boxedwine legt sie seinem Release als Beispiel bei. SkiFree erschien 1991 ursprünglich als Microsoft-Produkt (Microsoft Entertainment Pack), das Microsoft beim Autor lizenziert hatte. |
 | Hinweis | Erfüllt Kriterium 1 nicht streng. **Bewusst beibehalten** (Entscheidung vom 24.11.2026), weil der Autor die Datei selbst kostenlos anbietet und Boxedwine sie mit seinem Release verteilt. Bei einem Einwand des Rechteinhabers wird die Demo entfernt. |
 
+### OpenTTD 15.3 mit OpenGFX 8.0 (32 Bit)
+
+| | |
+|---|---|
+| System / Emulator | Windows (32 Bit) / Boxedwine mit Wine 6 (die Demo stellt Wine 6 ein, im Wine-11-Dateisystem fehlt `winhttp.dll`) |
+| Autoren | OpenTTD-Team (Spiel), OpenTTD-Team und Mitwirkende (OpenGFX) |
+| Projektseite | https://www.openttd.org/ |
+| Download | https://cdn.openttd.org/openttd-releases/15.3/openttd-15.3-windows-win32.zip und https://cdn.openttd.org/opengfx-releases/8.0/opengfx-8.0-all.zip |
+| Datei auf der Seite | `demos/windows/openttd-15.3.zip`: das Windows-ZIP ohne den obersten Ordner, dazu `baseset/opengfx-8.0.tar` aus dem OpenGFX-ZIP. Dateien unverändert. |
+| Lizenz | GPL-2.0 (OpenTTD und OpenGFX), Quellcode unter https://www.openttd.org/downloads/openttd-releases/latest bzw. https://github.com/OpenTTD |
+| Hinweis | Läuft in Boxedwine (getestet am 24.11.2026). Braucht die Wine-Module `winhttp` und `jsproxy`, die das Download-Script in `boxedwine/wine6/win16-extras.zip` ergänzt. Beim Start meldet OpenTTD, dass keine Grafikbeschleunigung verfügbar ist, das ist harmlos. |
+
 ### Castle of the Winds 1.1A (Vollversion, 16 Bit)
 
 | | |
@@ -156,6 +168,9 @@ Stand der Recherche: 24.11.2026.
 | `url` | Download aus dem Original-Release |
 | `local` | statt `url`: Datei unter `demos/local/` im Repository (siehe [local/README.md](local/README.md)) |
 | `entry` | optional: Datei innerhalb eines ZIP, die übernommen wird |
+| `strip` | optional: Ordner am Anfang der Pfade im ZIP, der entfernt wird |
+| `add` | optional: weitere Dateien aus anderen Downloads, die ins ZIP kommen (`url`, `entry`, `path`) |
+| `wine` | optional: Wine-Version, die die Demo braucht (`wine6` oder `wine11`) |
 | `note` | optional: Hinweis zur Herkunft |
 | `file` | Pfad unter `site/demos/` |
 | `start` | Programm bzw. Spieldatei, die gestartet wird |
