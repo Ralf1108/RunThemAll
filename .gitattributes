@@ -2,3 +2,6 @@
 *.zip binary
 *.wasm binary
 *.png binary
+
+# Demo files are shipped byte for byte (DOS batch files need CRLF)
+demos/local/** binary
