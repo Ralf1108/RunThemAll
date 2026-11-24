@@ -3,11 +3,13 @@
 
 import { listZip, readZipEntry } from './zip.js';
 import { detectKind, emulatorFor } from './exe.js';
+import { HEAD_BYTES, detectSystems, extOf, isBiosFile, isPossibleGame } from './systems.js';
 
 /**
  * @typedef {{ path: string, size: number, load: () => Promise<Uint8Array>,
  *             read?: (offset:number, length:number) => Promise<Uint8Array> }} WorkspaceFile
- * @typedef {WorkspaceFile & { kind: import('./exe.js').ProgramKind, emulator: 'dos'|'windows' }} Program
+ * @typedef {WorkspaceFile & { kind: import('./exe.js').ProgramKind | 'game',
+ *             emulator: 'dos'|'windows'|'emulatorjs', systems?: string[] }} Program
  * @typedef {{ name: string, files: WorkspaceFile[], dirHandle?: FileSystemDirectoryHandle }} Workspace
  */
 
@@ -122,9 +124,43 @@ export async function fromDataTransfer(dataTransfer) {
   return { name, files: stripCommonRoot(files) };
 }
 
+function rangeReader(f) {
+  if (f.read) return f.read;
+  let bytes; // e.g. ZIP entries: decompress once
+  return async (offset, length) => (bytes ??= await f.load()).subarray(offset, offset + length);
+}
+
 /**
- * Lists runnable programs with their type (DOS / Windows), most likely
- * candidates first: shallow paths before deep ones, installers last.
+ * Finds console/home computer games (EmulatorJS) by extension and magic bytes.
+ * @param {Workspace} ws
+ * @returns {Promise<Program[]>}
+ */
+async function findGames(ws) {
+  const dirsWithCue = new Set(ws.files.filter((f) => extOf(f.path) === 'cue')
+    .map((f) => f.path.slice(0, f.path.lastIndexOf('/') + 1).toLowerCase()));
+
+  const candidates = ws.files.filter((f) => {
+    if (RUNNABLE.test(f.path) || isBiosFile(f.path) || !isPossibleGame(f.path)) return false;
+    const dir = f.path.slice(0, f.path.lastIndexOf('/') + 1).toLowerCase();
+    // Tracks of a CD image are started via their .cue sheet.
+    if (['bin', 'img', 'iso'].includes(extOf(f.path)) && dirsWithCue.has(dir)) return false;
+    return true;
+  });
+
+  const games = await Promise.all(candidates.map(async (f) => {
+    let systems = [];
+    try {
+      const head = await rangeReader(f)(0, HEAD_BYTES);
+      systems = detectSystems(f.path, f.size, head);
+    } catch { /* unreadable: not a game */ }
+    return { ...f, kind: 'game', emulator: 'emulatorjs', systems };
+  }));
+  return games.filter((g) => g.systems.length > 0);
+}
+
+/**
+ * Lists runnable programs and games with their type, most likely candidates
+ * first: shallow paths before deep ones, installers last.
  * @param {Workspace} ws
  * @returns {Promise<Program[]>}
  */
@@ -132,20 +168,16 @@ export async function findPrograms(ws) {
   const unlikely = /(^|\/)(unins\w*|uninst\w*|setup|install\w*|config\w*|readme)\.(exe|com|bat)$/i;
   const candidates = ws.files.filter((f) => RUNNABLE.test(f.path));
 
-  const programs = await Promise.all(candidates.map(async (f) => {
-    let read = f.read;
-    if (!read) { // e.g. ZIP entries: decompress once
-      let bytes;
-      read = async (offset, length) => (bytes ??= await f.load()).subarray(offset, offset + length);
-    }
+  const executables = await Promise.all(candidates.map(async (f) => {
     let kind;
-    try { kind = await detectKind(f.path, read); } catch { kind = 'unknown'; }
+    try { kind = await detectKind(f.path, rangeReader(f)); } catch { kind = 'unknown'; }
     return { ...f, kind };
   }));
-  const kinds = programs.map((p) => p.kind);
-  for (const p of programs) p.emulator = emulatorFor(p.kind, kinds);
+  const kinds = executables.map((p) => p.kind);
+  for (const p of executables) p.emulator = emulatorFor(p.kind, kinds);
+  const programs = [...executables, ...await findGames(ws)];
 
-  const rank = (p) => (/\.exe$/i.test(p.path) ? 0 : /\.com$/i.test(p.path) ? 1 : 2);
+  const rank = (p) => (p.kind === 'game' || /\.exe$/i.test(p.path) ? 0 : /\.com$/i.test(p.path) ? 1 : 2);
   return programs.sort((a, b) => {
     const ua = unlikely.test(a.path), ub = unlikely.test(b.path);
     if (ua !== ub) return ua ? 1 : -1;

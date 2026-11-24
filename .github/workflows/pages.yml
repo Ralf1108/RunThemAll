@@ -30,7 +30,7 @@ jobs:
           path: vendor
           key: runtimes-${{ hashFiles('scripts/fetch-runtimes.mjs') }}
 
-      - name: Fetch Boxedwine and js-dos runtimes, GPL licenses and sources
+      - name: Fetch emulators (Boxedwine, js-dos, latest EmulatorJS), licenses and sources
         run: node scripts/fetch-runtimes.mjs
 
       - uses: actions/configure-pages@v5

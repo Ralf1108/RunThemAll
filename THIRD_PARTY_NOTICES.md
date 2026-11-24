@@ -1,6 +1,6 @@
 # Komponenten anderer Projekte
 
-Diese Komponenten sind nicht Teil dieses Repositorys. Sie werden von
+WebExe ist ein Aggregator: Diese Komponenten sind nicht Teil dieses Repositorys. Sie werden von
 `scripts/fetch-runtimes.mjs` heruntergeladen und zusammen mit der Webseite veröffentlicht.
 
 ## Boxedwine 26R1.0
@@ -33,6 +33,28 @@ Die Dateisystem-Archive enthalten Wine (LGPL-2.1 oder neuer) und Teile von Tiny 
   verwendeten Version (Commit `528578d`)
 - Die Emulator-Dateien werden von dieser Seite selbst ausgeliefert (`pathPrefix`), es werden
   keine Dateien vom js-dos-CDN nachgeladen. Lokale Speicherung von js-dos ist abgeschaltet.
+
+## EmulatorJS (neueste stabile Version, derzeit 4.2.3) mit libretro-Cores
+
+- Projekt: https://github.com/EmulatorJS/EmulatorJS, https://emulatorjs.org
+- Lizenz: GNU General Public License v3.0
+- Verwendet: unverändertes npm-Paket `@emulatorjs/emulatorjs` (Ordner `data/`) sowie je System ein
+  Core-Paket `@emulatorjs/core-<name>` in derselben Version. Die Version wird beim Build über das
+  npm-Tag `latest` bestimmt (Vorabversionen sind dort nicht markiert).
+- Da das npm-Paket nur die unminifizierten Quellen enthält, werden die Skripte unverändert zu
+  `emulator.min.js` zusammengefügt (gleiche Reihenfolge wie in `loader.js`), `emulator.css` wird als
+  `emulator.min.css` kopiert.
+- Lizenztext: `emulatorjs/LICENSE-GPL-3.0.txt`; Quellcode: `emulatorjs/source/EmulatorJS-<version>-source.tar.gz`
+- Cores: Jede Core-Datei (`*.data`) enthält ihren eigenen Lizenztext. Die Seite `emulatorjs/cores.html`
+  listet alle Cores mit Version, Quellcode-Repository (EmulatorJS-Forks der libretro-Cores) und Lizenzdatei.
+  **Einige Cores erlauben keine kommerzielle Nutzung**, u. a. Snes9x, Genesis Plus GX, PicoDrive,
+  FBNeo und MAME 2003-Plus.
+- BIOS: WebExe liefert keine BIOS-Dateien aus. Freie Ersatz-BIOS sind teilweise in den Cores enthalten
+  (AROS-Kickstart in PUAE, HLE-BIOS in mGBA, melonDS, PCSX ReARMed, Yabause; die Commodore-, Sinclair- und
+  Amstrad-ROMs liefern VICE, Fuse und Caprice32 selbst mit).
+- Netzwerk: EmulatorJS fragt beim Start `https://cdn.emulatorjs.org/stable/data/version.json` ab, um auf neue
+  Versionen hinzuweisen (es werden keine Nutzerdaten gesendet). Alle Emulator-Dateien werden von dieser Seite
+  geladen; Netplay ist ausgeblendet.
 
 ## coi-serviceworker v0.1.7
 

@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Downloads the emulator runtimes into site/:
-//   site/boxedwine/  Boxedwine web release (Windows programs)
-//   site/jsdos/      js-dos player + DOSBox backend (DOS programs)
+//   site/boxedwine/    Boxedwine web release (Windows programs)
+//   site/jsdos/        js-dos player + DOSBox backend (DOS programs)
+//   site/emulatorjs/   EmulatorJS + libretro cores (consoles, home computers)
 // Each folder also gets the GPL license text and the matching source archives.
 // Additionally fetches the coi-serviceworker helper (MIT).
 //
@@ -12,6 +13,7 @@ import { gunzipSync } from 'node:zlib';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createZip, listZip, readZipEntry, readZipEntryRaw } from '../site/js/zip.js';
+import { CORES, SYSTEMS } from '../site/js/systems.js';
 
 // --- Boxedwine -------------------------------------------------------------
 const BOXEDWINE_TAG = '26R1.0';
@@ -47,6 +49,16 @@ const JSDOS_FILES = {
   'package/dist/emulators/wlibzip.js': 'emulators/wlibzip.js',
   'package/dist/emulators/wlibzip.wasm': 'emulators/wlibzip.wasm',
 };
+
+// --- EmulatorJS ------------------------------------------------------------
+// Always the newest stable release: the npm dist-tag "latest" of
+// @emulatorjs/emulatorjs (pre-releases are not tagged "latest"). The cores are
+// published as one npm package per core with the same version number.
+const EJS_REGISTRY = 'https://registry.npmjs.org/@emulatorjs%2f';
+// Order of the scripts in data/loader.js; concatenated to emulator.min.js
+// because the npm package ships only the unminified sources.
+const EJS_SCRIPTS = ['emulator.js', 'nipplejs.js', 'shaders.js', 'storage.js', 'gamepad.js',
+  'GameManager.js', 'socket.io.min.js', 'compression.js'];
 
 // --- coi-serviceworker -----------------------------------------------------
 const COI_COMMIT = '7b1d2a092d0d2dd2b7270b6f12f13605de26f214'; // v0.1.7
@@ -170,6 +182,93 @@ async function fetchJsDos() {
   }, null, 2) + '\n');
 }
 
+async function npmPackage(name, version = 'latest') {
+  const res = await fetch(`${EJS_REGISTRY}${name}/${version}`);
+  if (!res.ok) throw new Error(`npm: @emulatorjs/${name}@${version} nicht gefunden (${res.status})`);
+  return res.json();
+}
+
+async function npmFiles(meta) {
+  const tarball = join(VENDOR, 'emulatorjs', `${meta.name.split('/')[1]}-${meta.version}.tgz`);
+  await download(meta.dist.tarball, tarball);
+  return readTar(gunzipSync(await readFile(tarball)));
+}
+
+async function fetchEmulatorJs() {
+  const loader = await npmPackage('emulatorjs');
+  const version = loader.version;
+  console.log(`EmulatorJS ${version} (neueste stabile Version)`);
+  const out = join(SITE, 'emulatorjs');
+  const data = join(out, 'data');
+
+  const files = await npmFiles(loader);
+  for (const [name, content] of files) {
+    if (!name.startsWith('package/data/') || name.startsWith('package/data/cores/')) continue;
+    await writeOut(join(data, name.slice('package/data/'.length)), content);
+  }
+  const scripts = EJS_SCRIPTS.map((f) => {
+    const content = files.get(`package/data/src/${f}`);
+    if (!content) throw new Error(`Im EmulatorJS-Paket fehlt: data/src/${f}`);
+    return new TextDecoder().decode(content);
+  });
+  await writeOut(join(data, 'emulator.min.js'), scripts.join(';\n'));
+  await writeOut(join(data, 'emulator.min.css'), files.get('package/data/emulator.css'));
+  await writeOut(join(out, 'LICENSE-GPL-3.0.txt'), files.get('package/LICENSE'));
+
+  const cores = [];
+  for (const core of CORES) {
+    const meta = await npmPackage(`core-${core}`, version).catch(() => npmPackage(`core-${core}`));
+    const coreFiles = await npmFiles(meta);
+    let count = 0;
+    for (const [name, content] of coreFiles) {
+      if (name.endsWith('.data')) {
+        await writeOut(join(data, 'cores', name.slice('package/'.length)), content);
+        count++;
+      } else if (name.startsWith('package/reports/')) {
+        await writeOut(join(data, 'cores', 'reports', name.slice('package/reports/'.length)), content);
+      }
+    }
+    if (count === 0) throw new Error(`Core ${core}: keine .data-Dateien gefunden`);
+    const repo = (meta.repository?.url || '').replace(/^git\+/, '').replace(/\.git$/, '');
+    cores.push({ core, version: meta.version, repo, license: meta.license || '' });
+    console.log(`  core ${core} ${meta.version}`);
+  }
+
+  const source = `https://github.com/EmulatorJS/EmulatorJS/archive/refs/tags/v${version}.tar.gz`;
+  await download(source, join(out, 'source', `EmulatorJS-${version}-source.tar.gz`));
+  await writeOut(join(out, 'version.json'), JSON.stringify({ version, source, cores }, null, 2) + '\n');
+  await writeOut(join(out, 'cores.html'), coresPage(version, source, cores));
+}
+
+/** Credits page listing every libretro core with its source repository. */
+function coresPage(version, source, cores) {
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const systemsOf = (core) => SYSTEMS.filter((s) => s.core === core).map((s) => s.label).join(', ');
+  const rows = cores.map((c) => `<tr><td>${esc(systemsOf(c.core))}</td><td><code>${esc(c.core)}</code></td>`
+    + `<td>${esc(c.version)}</td><td><a href="${esc(c.repo)}">${esc(c.repo.replace('https://github.com/', ''))}</a></td>`
+    + `<td>${esc(c.license)}</td></tr>`).join('\n');
+  return `<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><title>WebExe – EmulatorJS-Cores</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>body{font:15px/1.5 system-ui,sans-serif;margin:2rem auto;max-width:1000px;padding:0 1rem}
+table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #ccc;padding:.35rem .5rem;text-align:left}
+code{font-size:.9em}</style></head><body>
+<h1>Konsolen- und Heimcomputer-Emulation</h1>
+<p>WebExe nutzt <a href="https://emulatorjs.org">EmulatorJS</a> ${esc(version)}
+(<a href="https://github.com/EmulatorJS/EmulatorJS">GitHub</a>, GPL-3.0,
+<a href="LICENSE-GPL-3.0.txt">Lizenz</a>, <a href="source/EmulatorJS-${esc(version)}-source.tar.gz">Quellcode</a>)
+mit den folgenden libretro-Cores. Sie werden unverändert aus den npm-Paketen <code>@emulatorjs/core-*</code>
+übernommen. Jede Core-Datei enthält ihren eigenen Lizenztext; der Quellcode liegt in den verlinkten Repositories.
+Einige Cores (z. B. Snes9x, Genesis Plus GX, PicoDrive, FBNeo, MAME 2003-Plus) erlauben keine kommerzielle Nutzung.</p>
+<table><thead><tr><th>System</th><th>Core</th><th>Version</th><th>Quellcode</th><th>Lizenzdatei</th></tr></thead>
+<tbody>
+${rows}
+</tbody></table>
+<p><a href="../">Zurück zu WebExe</a></p>
+</body></html>
+`;
+}
+
 async function fetchCoi() {
   console.log('coi-serviceworker');
   await download(
@@ -181,6 +280,7 @@ async function fetchCoi() {
 async function main() {
   await fetchBoxedwine();
   await fetchJsDos();
+  await fetchEmulatorJs();
   await fetchCoi();
   console.log('Fertig.');
 }

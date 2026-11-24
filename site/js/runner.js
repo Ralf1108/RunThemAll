@@ -84,6 +84,9 @@ export class Runner {
 
   /** Enters fullscreen mode. */
   fullscreen() {}
+
+  /** Whether changed files can be read back (save as ZIP / write back to folder). */
+  get supportsFileSync() { return true; }
 }
 
 /** Downloads a file and reports progress. */

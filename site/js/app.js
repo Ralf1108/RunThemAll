@@ -1,7 +1,9 @@
 import { fromDataTransfer, fromDirectoryHandle, fromFileList, findPrograms, totalSize } from './workspace.js';
 import { WindowsRunner, canUseThreads, clearPersistentStorage } from './emulator.js';
 import { DosRunner } from './dos.js';
+import { EmulatorJsRunner, findBiosInWorkspace } from './ejs.js';
 import { KIND_LABELS } from './exe.js';
+import { SYSTEMS, SYSTEM_BY_ID } from './systems.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -14,6 +16,10 @@ let workspace = null;
 let programs = [];
 /** @type {import('./runner.js').Runner|null} */
 let emulator = null;
+/** BIOS files chosen by the user for the selected game. */
+let chosenBios = [];
+
+const EMULATOR_NAMES = { dos: 'DOSBox', windows: 'Boxedwine', emulatorjs: 'EmulatorJS' };
 
 function formatSize(bytes) {
   if (bytes < 1024) return `${bytes} B`;
@@ -36,7 +42,7 @@ async function openWorkspace(loader) {
     const ws = await loader();
     if (!ws || ws.files.length === 0) throw new Error('Keine Dateien gefunden.');
     const found = await findPrograms(ws);
-    if (found.length === 0) throw new Error('Keine ausführbare Datei (.exe, .com oder .bat) gefunden.');
+    if (found.length === 0) throw new Error('Kein startbares Programm oder Spiel gefunden.');
     workspace = ws;
     programs = found;
     showChooser();
@@ -108,20 +114,84 @@ function showChooser() {
     size.textContent = formatSize(p.size);
     const kind = document.createElement('span');
     kind.className = `kind ${p.emulator}`;
-    kind.textContent = p.kind === 'bat' || p.kind === 'unknown'
-      ? `${KIND_LABELS[p.kind]} (${p.emulator === 'dos' ? 'DOS' : 'Windows'})`
-      : KIND_LABELS[p.kind];
-    kind.title = p.emulator === 'dos' ? 'Läuft mit DOSBox' : 'Läuft mit Boxedwine';
+    if (p.kind === 'game') {
+      kind.textContent = SYSTEM_BY_ID.get(p.systems[0]).label + (p.systems.length > 1 ? ' ?' : '');
+    } else if (p.kind === 'bat' || p.kind === 'unknown') {
+      kind.textContent = `${KIND_LABELS[p.kind]} (${p.emulator === 'dos' ? 'DOS' : 'Windows'})`;
+    } else {
+      kind.textContent = KIND_LABELS[p.kind];
+    }
+    kind.title = `Läuft mit ${EMULATOR_NAMES[p.emulator]}`;
     label.append(radio, name, kind, size);
     label.addEventListener('dblclick', () => start());
+    radio.addEventListener('change', updateSystemPanel);
     li.append(label);
     return li;
   }));
 
   $('pick').hidden = true;
   $('choose').hidden = false;
+  updateSystemPanel();
   $('btn-start').focus();
 }
+
+function selectedProgram() {
+  const selected = document.querySelector('input[name="program"]:checked');
+  return programs.find((p) => p.path === selected?.value);
+}
+
+/** Shows system choice and BIOS hints for console/home computer games. */
+function updateSystemPanel() {
+  const program = selectedProgram();
+  const panel = $('system-panel');
+  panel.hidden = program?.kind !== 'game';
+  if (panel.hidden) return;
+
+  chosenBios = [];
+  $('bios-chosen').textContent = '';
+  const select = $('opt-system');
+  const candidates = program.systems.map((id) => SYSTEM_BY_ID.get(id));
+  const others = SYSTEMS.filter((s) => !program.systems.includes(s.id));
+  const option = (s) => Object.assign(document.createElement('option'), { value: s.id, textContent: s.label });
+  const group = Object.assign(document.createElement('optgroup'), { label: 'Andere Systeme' });
+  group.append(...others.map(option));
+  select.replaceChildren(...candidates.map(option), group);
+  select.value = candidates[0].id;
+  updateBiosInfo();
+}
+
+function updateBiosInfo() {
+  const system = SYSTEM_BY_ID.get($('opt-system').value);
+  const bios = system.bios;
+  const info = $('bios-info');
+  const found = findBiosInWorkspace(system, workspace).map((f) => f.path.split('/').pop());
+  const have = [...found, ...chosenBios.map((f) => f.name)];
+  let text;
+  let warn = false;
+  if (!bios || (bios.files.length === 0 && !bios.builtin)) {
+    text = 'Kein BIOS nötig.';
+  } else if (have.length) {
+    text = `BIOS: ${have.join(', ')}`;
+  } else if (bios.required) {
+    text = `Benötigt eine BIOS-Datei: ${bios.files.join(', ')}. Lege sie mit ins ZIP/in den Ordner oder füge sie hier hinzu.`;
+    warn = true;
+  } else {
+    text = [bios.builtin ? `Kein BIOS nötig (${bios.builtin}).` : 'Kein BIOS nötig.',
+      bios.note, bios.files.length ? `Optional: ${bios.files.join(', ')}` : ''].filter(Boolean).join(' ');
+  }
+  info.textContent = text;
+  info.classList.toggle('warn', warn);
+  $('btn-bios').hidden = !bios || bios.files.length === 0;
+}
+
+$('opt-system').addEventListener('change', updateBiosInfo);
+$('btn-bios').addEventListener('click', () => $('input-bios').click());
+$('input-bios').addEventListener('change', (e) => {
+  chosenBios = [...e.target.files];
+  $('bios-chosen').textContent = chosenBios.map((f) => f.name).join(', ');
+  e.target.value = '';
+  updateBiosInfo();
+});
 
 $('btn-reset').addEventListener('click', () => {
   workspace = null;
@@ -187,23 +257,29 @@ function message(text) {
 }
 
 async function start() {
-  const selected = document.querySelector('input[name="program"]:checked');
-  const program = programs.find((p) => p.path === selected?.value);
+  const program = selectedProgram();
   if (!workspace || !program) return;
   const opts = readOptions();
+  if (program.kind === 'game') {
+    opts.system = $('opt-system').value;
+    opts.biosFiles = chosenBios;
+  }
 
   $('choose').hidden = true;
   $('run').hidden = false;
-  $('run-title').textContent = `${program.path} (${program.emulator === 'dos' ? 'DOSBox' : 'Boxedwine'})`;
-  $('btn-writeback').hidden = !workspace.dirHandle;
+  const what = program.kind === 'game' ? SYSTEM_BY_ID.get(opts.system).label : EMULATOR_NAMES[program.emulator];
+  $('run-title').textContent = `${program.path} (${what})`;
 
-  const ui = { canvas: $('canvas'), dosContainer: $('dos-container'), status, log };
+  const ui = { canvas: $('canvas'), dosContainer: $('dos-container'), ejsContainer: $('ejs-container'), status, log };
   if (program.kind === 'win16' && opts.wine === 'wine11') {
     // The Wine 11 file system of the web release has no 16-bit Windows support.
     opts.wine = 'wine6';
     log('16-Bit-Programm: Wine 11 unterstützt hier kein Win16, verwende Wine 6.', false);
   }
-  emulator = program.emulator === 'dos' ? new DosRunner(ui) : new WindowsRunner(ui);
+  const Runner = { dos: DosRunner, windows: WindowsRunner, emulatorjs: EmulatorJsRunner }[program.emulator];
+  emulator = new Runner(ui);
+  $('btn-download').hidden = !emulator.supportsFileSync;
+  $('btn-writeback').hidden = !emulator.supportsFileSync || !workspace.dirHandle;
   try {
     await emulator.start(workspace, program.path, opts);
   } catch (err) {
@@ -269,6 +345,15 @@ fetch('jsdos/version.json')
       a.textContent = src.replace(/^source\//, '').replace(/-source\.tar\.gz$/, '');
       return i ? [', ', a] : [a];
     }));
+  })
+  .catch(() => {});
+
+fetch('emulatorjs/version.json')
+  .then((r) => (r.ok ? r.json() : null))
+  .then((v) => {
+    if (!v) return;
+    $('ejs-version').textContent = v.version;
+    $('ejs-source').href = `emulatorjs/source/EmulatorJS-${v.version}-source.tar.gz`;
   })
   .catch(() => {});
 

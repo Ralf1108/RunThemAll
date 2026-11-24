@@ -1,12 +1,13 @@
 # WebExe – Spezifikation
 
-Stand: 24.11.2026 (vor der Integration von EmulatorJS)
+Stand: 24.11.2026
 
 ## 1. Ziel
 
-WebExe ist eine statische Webseite, mit der man alte Software direkt im Browser startet:
-Datei, ZIP oder Ordner öffnen, Programm auswählen, starten. Der Nutzer soll so wenig wie
-möglich tun müssen: keine Installation, keine Konfiguration, keine Konten.
+WebExe ist eine statische Webseite, mit der man alte Software und Spiele direkt im Browser startet:
+DOS- und Windows-Programme sowie Spiele für Heimcomputer (C64, Amiga, …) und Konsolen.
+Datei, ZIP oder Ordner öffnen, Programm oder Spiel auswählen, starten. Der Nutzer soll so wenig
+wie möglich tun müssen: keine Installation, keine Konfiguration, keine Konten.
 
 WebExe ist ein **Aggregator**. Die Emulation stammt vollständig aus fremden Open-Source-Projekten,
 die unverändert eingebunden werden. WebExe liefert nur:
@@ -24,20 +25,24 @@ die unverändert eingebunden werden. WebExe liefert nur:
 | Kein Backend | Reine statische Seite, lauffähig auf GitHub Pages. |
 | Keine fremden Binärdateien im Repository | Emulatoren werden beim Build aus den offiziellen Releases bzw. npm-Paketen geladen (`scripts/fetch-runtimes.mjs`). |
 | Upstream unverändert | Emulator-Dateien werden nicht verändert. Fehlende Teile werden nur ergänzt (z. B. Overlay mit Wine-16-Bit-Modulen). |
-| Lizenzen einhalten | Zu jeder GPL-Komponente werden Lizenztext und Quellcode der genau verwendeten Version mit veröffentlicht. WebExe selbst ist MIT-lizenziert. |
-| Keine Datenweitergabe | Emulatoren werden so konfiguriert, dass sie ihre Dateien von der eigenen Seite laden und nichts an Dritte senden. |
+| Lizenzen einhalten | Zu jeder Komponente werden Lizenztext und Quellcode (bzw. Quellcode-Verweis) der verwendeten Version mit veröffentlicht. WebExe selbst ist MIT-lizenziert. |
+| Keine Datenweitergabe | Emulatoren werden so konfiguriert, dass sie ihre Dateien von der eigenen Seite laden und keine Nutzerdaten an Dritte senden. |
+| Keine geschützten BIOS-Dateien | WebExe liefert keine Original-BIOS aus. Freie Ersatz-BIOS werden genutzt, wo es sie gibt. |
 | Keine Abhängigkeiten | Kein Framework und kein Build-Schritt für die Seite selbst. Node.js wird nur für die Skripte gebraucht. |
 
 ## 3. Nutzerablauf
 
-1. **Öffnen**: per Dateiauswahl (EXE, COM, BAT oder ZIP), Ordnerauswahl oder Drag & Drop.
+1. **Öffnen**: per Dateiauswahl (beliebige Datei oder ZIP), Ordnerauswahl oder Drag & Drop.
    - Ein einzelnes ZIP wird im Browser entpackt.
    - Ein gemeinsamer Wurzelordner wird entfernt (`Spiel/SPIEL.EXE` wird zu `SPIEL.EXE`).
    - In Chrome/Edge wird ein Ordner über die File System Access API mit Schreibrecht geöffnet,
      in anderen Browsern über `<input webkitdirectory>` (nur lesend).
 2. **Auswählen**: Liste aller startbaren Dateien mit erkanntem Typ (DOS, Windows 16-Bit,
-   Windows 32-Bit, Batchdatei). Die wahrscheinlichste steht oben: flache Pfade vor tiefen,
-   `.exe` vor `.com` vor `.bat`, Installations- und Deinstallationsprogramme zuletzt.
+   Windows 32-Bit, Batchdatei oder ein System wie „Commodore 64“, „Amiga“). Die wahrscheinlichste
+   steht oben: flache Pfade vor tiefen, `.exe`/Spiele vor `.com` vor `.bat`, Installations- und
+   Deinstallationsprogramme zuletzt. Bei Spielen zeigt ein Bereich unter der Liste das System
+   (änderbar, wahrscheinlichste Kandidaten zuerst) und den BIOS-Status; eine BIOS-Datei kann dort
+   hinzugefügt werden.
 3. **Optionen** (aufklappbar, werden in `localStorage` gespeichert):
    - Windows: Wine-Version, Single-/Multithread, Auflösung, Farbtiefe, Laufwerk C: behalten
    - DOS: CPU-Geschwindigkeit (Zyklen)
@@ -47,8 +52,12 @@ die unverändert eingebunden werden. WebExe liefert nur:
    - *In Ordner zurückschreiben* (nur bei Ordnern mit Schreibrecht): neue und geänderte Dateien
      in den Originalordner schreiben. Es wird nie etwas gelöscht.
    - *Vollbild*, *Beenden* (lädt die Seite neu)
+   - Bei EmulatorJS sind *Sichern* und *Zurückschreiben* ausgeblendet; Spielstände und Savestates
+     verwaltet das Menü von EmulatorJS.
 
-## 4. Erkennung des Programmtyps
+## 4. Erkennung
+
+### 4.1 DOS- und Windows-Programme
 
 Die Erkennung (`site/js/exe.js`) liest nur den Dateikopf.
 
@@ -61,6 +70,31 @@ Die Erkennung (`site/js/exe.js`) liest nur den Dateikopf.
 | `MZ` + `NE` an `e_lfanew` | Windows 16-Bit | Boxedwine (immer Wine 6) |
 | `MZ` + `LE`/`LX` oder unbekannt | DOS (DOS-Extender wie DOS/4GW) | js-dos |
 | Endung `.bat` | Windows, wenn im Ordner Windows-Programme liegen, sonst DOS | |
+
+### 4.2 Spiele für Konsolen und Heimcomputer
+
+`site/js/systems.js` enthält die Systemtabelle (System, Core, Endungen, BIOS, Core-Optionen) und
+`detectSystems()`. Geprüft werden nur Dateien mit bekannter Endung oder mit mehrdeutiger Endung
+(`bin`, `iso`, `img`, `rom`, `cue`, `chd`, `tap`, `dsk`, `sna`, `zip`, `7z`). Bekannte BIOS-Dateien
+werden nicht als Spiel gelistet. Gelesen werden die ersten 64 KB.
+
+Reihenfolge der Erkennung:
+
+1. Eindeutige Magic Bytes, z. B. `NES` + `0x1A` (NES), `FDS` + `0x1A`, `C64 CARTRIDGE`,
+   `C64-TAPE-RAW`, `C64 tape image`, `GCR-1541`, `DMS!`/`CAPS`/`RDSK` (Amiga), `LYNX`, `ATARI7800`,
+   `MV - CPC`/`EXTENDED CPC DSK`, `ZXST`, `ZXTape!` (Spectrum, bei `.cdt` CPC), `CISO` (PSP),
+   die drei N64-Byte-Reihenfolgen, Nintendo-Logo an `0x104` (Game Boy), `0x04` (GBA), `0xC0` (DS),
+   `SEGA 32X`/`SEGA` an `0x100` (32X/Mega Drive), SMD-Kopf.
+2. CD-Abbilder: Kennungen in den ersten Sektoren (`SEGADISCSYSTEM`, `SEGA SEGASATURN`, `PSP GAME`,
+   `PLAYSTATION`, 3DO-Kopf).
+3. `TMR SEGA` bei `0x7FF0`/`0x3FF0`/`0x1FF0`; der Regionscode trennt Master System und Game Gear.
+4. Inhalt und Größe bei Disketten (ADF 880 KB/1,76 MB mit `DOS`-Bootblock, D64-Größen).
+5. Dateiendung.
+6. Mehrdeutige Endungen ohne Treffer liefern mehrere Kandidaten (z. B. `.cue` → PlayStation,
+   Mega-CD, Saturn, PC Engine, 3DO, PC-FX); der Nutzer wählt im Auswahlbereich.
+
+CD-Spuren (`bin`/`img`/`iso`) in Ordnern mit `.cue` werden nicht einzeln gelistet. Gestartet wird
+über die `.cue`, die mit allen referenzierten Spuren als ZIP an EmulatorJS geht.
 
 ## 5. Emulatoren
 
@@ -90,27 +124,59 @@ Die Erkennung (`site/js/exe.js`) liest nur den Dateikopf.
   Kurznamen abgebildet (`Langes Verzeichnis` → `LANGES~1`) und beim Sichern zurückübersetzt.
 - Geänderte Dateien werden über `ci.fsTree()` und `ci.fsReadFile()` gelesen.
 
-### 5.3 Gemeinsame Laufzeitlogik
+### 5.3 Konsolen und Heimcomputer: EmulatorJS
+
+- Quelle: npm-Paket `@emulatorjs/emulatorjs` in der **neuesten stabilen Version** (npm-Tag `latest`,
+  derzeit 4.2.3) und pro Core ein Paket `@emulatorjs/core-<name>` derselben Version.
+- Ausgeliefert: `emulatorjs/data/` (Lader, Quellen, Lokalisierung, Entpacker) und
+  `data/cores/*.data` (je Core vier Varianten: mit/ohne Threads, WebGL2/Legacy) sowie `cores/reports/`.
+  Weil das npm-Paket keine minifizierten Dateien enthält, fügt das Build-Skript die Quellen in der
+  Reihenfolge aus `loader.js` zu `emulator.min.js` zusammen (Inhalt unverändert).
+- Ein Core pro System (35 Cores, ca. 200 MB). `dosbox_pure` wird nicht genutzt, DOS läuft über js-dos.
+- Start: globale `EJS_*`-Variablen setzen und `data/loader.js` laden:
+  `EJS_core` = Core-Name, `EJS_gameUrl` = `File`-Objekt des Spiels (Dateiname bleibt erhalten),
+  `EJS_biosUrl` = Blob-URL eines ZIP mit allen BIOS-Dateien (EmulatorJS entpackt es; ein `File`-Objekt
+  wäre hier fehlerhaft), `EJS_defaultOptions` = Core-Optionen aus der Systemtabelle,
+  `EJS_language: 'de-GER'`, `EJS_startOnLoaded: true`, Netplay ausgeblendet.
+- BIOS: Dateien mit passendem Namen aus dem geöffneten ZIP/Ordner werden automatisch genutzt,
+  zusätzlich vom Nutzer gewählte. Fehlt ein *erforderliches* BIOS, startet das Spiel nicht und es
+  erscheint ein Hinweis. Freie Ersatz-BIOS sind in den Cores enthalten: AROS-Kickstart in PUAE,
+  HLE-BIOS in mGBA, melonDS, PCSX ReARMed und Yabause; die Commodore-, Sinclair- und Amstrad-ROMs
+  liefern VICE, Fuse und Caprice32 selbst mit. Für Mega-CD, Atari 5200, Lynx, PC-FX, ColecoVision
+  und 3DO gibt es keinen freien Ersatz.
+- Core-Optionen: VICE-Systeme mit `vice_autoloadwarp: enabled` (Warp während des automatischen Ladens,
+  die Laufwerksemulation bleibt originalgetreu). Ohne diese Option dauert das Laden von C64-Disketten
+  mehrere Minuten.
+- Credits: `emulatorjs/cores.html` wird beim Build aus den npm-Metadaten erzeugt (System, Core, Version,
+  Quellcode-Repository, Lizenzdatei).
+- Externe Anfrage: EmulatorJS prüft beim Start `cdn.emulatorjs.org/stable/data/version.json`
+  (Versionshinweis, keine Nutzerdaten). Alle Emulator-Dateien kommen von der eigenen Seite.
+
+### 5.4 Gemeinsame Laufzeitlogik
 
 `site/js/runner.js` enthält die Basisklasse `Runner`:
 
 - merkt sich beim Start Größe und CRC32 jeder Nutzerdatei,
 - `changedFiles()` vergleicht den aktuellen Stand im Emulator damit,
 - `downloadChanges()` erzeugt ein ZIP (eigener ZIP-Schreiber in `zip.js`),
-- `writeBack()` schreibt über die File System Access API in den Originalordner.
+- `writeBack()` schreibt über die File System Access API in den Originalordner,
+- `supportsFileSync` gibt an, ob Sichern/Zurückschreiben möglich ist (bei EmulatorJS nicht).
 
 ## 6. Build und Auslieferung
 
 - `scripts/fetch-runtimes.mjs` lädt alle Emulatoren nach `site/` (nicht im Git):
-  `site/boxedwine/`, `site/jsdos/`, `site/coi-serviceworker.js`.
+  `site/boxedwine/`, `site/jsdos/`, `site/emulatorjs/`, `site/coi-serviceworker.js`.
   Downloads werden in `vendor/` zwischengespeichert. ZIP und tar werden ohne externe Werkzeuge
   in Node entpackt.
 - Zu jeder Komponente werden der Lizenztext und die Quellcode-Archive der verwendeten Version
-  abgelegt (`*/LICENSE-GPL-2.0.txt`, `*/source/`). Der Footer der Seite verlinkt sie.
+  abgelegt (`*/LICENSE-*.txt`, `*/source/`). Der Footer der Seite verlinkt sie.
 - `.github/workflows/pages.yml`: bei jedem Push auf `main` Skript ausführen und `site/` auf
   GitHub Pages veröffentlichen. `vendor/` wird zwischengespeichert.
-- Versionen sind derzeit fest eingetragen (Boxedwine 26R1.0, js-dos 8.5.4), weil die
-  Integration davon abhängt (Dateinamen im Release, Win16-Overlay, Kurzname-Logik).
+- EmulatorJS wird immer in der neuesten stabilen Version geladen. Boxedwine (26R1.0) und js-dos
+  (8.5.4) sind fest eingetragen, weil die Integration von ihrem Aufbau abhängt (Dateinamen im
+  Release, Win16-Overlay, js-dos-API).
+- Größe der veröffentlichten Seite: ca. 400 MB (Boxedwine ~130 MB, EmulatorJS ~200 MB, js-dos ~6 MB,
+  Quellcode-Archive). Das Limit von GitHub Pages liegt bei 1 GB.
 
 ### Cross-Origin-Isolation
 
@@ -126,11 +192,13 @@ Ohne Service Worker wird automatisch der Singlethreaded-Build genutzt.
 site/
   index.html, style.css     Oberfläche (CSS-Klassen mit Präfix wx-, damit js-dos/daisyUI nicht stört)
   js/app.js                 Oberflächenlogik
-  js/workspace.js           Dateien, ZIPs und Ordner einlesen, Programme finden und bewerten
+  js/workspace.js           Dateien, ZIPs und Ordner einlesen, Programme und Spiele finden
   js/exe.js                 Erkennung DOS/Win16/Win32
+  js/systems.js             Systemtabelle und Erkennung für Konsolen/Heimcomputer
   js/runner.js              Basisklasse, Sichern und Zurückschreiben
   js/emulator.js            Boxedwine-Anbindung (WindowsRunner)
   js/dos.js                 js-dos-Anbindung (DosRunner), 8.3-Kurznamen
+  js/ejs.js                 EmulatorJS-Anbindung (EmulatorJsRunner), BIOS-Übergabe
   js/zip.js                 ZIP lesen (stored/deflate) und schreiben
 scripts/
   fetch-runtimes.mjs        Emulatoren, Lizenzen und Quellcode laden
@@ -149,10 +217,15 @@ THIRD_PARTY_NOTICES.md      Lizenzen und Herkunft aller fremden Komponenten
 | Colonization für Windows (Win16, WinG) | läuft mit Wine 6 + Win16-Overlay |
 | Selbst gebaute DOS-COM und DOS-EXE in langem Ordnernamen | laufen, `SAVE.TXT` wird mit Originalpfad gesichert |
 | ZIP mit DOS- und Windows-Programmen gemischt | Typen korrekt erkannt |
+| Great Giana Sisters (`.d64`, C64) | als C64 erkannt, lädt mit Warp, Intro nach ca. 45–90 s |
+| Dogs of War (`.adf`, Amiga) | als Amiga erkannt, Titelbild mit freiem AROS-Kickstart |
 
-Nicht getestet: Drag & Drop, Zurückschreiben in Ordner, DOS/4GW-Programme.
+Nicht getestet: Drag & Drop, Zurückschreiben in Ordner, DOS/4GW-Programme, alle Konsolen und
+übrigen Heimcomputer, BIOS-Übergabe, CD-Abbilder mit `.cue`.
 
-## 9. Geplant
+## 9. Offene Punkte
 
-Integration von EmulatorJS für Konsolen und Heimcomputer (C64, Amiga, NES, SNES, Game Boy usw.)
-mit Erkennung über Dateiendung und Magic Bytes, siehe nächster Abschnitt nach Umsetzung.
+- Übrige Systeme testen (Konsolen, Spectrum, CPC, CD-Abbilder, Arcade).
+- Arcade-ROM-ZIPs: Ein einzeln geöffnetes ZIP wird derzeit immer entpackt; Arcade-Spiele brauchen das
+  ZIP unverändert. Nur ZIPs innerhalb eines Ordners werden als Arcade-Kandidat erkannt.
+- Spielstände von EmulatorJS werden im Browser (IndexedDB) gespeichert, nicht in den geöffneten Ordner.

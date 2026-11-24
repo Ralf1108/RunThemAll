@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>WebExe – Windows- und DOS-Programme im Browser</title>
-  <meta name="description" content="Alte DOS- und Windows-Programme (16/32 Bit) direkt im Browser ausführen. Nichts wird hochgeladen.">
+  <title>WebExe – alte Programme und Spiele im Browser</title>
+  <meta name="description" content="Alte DOS- und Windows-Programme sowie Konsolen- und Heimcomputer-Spiele direkt im Browser ausführen. Nichts wird hochgeladen.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='5' width='26' height='22' rx='3' fill='%233b6fd8'/%3E%3Crect x='6' y='10' width='20' height='14' rx='1' fill='white'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="style.css">
   <!-- Adds COOP/COEP headers via service worker where the server cannot (e.g. GitHub Pages). -->
@@ -14,7 +14,7 @@
   <header class="site-header">
     <div class="wrap">
       <h1 class="logo"><span class="logo-mark" aria-hidden="true"></span>WebExe</h1>
-      <p class="tagline">Alte DOS- und Windows-Programme direkt im Browser ausführen. Deine Dateien bleiben auf deinem Rechner.</p>
+      <p class="tagline">Alte DOS- und Windows-Programme, C64-, Amiga- und Konsolenspiele direkt im Browser starten. Deine Dateien bleiben auf deinem Rechner.</p>
     </div>
   </header>
 
@@ -23,7 +23,7 @@
     <section id="pick" class="wx-card">
       <h2>1. Programm öffnen</h2>
       <div id="dropzone" class="dropzone" tabindex="0">
-        <p class="dz-title">EXE, ZIP oder Ordner hierher ziehen</p>
+        <p class="dz-title">Programm, Spiel, ZIP oder Ordner hierher ziehen</p>
         <p class="dz-or">oder</p>
         <div class="buttons">
           <button type="button" id="btn-files" class="wx-btn wx-primary">Datei / ZIP öffnen …</button>
@@ -31,7 +31,7 @@
         </div>
         <p id="folder-hint" class="hint"></p>
       </div>
-      <input type="file" id="input-files" multiple hidden accept=".exe,.com,.zip,.bat,application/zip">
+      <input type="file" id="input-files" multiple hidden>
       <input type="file" id="input-folder" webkitdirectory hidden>
       <p id="pick-error" class="error" hidden></p>
     </section>
@@ -44,6 +44,18 @@
       </div>
       <p id="ws-summary" class="muted"></p>
       <ul id="program-list" class="program-list" role="radiogroup" aria-label="Programme"></ul>
+
+      <div id="system-panel" class="system-panel" hidden>
+        <label>System
+          <select id="opt-system"></select>
+        </label>
+        <p id="bios-info" class="hint"></p>
+        <div class="bios-row">
+          <button type="button" id="btn-bios" class="wx-btn wx-small">BIOS-Datei hinzufügen …</button>
+          <span id="bios-chosen" class="hint"></span>
+        </div>
+        <input type="file" id="input-bios" multiple hidden>
+      </div>
 
       <details class="options">
         <summary>Optionen</summary>
@@ -122,6 +134,7 @@
       <div class="screen">
         <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1" hidden></canvas>
         <div id="dos-container" class="dos-container" hidden></div>
+        <div id="ejs-container" class="ejs-container" hidden></div>
       </div>
       <p id="run-message" class="hint"></p>
       <details class="console">
@@ -140,7 +153,10 @@
         <a href="boxedwine/LICENSE-GPL-2.0.txt">Lizenz</a>, <a id="bw-source" href="boxedwine/">Quellcode</a>)
         und Wine (LGPL), DOS-Programme mit <a href="https://js-dos.com" rel="noopener">js-dos</a>
         <span id="jsdos-version"></span> und DOSBox (GPL-2.0:
-        <a href="jsdos/LICENSE-GPL-2.0.txt">Lizenz</a>, Quellcode: <span id="jsdos-sources"></span>).
+        <a href="jsdos/LICENSE-GPL-2.0.txt">Lizenz</a>, Quellcode: <span id="jsdos-sources"></span>),
+        Konsolen und Heimcomputer mit <a href="https://emulatorjs.org" rel="noopener">EmulatorJS</a>
+        <span id="ejs-version"></span> und den <a href="emulatorjs/cores.html">libretro-Cores</a> (GPL-3.0:
+        <a href="emulatorjs/LICENSE-GPL-3.0.txt">Lizenz</a>, <a id="ejs-source" href="emulatorjs/">Quellcode</a>).
       </p>
       <p>
         Alles läuft lokal in deinem Browser, es werden keine Dateien hochgeladen.
