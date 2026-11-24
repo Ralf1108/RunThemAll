@@ -251,6 +251,22 @@ Nicht getestet: Drag & Drop, Zurückschreiben in Ordner, DOS/4GW-Programme, alle
 
 ## 9. Offene Punkte
 
+### Nächste Schritte (Stand 24.11.2026)
+
+1. **Name festlegen**: Arbeitsname ist „Run Them All“ (vorher „WebExe“). Weitere Vorschläge: „Insert Disk“,
+   „RetroDrop“. Vor der Entscheidung prüfen, ob der Name auf GitHub, als Domain und als Marke frei ist.
+   Bei einer Umbenennung alle Vorkommen ersetzen (Dokumentation, `site/index.html`, `package.json`,
+   `scripts/*.mjs`, interne Schlüssel wie `runthemall-options`).
+2. **GitHub-Repository anlegen** (leer, ohne README/Lizenz) und pushen:
+   `git remote add origin https://github.com/<name>/<repo>.git` und `git push -u origin main`.
+3. **GitHub Pages aktivieren**: Settings → Pages → Source „GitHub Actions“.
+4. **Ersten Deploy prüfen**: Der erste Lauf dauert ca. 15 Minuten (boxedwine.org ist langsam). Danach die
+   veröffentlichte Seite testen: Demos starten, Service Worker aktiviert Multithreading
+   (`crossOriginIsolated`), Seitengröße unter 1 GB.
+5. Der lokale Projektordner heißt noch `WebExe` und kann umbenannt werden.
+
+### Weitere offene Punkte
+
 - Übrige Systeme testen (Konsolen, Spectrum, CPC, CD-Abbilder, Arcade).
 - Arcade-ROM-ZIPs: Ein einzeln geöffnetes ZIP wird derzeit immer entpackt; Arcade-Spiele brauchen das
   ZIP unverändert. Nur ZIPs innerhalb eines Ordners werden als Arcade-Kandidat erkannt.
