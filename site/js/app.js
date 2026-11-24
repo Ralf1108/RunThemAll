@@ -1,3 +1,4 @@
+import { audioSuspended } from './audio.js';
 import { fromDataTransfer, fromDirectoryHandle, fromFileList, findPrograms, totalSize } from './workspace.js';
 import { fetchWithProgress } from './runner.js';
 import { WindowsRunner, canUseThreads, clearPersistentStorage } from './emulator.js';
@@ -299,6 +300,14 @@ function setProgress(loaded, total) {
 function hideLoader() {
   loaderSteps.forEach((li) => { li.classList.remove('active'); li.classList.add('done'); });
   $('loader').hidden = true;
+  // The browser may hold back the sound until the next click or key press (see audio.js).
+  setTimeout(() => {
+    if (!$('opt-sound').checked || !audioSuspended()) return;
+    message('Kein Ton? Einmal ins Bild klicken oder eine Taste drücken, dann gibt der Browser den Ton frei.');
+    const clear = () => setTimeout(() => { if (!audioSuspended()) message(''); }, 300);
+    window.addEventListener('pointerdown', clear, { once: true, capture: true });
+    window.addEventListener('keydown', clear, { once: true, capture: true });
+  }, 2000);
 }
 
 /** @param {object} [overrides] options a demo needs, e.g. a Wine version (not saved as user setting) */

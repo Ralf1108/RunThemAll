@@ -97,7 +97,7 @@
     "author": "LucasArts",
     "homepage": "https://classicdosgames.com/game/Star_Wars:_Dark_Forces.html",
     "license": "Shareware-Demo, kostenlos weitergebbar (README.TXT im ZIP)",
-    "url": "https://classicdosgames.com/files/games/lucasarts/dforces1.zip",
+    "url": "https://classicdosgames.com/online/zip/dforces1.zip",
     "file": "dos/dforces1.zip",
     "start": "DF.EXE"
   },

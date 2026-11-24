@@ -87,8 +87,8 @@ Stand der Recherche: 24.11.2026.
 | System / Emulator | DOS / js-dos (DOSBox) |
 | Autor | LucasArts (1994) |
 | Projektseite | https://classicdosgames.com/game/Star_Wars:_Dark_Forces.html |
-| Download | https://classicdosgames.com/files/games/lucasarts/dforces1.zip |
-| Datei auf der Seite | `demos/dos/dforces1.zip` (3.331.130 Byte, unverändert), gestartet wird `DF.EXE` |
+| Download | https://classicdosgames.com/online/zip/dforces1.zip, die Fassung der Online-Version: Demo plus die optionalen Zwischensequenzen (`dforces2.zip`, `dforces3.zip`) und eine fertige Soundkonfiguration `IMUSE.INI` (Sound Blaster 16). Das Original-ZIP https://classicdosgames.com/files/games/lucasarts/dforces1.zip hat keine Soundkonfiguration, dort bleibt das Spiel ohne Einrichtung stumm. |
+| Datei auf der Seite | `demos/dos/dforces1.zip` (9.913.878 Byte), gestartet wird `DF.EXE` |
 | Lizenz | Demo mit einem spielbaren Level. `README.TXT` im ZIP: LucasArts erlaubt Kopien und elektronische Weitergabe, solange kein Geld dafür verlangt wird. |
 | Hinweis | Läuft (getestet am 25.11.2026). |
 
