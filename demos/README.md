@@ -94,10 +94,12 @@ Stand der Recherche: 24.11.2026.
 | Galactor (Dr. Ludos) | NES | Code MIT, Grafik/Ton CC-BY | https://drludos.itch.io/galactor | nur über itch.io erhältlich |
 | Sprilo (cmrn) | NES | MIT | https://cmrn.itch.io/sprilo | nur über itch.io erhältlich |
 | Jump N Bump, Amiga-Port (earok) | Amiga | GPL-3.0 | https://earok.itch.io/jump-n-bump | nur über itch.io erhältlich |
+| Calculator 2.0 / 1.0 (win31-calc-unified, Juan Sicilia) | Windows 3.x (16 Bit) | MIT ([LICENSE](https://github.com/siciliajuan/win31-calc-unified/blob/HEAD/LICENSE)) | https://github.com/siciliajuan/win31-calc-unified/releases (v2.0.0, 1.0) | stürzt in Boxedwine (Wine 6, Single- und Multithread) direkt beim Start ab („Unhandled page fault on read access to FFFFFFFF“); `SETUP.EXE` aus demselben Release genauso. Gebaut mit Open Watcom, Ursache noch offen (getestet am 24.11.2026) |
 | Tobu Tobu Girl (Simon Larsen) | Game Boy | Code MIT, Grafik CC-BY | https://github.com/SimonLarsen/tobutobugirl | kein Release mit ROM auf GitHub |
 
 ## Offene Fragen
 
+- **Windows-3.x-Demo (16 Bit)**: fehlt noch. Kandidat mit freier Lizenz und fertigem Build war nur der Calculator (siehe oben), der unter Boxedwine abstürzt.
 - **Amiga-Demo**: fehlt noch. Blocky Skies wäre technisch geeignet, braucht aber die Zustimmung des Autors.
 
 ## Format von `demos.json`
