@@ -28,7 +28,7 @@ Stand der Recherche: 24.11.2026.
 | Bezogen von | Boxedwine-Web-Release 26R1.0, Datei `SingleThreaded/ski32.zip` in https://github.com/danoon2/Boxedwine/releases/download/26R1.0/Boxedwine26R1Web.zip |
 | Datei auf der Seite | `demos/windows/ski32.zip` (39.491 Byte), gestartet wird `ski32.exe` |
 | Lizenz | **keine ausdrückliche Lizenz.** Der Autor bietet die 32-Bit-Version auf seiner Seite kostenlos zum Download an, Boxedwine legt sie seinem Release als Beispiel bei. SkiFree erschien 1991 ursprünglich als Microsoft-Produkt (Microsoft Entertainment Pack), das Microsoft beim Autor lizenziert hatte. |
-| Hinweis | Erfüllt Kriterium 1 nicht streng; Aufnahme ist noch zu entscheiden (siehe „Offene Fragen“). |
+| Hinweis | Erfüllt Kriterium 1 nicht streng. **Bewusst beibehalten** (Entscheidung vom 24.11.2026), weil der Autor die Datei selbst kostenlos anbietet und Boxedwine sie mit seinem Release verteilt. Bei einem Einwand des Rechteinhabers wird die Demo entfernt. |
 
 ### ZZT (Reconstruction of ZZT 1.0)
 
@@ -98,8 +98,6 @@ Stand der Recherche: 24.11.2026.
 
 ## Offene Fragen
 
-- **SkiFree**: keine ausdrückliche Lizenz (siehe oben). Entweder ersetzen, beim Autor nachfragen oder
-  bewusst beibehalten, weil Autor und Boxedwine es frei anbieten.
 - **Amiga-Demo**: fehlt noch. Blocky Skies wäre technisch geeignet, braucht aber die Zustimmung des Autors.
 
 ## Format von `demos.json`
