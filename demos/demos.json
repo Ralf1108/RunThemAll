@@ -97,6 +97,19 @@
     "system": "gb"
   },
   {
+    "id": "dosbox",
+    "title": "DOSBox (DOS-Eingabeaufforderung)",
+    "platform": "Betriebssysteme",
+    "emulator": "js-dos (DOSBox)",
+    "description": "Ein leerer DOS-PC mit der Eingabeaufforderung C:> zum Ausprobieren von DOS-Befehlen wie DIR, VER oder MEM.",
+    "author": "DOSBox-Team, js-dos (Alexander Guryanov)",
+    "homepage": "https://www.dosbox.com/",
+    "license": "GPL-2.0",
+    "local": "local/os/DOSBOX.BAT",
+    "file": "os/DOSBOX.BAT",
+    "start": "DOSBOX.BAT"
+  },
+  {
     "id": "tinycore",
     "title": "Tiny Core Linux 17.1",
     "platform": "Betriebssysteme",

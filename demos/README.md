@@ -95,6 +95,14 @@ Stand der Recherche: 24.11.2026.
 | Lizenztext | https://github.com/AntonioND/ucity/blob/master/gpl-3.0.txt |
 | Quellcode | Tag `v1.3` im Projekt-Repository |
 
+### DOSBox (DOS-Eingabeaufforderung)
+
+| | |
+|---|---|
+| System / Emulator | Betriebssystem (DOS) / js-dos (DOSBox) |
+| Datei auf der Seite | `demos/os/DOSBOX.BAT`, eigene Startdatei aus `demos/local/os/` (zeigt eine kurze Hilfe und endet an der Eingabe `C:\>`) |
+| Lizenz | DOSBox und js-dos GPL-2.0 (siehe THIRD_PARTY_NOTICES.md); die Startdatei gehört zu Run Them All (MIT) |
+
 ### Tiny Core Linux 17.1
 
 | | |

@@ -4,6 +4,11 @@ Fast alle Demos werden beim Build aus ihren Original-Releases geladen (siehe [..
 Die Dateien hier sind die Ausnahme: Für sie gibt es keinen festen Download-Link oder kein fertiges
 Format, deshalb liegen sie im Repository. In `demos.json` verweist das Feld `local` auf sie.
 
+## `os/DOSBOX.BAT` – DOS-Eingabeaufforderung
+
+Eigene Startdatei (MIT, Teil von Run Them All). DOSBox führt sie aus, sie zeigt ein paar Befehle und
+endet an der Eingabe `C:\>`. So lässt sich DOSBox wie ein leerer DOS-PC starten.
+
 ## `os/kolibri.img` – KolibriOS 0.7.7.0+8930
 
 | | |
