@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WebExe – Windows-Programme im Browser</title>
+  <meta name="description" content="Alte 16- und 32-Bit-Windows-Programme direkt im Browser ausführen. Nichts wird hochgeladen.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='5' width='26' height='22' rx='3' fill='%233b6fd8'/%3E%3Crect x='6' y='10' width='20' height='14' rx='1' fill='white'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+  <!-- Adds COOP/COEP headers via service worker where the server cannot (e.g. GitHub Pages). -->
+  <script src="coi-serviceworker.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <h1 class="logo"><span class="logo-mark" aria-hidden="true"></span>WebExe</h1>
+      <p class="tagline">Alte Windows-Programme direkt im Browser ausführen. Deine Dateien bleiben auf deinem Rechner.</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- Step 1: choose files -->
+    <section id="pick" class="card">
+      <h2>1. Programm öffnen</h2>
+      <div id="dropzone" class="dropzone" tabindex="0">
+        <p class="dz-title">EXE, ZIP oder Ordner hierher ziehen</p>
+        <p class="dz-or">oder</p>
+        <div class="buttons">
+          <button type="button" id="btn-files" class="btn primary">Datei / ZIP öffnen …</button>
+          <button type="button" id="btn-folder" class="btn">Ordner öffnen …</button>
+        </div>
+        <p id="folder-hint" class="hint"></p>
+      </div>
+      <input type="file" id="input-files" multiple hidden accept=".exe,.zip,.bat,application/zip">
+      <input type="file" id="input-folder" webkitdirectory hidden>
+      <p id="pick-error" class="error" hidden></p>
+    </section>
+
+    <!-- Step 2: choose program + options -->
+    <section id="choose" class="card" hidden>
+      <div class="choose-head">
+        <h2>2. Programm auswählen</h2>
+        <button type="button" id="btn-reset" class="btn small ghost">Andere Dateien wählen</button>
+      </div>
+      <p id="ws-summary" class="muted"></p>
+      <ul id="program-list" class="program-list" role="radiogroup" aria-label="Programme"></ul>
+
+      <details class="options">
+        <summary>Optionen</summary>
+        <div class="option-grid">
+          <label>Wine-Version
+            <select id="opt-wine">
+              <option value="wine6">Wine 6.0 (kompatibler)</option>
+              <option value="wine11">Wine 11.0 (schneller)</option>
+            </select>
+          </label>
+          <label>Ausführung
+            <select id="opt-threads">
+              <option value="auto">Automatisch</option>
+              <option value="st">Singlethreaded</option>
+              <option value="mt">Multithreaded</option>
+            </select>
+          </label>
+          <label>Auflösung
+            <select id="opt-resolution">
+              <option value="">Standard</option>
+              <option>640x480</option>
+              <option>800x600</option>
+              <option>1024x768</option>
+            </select>
+          </label>
+          <label>Farbtiefe
+            <select id="opt-bpp">
+              <option value="32">32 Bit</option>
+              <option value="16">16 Bit</option>
+              <option value="8">8 Bit (256 Farben)</option>
+            </select>
+          </label>
+          <label class="check"><input type="checkbox" id="opt-sound" checked> Ton</label>
+          <label class="check"><input type="checkbox" id="opt-persistent" checked> Laufwerk C: im Browser behalten</label>
+        </div>
+        <p id="thread-info" class="hint"></p>
+      </details>
+
+      <div class="start-row">
+        <button type="button" id="btn-start" class="btn primary large">Starten</button>
+      </div>
+    </section>
+
+    <!-- Step 3: running -->
+    <section id="run" class="run" hidden>
+      <div class="toolbar">
+        <strong id="run-title"></strong>
+        <span class="spacer"></span>
+        <button type="button" id="btn-writeback" class="btn small" hidden>In Ordner zurückschreiben</button>
+        <button type="button" id="btn-download" class="btn small">Geänderte Dateien sichern</button>
+        <button type="button" id="btn-fullscreen" class="btn small">Vollbild</button>
+        <button type="button" id="btn-restart" class="btn small ghost">Beenden</button>
+      </div>
+      <div class="status-row">
+        <span id="status-text">Vorbereiten …</span>
+        <progress id="status-progress" max="1" hidden></progress>
+      </div>
+      <div class="screen">
+        <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
+      </div>
+      <p id="run-message" class="hint"></p>
+      <details class="console">
+        <summary>Konsole</summary>
+        <pre id="console-output"></pre>
+      </details>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>
+        WebExe ist freie Software (<a href="https://opensource.org/license/mit" rel="noopener">MIT</a>).
+        Die Emulation stammt von <a href="https://github.com/danoon2/Boxedwine" rel="noopener">Boxedwine</a>
+        <span id="bw-version"></span> (GPL-2.0):
+        <a href="boxedwine/LICENSE-GPL-2.0.txt">Lizenz</a> ·
+        <a id="bw-source" href="boxedwine/source/">Quellcode</a>.
+        Wine ist unter der LGPL lizenziert.
+      </p>
+      <p>
+        Alles läuft lokal in deinem Browser, es werden keine Dateien hochgeladen.
+        <button type="button" id="btn-clear" class="linklike">Gespeichertes Laufwerk C: löschen</button>
+      </p>
+    </div>
+  </footer>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

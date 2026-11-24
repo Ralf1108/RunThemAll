@@ -3,7 +3,8 @@ node_modules/
 
 # Boxedwine runtime (downloaded from upstream release, not committed)
 vendor/
-public/boxedwine/
+site/boxedwine/
+site/coi-serviceworker.js
 *.wasm
 Boxedwine*Web.zip
 
