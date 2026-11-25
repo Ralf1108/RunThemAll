@@ -74,7 +74,6 @@ export class WindowsRunner extends Runner {
     args.push('-mount_drive', D_DRIVE, 'd');
     if (opts.resolution) args.push('-resolution', opts.resolution);
     if (opts.bpp !== 32) args.push('-bpp', String(opts.bpp));
-    if (!opts.sound) args.push('-nosound');
     args.push('-w', progDir ? `${D_DRIVE_IN_WINE}/${progDir}` : D_DRIVE_IN_WINE);
     args.push('/bin/wine');
     if (/\.bat$/i.test(progName)) args.push('cmd', '/c');
@@ -150,6 +149,13 @@ export class WindowsRunner extends Runner {
     };
     walk(D_DRIVE, '');
     return files;
+  }
+
+  get supportsPause() { return true; }
+
+  setPaused(paused) {
+    if (paused) window.Module?.pauseMainLoop?.();
+    else window.Module?.resumeMainLoop?.();
   }
 
   fullscreen() {

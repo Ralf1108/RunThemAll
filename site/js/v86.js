@@ -92,7 +92,7 @@ export class V86Runner extends Runner {
       bios: buffer('bios/seabios.bin'),
       vga_bios: buffer('bios/vgabios.bin'),
       [slot]: image,
-      disable_speaker: !opts.sound,
+      disable_speaker: false, // muting is done by the sound button (audio.js)
       acpi: false,
       autostart: true,
     });
@@ -105,6 +105,13 @@ export class V86Runner extends Runner {
 
   async readAllFiles() {
     return [];
+  }
+
+  get supportsPause() { return true; }
+
+  setPaused(paused) {
+    if (paused) this.emulator?.stop();
+    else this.emulator?.run();
   }
 
   fullscreen() {

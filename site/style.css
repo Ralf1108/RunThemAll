@@ -205,6 +205,12 @@ select {
 .ejs-container { position: relative; width: 100%; height: 100%; }
 .ejs-container > div { width: 100%; height: 100%; }
 
+/* Sound and pause buttons in the toolbar */
+.wx-toggle { display: inline-flex; align-items: center; gap: .4rem; }
+.wx-toggle svg { flex: none; }
+.wx-toggle.off { color: var(--muted); }
+#btn-pause[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+
 /* Running emulator */
 .emu-badge {
   font-size: .8rem; padding: .15rem .6rem; border-radius: 999px;

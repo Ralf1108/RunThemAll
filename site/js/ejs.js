@@ -117,7 +117,7 @@ export class EmulatorJsRunner extends Runner {
       EJS_gameName: name.replace(/\.[^.]+$/, ''),
       EJS_biosUrl: biosUrl,
       EJS_startOnLoaded: true,
-      EJS_volume: opts.sound ? 0.5 : 0,
+      EJS_volume: 0.5, // muting is done by the sound button (audio.js)
       EJS_Buttons: { netplay: false },
       EJS_defaultOptions: system.options ?? {},
       EJS_onGameStart: () => {
@@ -135,5 +135,13 @@ export class EmulatorJsRunner extends Runner {
 
   fullscreen() {
     this.ui.ejsContainer.requestFullscreen?.();
+  }
+
+  get supportsPause() { return true; }
+
+  setPaused(paused) {
+    // EmulatorJS's own pause (also updates its pause/play button)
+    if (paused) window.EJS_emulator?.pause();
+    else window.EJS_emulator?.play();
   }
 }

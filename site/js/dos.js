@@ -93,7 +93,7 @@ function buildDosboxConf(dosProgram, opts) {
     `cycles=${opts.cycles || 'auto'}`,
     '',
     '[mixer]',
-    `nosound=${opts.sound ? 'false' : 'true'}`,
+    'nosound=false', // muting is done by the sound button (audio.js)
     '',
     '[autoexec]',
     '@echo off',
@@ -162,7 +162,7 @@ export class DosRunner extends Runner {
       renderAspect: '4/3', // DOS ran on 4:3 monitors (320x200 has non-square pixels)
       lang: 'en',
       theme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
-      volume: opts.sound ? 1 : 0,
+      volume: 1,
       fsChanges: { local: false }, // do not store anything in the browser
       onEvent: (event, arg) => {
         log(`js-dos: ${event}`, false);
@@ -206,5 +206,12 @@ export class DosRunner extends Runner {
 
   fullscreen() {
     this.props?.setFullScreen(true);
+  }
+
+  get supportsPause() { return true; }
+
+  setPaused(paused) {
+    if (paused) this.ci?.pause();
+    else this.ci?.resume();
   }
 }

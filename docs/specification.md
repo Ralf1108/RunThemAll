@@ -45,7 +45,13 @@ How Run Them All works inside. As of November 2026.
 4. **Start**: the right emulator is loaded. Then:
    - *Save changed files*: download new and changed files as a ZIP.
    - *Write back to folder* (folders with write access only): write them back. Nothing is ever deleted.
+   - *Sound on/off*: mutes every emulator the same way: `js/audio.js` routes everything sent to the
+     speakers through one master gain per audio context. The emulators always start with sound;
+     the option "Sound" only decides whether the button starts as on or off.
+   - *Pause/Resume*: EmulatorJS `pause()`/`play()`, js-dos `ci.pause()`/`ci.resume()`, v86 `stop()`/`run()`,
+     Boxedwine `Module.pauseMainLoop()`/`resumeMainLoop()` (checked: the program does not run on while paused).
    - *Fullscreen*: the emulator area goes fullscreen.
+   - Keys that games use (arrows, space, page up/down, home/end) do not scroll the page while a program runs.
    - *Quit*: reloads the page.
    - A badge shows which emulator runs (e.g. "Boxedwine 26R1.0 · Wine 6 · Multithreaded").
    - A message box tells what was saved, or that nothing changed.

@@ -42,6 +42,7 @@ Where they come from and their licences: [demos/README.md](demos/README.md)
 ## Tips
 
 - **No sound?** Click once into the picture. Browsers only play sound after a click.
+- **Sound on/off and Pause**: buttons next to *Fullscreen* while a program runs.
 - **Fullscreen**: button *Fullscreen*. The picture always keeps the shape of the original screen.
 - **Mouse in operating systems**: click into the picture to capture the mouse, press `Esc` to release it.
 - **Save games**: *Save changed files* downloads all new and changed files as a ZIP.

@@ -91,6 +91,15 @@ export class Runner {
   /** Enters fullscreen mode. */
   fullscreen() {}
 
+  /** Whether the emulation can be paused. */
+  get supportsPause() { return false; }
+
+  /**
+   * Pauses or resumes the emulation.
+   * @param {boolean} paused
+   */
+  setPaused(paused) {} // eslint-disable-line no-unused-vars
+
   /** Whether changed files can be read back (save as ZIP / write back to folder). */
   get supportsFileSync() { return true; }
 }

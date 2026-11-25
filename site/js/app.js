@@ -1,4 +1,4 @@
-import { audioSuspended } from './audio.js';
+import { audioSuspended, isMuted, setMuted } from './audio.js';
 import { fromDataTransfer, fromDirectoryHandle, fromFileList, findPrograms, totalSize } from './workspace.js';
 import { fetchWithProgress } from './runner.js';
 import { WindowsRunner, canUseThreads, clearPersistentStorage } from './emulator.js';
@@ -307,9 +307,10 @@ function setProgress(loaded, total) {
 function hideLoader() {
   loaderSteps.forEach((li) => { li.classList.remove('active'); li.classList.add('done'); });
   $('loader').hidden = true;
+  $('btn-pause').disabled = false; // the emulator is ready now
   // The browser may hold back the sound until the next click or key press (see audio.js).
   setTimeout(() => {
-    if (!$('opt-sound').checked || !audioSuspended()) return;
+    if (isMuted() || !audioSuspended()) return;
     message('No sound? Click into the picture or press a key once, then the browser allows sound.');
     const clear = () => setTimeout(() => { if (!audioSuspended()) message(''); }, 300);
     window.addEventListener('pointerdown', clear, { once: true, capture: true });
@@ -352,6 +353,9 @@ async function start(overrides = {}) {
     : { dos: DosRunner, windows: WindowsRunner, emulatorjs: EmulatorJsRunner }[program.emulator];
   emulator = new Runner(ui);
   $('btn-download').hidden = !emulator.supportsFileSync;
+  $('btn-pause').hidden = !emulator.supportsPause;
+  setPaused(false);
+  setSound(opts.sound);
   $('btn-writeback').hidden = !emulator.supportsFileSync || !workspace.dirHandle;
   try {
     await emulator.start(workspace, program.path, opts);
@@ -417,6 +421,37 @@ $('btn-writeback').addEventListener('click', async () => {
   } catch (err) {
     showDialog('Writing back failed', String(err.message || err), [], true);
   }
+});
+
+// Sound on/off for every emulator (master gain in audio.js).
+const SPEAKER_ON = '<path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/>';
+const SPEAKER_OFF = '<path d="M11 5 6 9H3v6h3l5 4z"/><path d="m16 9 6 6M22 9l-6 6"/>';
+function setSound(on) {
+  setMuted(!on);
+  const button = $('btn-sound');
+  button.setAttribute('aria-pressed', String(on));
+  button.classList.toggle('off', !on);
+  button.title = on ? 'Switch the sound off' : 'Switch the sound on';
+  button.querySelector('svg').innerHTML = on ? SPEAKER_ON : SPEAKER_OFF;
+  button.querySelector('span').textContent = on ? 'Sound on' : 'Sound off';
+}
+$('btn-sound').addEventListener('click', () => setSound(isMuted()));
+
+// Pause/resume the emulation (each emulator has its own way, see the runners).
+let paused = false;
+function setPaused(value) {
+  paused = value;
+  const button = $('btn-pause');
+  button.setAttribute('aria-pressed', String(paused));
+  button.title = paused ? 'Resume the emulation' : 'Pause the emulation';
+  button.querySelector('svg').innerHTML = paused ? '<path d="M7 5v14l12-7z"/>' : '<path d="M9 5v14M15 5v14"/>';
+  button.querySelector('span').textContent = paused ? 'Resume' : 'Pause';
+}
+$('btn-pause').addEventListener('click', () => {
+  if (!emulator) return;
+  setPaused(!paused);
+  emulator.setPaused(paused);
+  status(paused ? 'Paused' : 'Running');
 });
 
 // Fullscreen: the whole emulator area (canvas or player) covers the screen.
