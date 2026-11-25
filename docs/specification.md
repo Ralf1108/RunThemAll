@@ -30,8 +30,8 @@ How RunThemAll works inside. As of November 2026.
 
 ## 3. User flow
 
-The start page has three columns: supported platforms on the left (3.3), in the middle *Open a program*
-and the demo carousel (3.2), the emulators on the right (3.3). The interface is in English.
+The start page has three columns: *Open a program* and the demo carousel (3.2) on the left, then side by
+side the supported platforms and the emulators (3.3). The interface is in English.
 
 1. **Open**: file picker (any file or ZIP), folder picker or drag & drop.
    - A single ZIP is unpacked in the browser.
@@ -84,16 +84,15 @@ and the demo carousel (3.2), the emulators on the right (3.3). The interface is 
 
 ### 3.3 Supported platforms and emulators
 
-- A sidebar on the left of the start page lists every supported platform, grouped
+- A sidebar right of the main column lists every supported platform, grouped
   (PC, home computers, consoles, handhelds, arcade), with logo or icon.
 - It is built from `SUPPORTED_GROUPS` in `js/platforms.js` and the system table in `js/systems.js`,
   so it matches what the detection supports. Systems that need an original BIOS are marked "BIOS".
 - Hovering a platform shows a tooltip with its emulator (e.g. "Runs with EmulatorJS (core snes9x)") and
-  highlights that emulator in the right sidebar.
-- The right sidebar lists the emulators (Boxedwine, js-dos, EmulatorJS, v86) with version (from the
+  highlights that emulator in the sidebar next to it.
+- The sidebar on the far right (*Powered by*) lists the emulators (Boxedwine, js-dos, EmulatorJS, v86) with version (from the
   `version.json` files), what they run, licence and link.
-- Between 900 and 1200 px the emulators move below the main column; on narrow screens both sidebars move
-  below the demos. While a program runs both are hidden.
+- Below 960 px both sidebars move side by side below the demos; below 600 px they stack. While a program runs both are hidden.
 
 ### 3.4 Picture and sound
 

@@ -39,7 +39,7 @@ No time? Click one of the **demos** and press **Start**.
 - **Whole operating systems** from a CD, floppy or hard disk image, e.g. Linux, ReactOS or your own
   Windows 98 CD
 
-The page lists all 41 platforms on the left. Details and file types: [docs/systems.md](docs/systems.md)
+The page lists all 41 platforms on the right. Details and file types: [docs/systems.md](docs/systems.md)
 
 ## Demos
 

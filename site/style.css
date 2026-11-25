@@ -239,26 +239,32 @@ select {
 .screen:fullscreen { width: 100vw; height: 100vh; border-radius: 0; background: #000; }
 /* The emulators fill the area; js/fit.js scales canvases to the new size. */
 
-/* Layout: platforms on the left, main column, emulators on the right */
+/* Layout: main column, then platforms and emulators side by side on the right */
 .layout {
   flex: 1; width: min(1480px, 100% - 2rem);
-  display: grid; grid-template-columns: 220px minmax(0, 1fr) 220px; gap: 1.25rem; align-items: start;
+  display: grid; grid-template-columns: minmax(0, 1fr) 220px 220px; gap: 1.25rem; align-items: start;
 }
+.layout > main { grid-column: 1; grid-row: 1; }
+.layout > .platforms { grid-column: 2; grid-row: 1; }
+.layout > .emulators { grid-column: 3; grid-row: 1; }
 .site-header .wrap, .site-footer .wrap { width: min(1480px, 100% - 2rem); }
 .layout:has(> .platforms[hidden]) { grid-template-columns: minmax(0, 1fr); }
 @media (max-width: 1200px) {
-  /* emulators move below the main column */
-  .layout { grid-template-columns: 220px minmax(0, 1fr); grid-template-rows: auto 1fr; }
-  .layout > .platforms { grid-row: span 2; }
-  .layout > .emulators { grid-column: 2; margin-top: 0; }
-  .layout > main { padding-bottom: 0; }
-  .emu-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: .6rem; }
+  .layout { grid-template-columns: minmax(0, 1fr) 200px 200px; gap: 1rem; }
 }
-@media (max-width: 900px) {
-  .layout { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
-  .layout > .platforms { order: 2; grid-row: auto; }
-  .layout > .emulators { order: 3; grid-column: auto; }
-  .platforms #platform-list { columns: 2 180px; }
+@media (max-width: 960px) {
+  /* main column on top, platforms and emulators side by side below it */
+  .layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .layout > main { grid-column: 1 / -1; grid-row: 1; padding-bottom: 0; }
+  .layout > .platforms { grid-column: 1; grid-row: 2; }
+  .layout > .emulators { grid-column: 2; grid-row: 2; }
+}
+@media (max-width: 600px) {
+  /* one column: main, then platforms, then emulators */
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .layout > main, .layout > .platforms, .layout > .emulators { grid-column: auto; grid-row: auto; }
+  .layout > .platforms { order: 2; }
+  .layout > .emulators { order: 3; margin-top: 0; }
 }
 
 /* Side panels (platforms, emulators) */
