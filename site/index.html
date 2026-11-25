@@ -25,6 +25,8 @@
       </nav>
       <h1 class="logo"><img class="logo-mark" src="img/logo.svg" alt="" width="44" height="44">RunThemAll</h1>
       <p class="tagline">Run old DOS and Windows programs, C64, Amiga and console games and whole operating systems right in your browser. Your files stay on your computer.</p>
+      <p class="tagline-note">Emulation in the browser has its limits: a game may run too slowly or have bugs.
+        If something does not work, please tell us with <a href="https://github.com/Ralf1108/RunThemAll/issues/new/choose" rel="noopener">Problem or idea?</a> at the top right.</p>
     </div>
   </header>
 
@@ -181,8 +183,7 @@
         <strong id="run-title"></strong>
         <span id="run-emulator" class="emu-badge" title="Running emulator"></span>
         <span class="spacer"></span>
-        <button type="button" id="btn-writeback" class="wx-btn wx-small" hidden>Write back to folder</button>
-        <button type="button" id="btn-download" class="wx-btn wx-small">Save changed files</button>
+        <button type="button" id="btn-changes" class="wx-btn wx-small" title="Show the files the program changed or created, then download them or write them back">Changed files …</button>
         <button type="button" id="btn-sound" class="wx-btn wx-small wx-toggle" aria-pressed="true" title="Switch the sound off">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="on" d="M11 5 6 9H3v6h3l5 4z"/><path class="on" d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>
           <span>Sound on</span></button>
@@ -283,7 +284,7 @@
     <h3 id="msg-title"></h3>
     <p id="msg-text"></p>
     <ul id="msg-files" class="msg-files" hidden></ul>
-    <div class="msg-actions"><button type="button" id="msg-ok" class="wx-btn wx-primary wx-small">OK</button></div>
+    <div id="msg-actions" class="msg-actions"></div>
   </dialog>
 
   <script type="module" src="js/app.js"></script>

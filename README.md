@@ -57,8 +57,8 @@ Where they come from: [demos/README.md](demos/README.md)
 - **No sound?** Click once into the picture. Browsers only play sound after a click.
 - **Buttons while playing**: *Sound on/off*, *Pause*, *Fullscreen*, *Quit*.
 - **Mouse in operating systems**: click into the picture to use the mouse, `Esc` releases it.
-- **Save games**: *Save changed files* downloads them as a ZIP. In Chrome or Edge, an opened folder
-  can get them back directly (*Write back to folder*).
+- **Save games**: *Changed files* shows what the program saved. Download it as a ZIP or, in Chrome or
+  Edge with an opened folder, write it back directly (*Apply to folder*).
 - **Settings**: every demo has an *Options* button (speed, memory, Windows version).
 
 ## Good to know

@@ -46,8 +46,8 @@ side the supported platforms and the emulators (3.3). The interface is in Englis
    - Complete PC: RAM
    - All: sound
 4. **Start**: the right emulator is loaded. Then:
-   - *Save changed files*: download new and changed files as a ZIP.
-   - *Write back to folder* (folders with write access only): write them back. Nothing is ever deleted.
+   - *Changed files …*: first lists the new and changed files, then *Download as ZIP* or, for folders with
+     write access, *Apply to folder* (writes them back; nothing is ever deleted).
    - *Sound on/off*: mutes every emulator the same way: `js/audio.js` routes everything sent to the
      speakers through one master gain per audio context. The emulators always start with sound;
      the option "Sound" only decides whether the button starts as on or off.

@@ -49,14 +49,17 @@ export class Runner {
     });
   }
 
-  /** Downloads all new/changed files as a ZIP. Returns their paths. */
-  async downloadChanges() {
-    const files = await this.changedFiles();
+  /**
+   * Downloads new/changed files as a ZIP. Returns their paths.
+   * @param {{path:string, data:Uint8Array}[]} [files] defaults to all changed files
+   */
+  async downloadChanges(files) {
+    files ??= await this.changedFiles();
     if (files.length === 0) return [];
     const blob = createZip(files.map((f) => ({ name: f.path, data: f.data })));
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `${(this.workspace?.name || 'runthemall').replace(/[^\w.-]+/g, '_')}-aenderungen.zip`;
+    a.download = `${(this.workspace?.name || 'runthemall').replace(/[^\w.-]+/g, '_')}-changes.zip`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 10000);
     return files.map((f) => f.path);
@@ -65,15 +68,16 @@ export class Runner {
   /**
    * Writes new/changed files back into the folder the user opened (Chromium only).
    * Files are never deleted from the user's folder.
+   * @param {{path:string, data:Uint8Array}[]} [files] defaults to all changed files
    * @returns {Promise<string[]>} paths of the written files
    */
-  async writeBack() {
+  async writeBack(files) {
     const root = this.workspace?.dirHandle;
     if (!root) throw new Error('No folder with write access is open.');
     if ((await root.requestPermission({ mode: 'readwrite' })) !== 'granted') {
       throw new Error('Write access was not allowed.');
     }
-    const files = await this.changedFiles();
+    files ??= await this.changedFiles();
     for (const f of files) {
       const parts = f.path.split('/');
       const name = parts.pop();

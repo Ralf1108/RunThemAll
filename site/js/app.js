@@ -353,11 +353,10 @@ async function start(overrides = {}) {
     ? V86Runner
     : { dos: DosRunner, windows: WindowsRunner, emulatorjs: EmulatorJsRunner }[program.emulator];
   emulator = new Runner(ui);
-  $('btn-download').hidden = !emulator.supportsFileSync;
+  $('btn-changes').hidden = !emulator.supportsFileSync;
   $('btn-pause').hidden = !emulator.supportsPause;
   setPaused(false);
   setSound(opts.sound);
-  $('btn-writeback').hidden = !emulator.supportsFileSync || !workspace.dirHandle;
   try {
     await emulator.start(workspace, program.path, opts);
   } catch (err) {
@@ -371,13 +370,15 @@ async function start(overrides = {}) {
 $('btn-start').addEventListener('click', () => start());
 
 /**
- * Message box (modal dialog) with a title, text and an optional list of files.
+ * Message box (modal dialog) with a title, text, an optional list of files and buttons.
+ * Without actions it has a single OK button. An action's handler runs after the dialog closed.
  * @param {string} title
  * @param {string} text
  * @param {string[]} [files]
  * @param {boolean} [error]
+ * @param {{label:string, primary?:boolean, run?:()=>void}[]} [actions]
  */
-function showDialog(title, text, files = [], error = false) {
+function showDialog(title, text, files = [], error = false, actions = [{ label: 'OK', primary: true }]) {
   const dialog = $('msg-dialog');
   $('msg-title').textContent = title;
   $('msg-text').textContent = text;
@@ -386,42 +387,62 @@ function showDialog(title, text, files = [], error = false) {
     ...(files.length > max ? [Object.assign(document.createElement('li'), { className: 'more', textContent: `… and ${files.length - max} more` })] : []));
   $('msg-files').hidden = files.length === 0;
   dialog.classList.toggle('error', error);
+  const buttons = actions.map((a) => {
+    const b = el('button', { type: 'button', className: a.primary ? 'wx-btn wx-primary wx-small' : 'wx-btn wx-small', textContent: a.label });
+    b.addEventListener('click', () => { dialog.close(); a.run?.(); });
+    return b;
+  });
+  $('msg-actions').replaceChildren(...buttons);
   dialog.showModal();
-  $('msg-ok').focus();
+  (buttons.find((b) => b.classList.contains('wx-primary')) ?? buttons[0]).focus();
 }
-$('msg-ok').addEventListener('click', () => $('msg-dialog').close());
 
 const NOTHING_CHANGED = 'The program has not changed or created any files since it started. '
   + 'Save games usually only appear after you save in the program.';
 
-$('btn-download').addEventListener('click', async () => {
+// Changed files: first an overview, then download as ZIP or write back into the opened folder.
+const fileCount = (n) => (n === 1 ? 'One file was' : `${n} files were`);
+$('btn-changes').addEventListener('click', async () => {
+  let files;
   try {
-    const files = (await emulator?.downloadChanges()) ?? [];
-    message('');
-    if (files.length) {
-      showDialog('Changed files saved',
-        `${files.length === 1 ? 'One file was' : `${files.length} files were`} saved as a ZIP to your downloads:`, files);
-    } else {
-      showDialog('Nothing to save', NOTHING_CHANGED);
-    }
+    files = (await emulator?.changedFiles()) ?? [];
   } catch (err) {
-    showDialog('Saving failed', String(err.message || err), [], true);
+    showDialog('Reading the files failed', String(err.message || err), [], true);
+    return;
   }
-});
-
-$('btn-writeback').addEventListener('click', async () => {
-  try {
-    const files = await emulator.writeBack();
-    message('');
-    if (files.length) {
-      showDialog('Written back to folder',
-        `${files.length === 1 ? 'One file was' : `${files.length} files were`} written to the opened folder "${workspace.name}":`, files);
-    } else {
-      showDialog('Nothing to write back', NOTHING_CHANGED);
+  message('');
+  if (!files.length) {
+    showDialog('No changed files', NOTHING_CHANGED);
+    return;
+  }
+  const paths = files.map((f) => f.path);
+  const download = async () => {
+    try {
+      await emulator.downloadChanges(files);
+      showDialog('Downloaded', `${fileCount(files.length)} saved as a ZIP to your downloads.`);
+    } catch (err) {
+      showDialog('Download failed', String(err.message || err), [], true);
     }
-  } catch (err) {
-    showDialog('Writing back failed', String(err.message || err), [], true);
-  }
+  };
+  const apply = async () => {
+    try {
+      await emulator.writeBack(files);
+      showDialog('Changes applied', `${fileCount(files.length)} written to the opened folder "${workspace.name}".`);
+    } catch (err) {
+      showDialog('Applying failed', String(err.message || err), [], true);
+    }
+  };
+  const canApply = Boolean(workspace?.dirHandle);
+  const them = files.length === 1 ? 'it' : 'them';
+  showDialog('Changed files',
+    `${fileCount(files.length)} changed or created since the program started.`
+      + (canApply ? ` Apply ${them} to the opened folder "${workspace.name}" or download them as a ZIP.`
+        : ` Download ${them} as a ZIP to keep ${them}.`),
+    paths, false, [
+      { label: 'Cancel' },
+      { label: 'Download as ZIP', primary: !canApply, run: download },
+      ...(canApply ? [{ label: 'Apply to folder', primary: true, run: apply }] : []),
+    ]);
 });
 
 // Sound on/off for every emulator (master gain in audio.js).
