@@ -1,11 +1,11 @@
 # RunThemAll
 
+### ▶️ [Use it now: ralf1108.github.io/RunThemAll](https://ralf1108.github.io/RunThemAll/)
+
 **Play old DOS and Windows programs, retro console games and whole operating systems right in your
 browser. Nothing to install, nothing uploaded.**
 
-👉 **[Open RunThemAll](https://ralf1108.github.io/RunThemAll/)**
-
-![The RunThemAll start page: open a program, demos, supported platforms and emulators](docs/images/start.webp)
+[![The RunThemAll start page: open a program, demos, supported platforms and emulators](docs/images/start.webp)](https://ralf1108.github.io/RunThemAll/)
 
 ## How to use it
 
