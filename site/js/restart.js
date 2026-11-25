@@ -50,10 +50,14 @@ export function saveRestart(plan) {
   return run('readwrite', (store) => store.put({ ...plan, savedAt: Date.now() }, KEY));
 }
 
+/** How many page loads may try a restart (coi-serviceworker may reload the page once more by itself). */
+const MAX_ATTEMPTS = 3;
+
 /**
- * The plan saved before the reload, if any. It is deleted on every page load,
- * so the files never stay longer than until the page is opened again; a plan
- * older than RESTART_TTL_MS is deleted without being used.
+ * The plan saved before the reload, if any. It stays until clearRestart() is called
+ * once the program runs again, because the page may be reloaded once more in between
+ * (coi-serviceworker does that when the page is not cross-origin isolated, or after an
+ * update). A plan older than RESTART_TTL_MS or tried MAX_ATTEMPTS times is deleted unused.
  * @returns {Promise<RestartPlan|null>}
  */
 export async function takeRestart() {
@@ -61,9 +65,24 @@ export async function takeRestart() {
   try {
     const plan = await run('readonly', (store) => store.get(KEY));
     if (!plan) return null;
-    await run('readwrite', (store) => store.delete(KEY));
-    return Date.now() - (plan.savedAt ?? 0) <= RESTART_TTL_MS ? plan : null;
-  } catch {
+    const attempts = (plan.attempts ?? 0) + 1;
+    if (Date.now() - (plan.savedAt ?? 0) > RESTART_TTL_MS || attempts > MAX_ATTEMPTS) {
+      await clearRestart();
+      return null;
+    }
+    await run('readwrite', (store) => store.put({ ...plan, attempts }, KEY));
+    return plan;
+  } catch (err) {
+    console.error('Restart data could not be read:', err);
     return null;
+  }
+}
+
+/** Deletes the kept files: the program runs again (or the restart is given up). */
+export async function clearRestart() {
+  try {
+    await run('readwrite', (store) => store.delete(KEY));
+  } catch (err) {
+    console.error('Restart data could not be deleted:', err);
   }
 }

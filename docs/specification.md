@@ -71,8 +71,10 @@ side the supported platforms and the emulators (3.3). The interface is in Englis
      The emulators cannot be stopped and started again cleanly in one page, so the page reloads:
      a demo is started again with the new settings (saved as its demo options); for own files
      `js/restart.js` keeps the files, start options, BIOS files and the folder handle in IndexedDB for
-     this one reload. Every page load deletes what was kept, and a
-     restart older than 10 minutes is not used. A folder is used directly again if the browser still
+     this one reload. They are deleted as soon as the program runs again. They are not deleted earlier
+     because coi-serviceworker may reload the page once more by itself (page not cross-origin isolated,
+     or a new service worker after an update). A restart older than 10 minutes or tried on 3 page loads
+     is deleted unused. A folder is used directly again if the browser still
      allows writing to it, otherwise the kept copy is used (then without writing back).
    - *Report*: prepares a GitHub issue (form `bug_report.yml`, fields filled through the address) with the
      program, platform, emulator and version, start options, SHA-256 of the started file and the last console

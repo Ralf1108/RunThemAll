@@ -1,6 +1,6 @@
 import { audioSuspended, isMuted, setMuted } from './audio.js';
 import { fromDataTransfer, fromDirectoryHandle, fromFileList, fromStoredFiles, findPrograms, totalSize } from './workspace.js';
-import { saveRestart, takeRestart } from './restart.js';
+import { clearRestart, saveRestart, takeRestart } from './restart.js';
 import { KEY_BY_ID, VIRTUAL_KEYS } from './keys.js';
 import { fetchWithProgress } from './runner.js';
 import { WindowsRunner, canUseThreads, clearPersistentStorage } from './emulator.js';
@@ -365,6 +365,7 @@ function hideLoader() {
   loaderSteps.forEach((li) => { li.classList.remove('active'); li.classList.add('done'); });
   $('loader').hidden = true;
   $('btn-pause').disabled = false; // the emulator is ready now
+  clearRestart(); // files kept for "Options → Restart" are no longer needed
   // The browser may hold back the sound until the next click or key press (see audio.js).
   setTimeout(() => {
     if (isMuted() || !audioSuspended()) return;
