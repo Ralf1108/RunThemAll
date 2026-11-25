@@ -102,6 +102,8 @@ side the supported platforms and the emulators (3.3). The interface is in Englis
    - There is no status line: while loading, the loading screen shows the steps and progress; afterwards
      the *Play/Pause* button shows the state. Hints (no sound yet, mouse in v86, crash) appear below the picture.
    - Keys that games use (arrows, space, page up/down, home/end) do not scroll the page while a program runs.
+   - Touch on the emulator area (`.screen`, `touch-action: none`) goes to the emulator as mouse or touch input;
+     it does not scroll or zoom the page.
    - *Quit*: reloads the page.
    - A badge shows which emulator runs (e.g. "Boxedwine 26R1.0 · Wine 6 · Multithreaded").
    - A message box tells what was saved, or that nothing changed.

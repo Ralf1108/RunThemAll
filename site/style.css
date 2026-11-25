@@ -162,6 +162,8 @@ select {
   /* Fixed area for every emulator; the picture is scaled to fill it (see js/fit.js). */
   height: max(300px, min(75vh, 720px));
   overflow: hidden;
+  /* Touch on the picture goes to the emulator (mouse), it must not scroll or zoom the page. */
+  touch-action: none; overscroll-behavior: contain;
 }
 #canvas { display: block; flex: none; image-rendering: pixelated; outline: none; }
 
