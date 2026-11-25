@@ -1,6 +1,7 @@
 import { audioSuspended, isMuted, setMuted } from './audio.js';
 import { fromDataTransfer, fromDirectoryHandle, fromFileList, fromStoredFiles, findPrograms, totalSize } from './workspace.js';
 import { saveRestart, takeRestart } from './restart.js';
+import { KEY_BY_ID, VIRTUAL_KEYS } from './keys.js';
 import { fetchWithProgress } from './runner.js';
 import { WindowsRunner, canUseThreads, clearPersistentStorage } from './emulator.js';
 import { DosRunner } from './dos.js';
@@ -12,6 +13,12 @@ import { platformStyle, SUPPORTED_GROUPS, supportedItems } from './platforms.js'
 import { buildReport, fittingIssueUrl, isCrashError, isCrashLine, MAX_ATTACHMENT, PLATFORMS, sha256, zipFiles } from './report.js';
 
 const $ = (id) => document.getElementById(id);
+/** Creates an element with properties and children. */
+const el = (tag, props = {}, ...children) => {
+  const node = Object.assign(document.createElement(tag), props);
+  node.append(...children);
+  return node;
+};
 
 const MAX_LOG_LINES = 2000;
 const hasDirectoryPicker = typeof window.showDirectoryPicker === 'function';
@@ -733,12 +740,82 @@ $('btn-report').addEventListener('click', async () => {
     ], body);
 });
 
-// Fullscreen: the whole emulator area (canvas or player) covers the screen.
-$('btn-fullscreen').addEventListener('click', () => {
+// Fullscreen: the whole emulator area (canvas or player) covers the screen. In Chrome and Edge
+// the Esc key is then given to the program (Keyboard Lock); holding Esc leaves fullscreen.
+$('btn-fullscreen').addEventListener('click', async () => {
   const screen = $('screen');
-  if (screen.requestFullscreen) screen.requestFullscreen().catch(() => emulator?.fullscreen());
-  else emulator?.fullscreen();
+  if (!screen.requestFullscreen) {
+    emulator?.fullscreen();
+    return;
+  }
+  try {
+    await screen.requestFullscreen();
+    await navigator.keyboard?.lock?.(['Escape']);
+  } catch {
+    emulator?.fullscreen();
+  }
 });
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement) navigator.keyboard?.unlock?.();
+});
+
+// Virtual keyboard: keys the browser keeps for itself (Esc releases the mouse) or that are
+// hard to type. Ctrl, Alt and Shift stay pressed for the next key.
+{
+  const panel = $('keys-panel');
+  const held = new Set();
+  const button = (label, title, onPress, extra = '') => {
+    const b = el('button', { type: 'button', className: `key ${extra}`.trim(), textContent: label, title });
+    b.addEventListener('pointerdown', (e) => e.preventDefault()); // keep the focus in the emulator
+    b.addEventListener('click', onPress);
+    return b;
+  };
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  async function press(keys) {
+    if (!emulator) return;
+    for (const key of keys) emulator.sendKey(key, true);
+    await sleep(80);
+    for (const key of [...keys].reverse()) emulator.sendKey(key, false);
+  }
+  async function pressWithHeld(key) {
+    const mods = [...held].map((id) => KEY_BY_ID.get(id));
+    held.clear();
+    panel.querySelectorAll('[aria-pressed="true"]').forEach((b) => b.setAttribute('aria-pressed', 'false'));
+    await press([...mods, key]);
+  }
+  const groups = [
+    ['Escape', 'Tab', 'Enter', 'Backspace', 'Space'],
+    VIRTUAL_KEYS.filter((key) => /^F\d+$/.test(key.id)).map((key) => key.id),
+    ['Insert', 'Delete', 'Home', 'End', 'PageUp', 'PageDown'],
+    ['ArrowLeft', 'ArrowUp', 'ArrowDown', 'ArrowRight'],
+  ];
+  const parts = [];
+  for (const group of groups) {
+    for (const id of group) {
+      const key = KEY_BY_ID.get(id);
+      parts.push(button(key.label, `Send ${key.id}`, () => pressWithHeld(key), ['Escape', 'Enter', 'Space', 'Backspace'].includes(id) ? 'wide' : ''));
+    }
+    parts.push(el('span', { className: 'sep' }));
+  }
+  for (const key of VIRTUAL_KEYS.filter((k) => k.modifier)) {
+    const b = button(key.label, `Hold ${key.label} for the next key`, () => {
+      const on = !held.has(key.id);
+      if (on) held.add(key.id); else held.delete(key.id);
+      b.setAttribute('aria-pressed', String(on));
+    }, 'wide');
+    b.setAttribute('aria-pressed', 'false');
+    parts.push(b);
+  }
+  parts.push(button('Ctrl+Alt+Del', 'Send Ctrl+Alt+Del', () => press(['Control', 'Alt', 'Delete'].map((id) => KEY_BY_ID.get(id))), 'wide'));
+  parts.push(el('p', { className: 'hint', textContent: 'Ctrl, Alt and Shift stay pressed for the next key. '
+    + 'In fullscreen (Chrome, Edge) the real Esc key goes to the program; hold Esc to leave fullscreen.' }));
+  panel.append(...parts);
+
+  $('btn-keys').addEventListener('click', () => {
+    panel.hidden = !panel.hidden;
+    $('btn-keys').setAttribute('aria-expanded', String(!panel.hidden));
+  });
+}
 
 $('btn-restart').addEventListener('click', () => {
   const quit = () => {
@@ -798,11 +875,6 @@ async function launchDemo(demo, button = el('button')) {
   }
 }
 
-const el = (tag, props = {}, ...children) => {
-  const node = Object.assign(document.createElement(tag), props);
-  node.append(...children);
-  return node;
-};
 
 let demoAnchor = null; // tree entry the detail popover belongs to
 

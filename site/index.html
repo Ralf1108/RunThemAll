@@ -198,6 +198,9 @@
         <button type="button" id="btn-options" class="wx-btn wx-small wx-icon" title="Change the settings and restart the program with them">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
           <span>Options</span></button>
+        <button type="button" id="btn-keys" class="wx-btn wx-small wx-icon" aria-expanded="false" aria-controls="keys-panel" title="Virtual keyboard: send Esc, function keys and more to the program">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>
+          <span>Keys</span></button>
         <button type="button" id="btn-console" class="wx-btn wx-small wx-icon" aria-expanded="false" aria-controls="console" title="Show the messages of the emulator">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M12 15h5"/></svg>
           <span>Console</span></button>
@@ -208,6 +211,7 @@
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 17l-5-5 5-5M5 12h11"/></svg>
           <span>Quit</span></button>
       </div>
+      <div id="keys-panel" class="keys-panel" role="toolbar" aria-label="Virtual keyboard" hidden></div>
       <div id="screen" class="screen">
         <div id="loader" class="loader">
           <h3>Preparing the environment</h3>

@@ -2,6 +2,7 @@
 // with the v86 x86 PC emulator. v86 is loaded unmodified from ./v86/.
 
 import { toPng } from './report.js';
+import { releaseScancodes } from './keys.js';
 import { Runner, prefetch, splitPath } from './runner.js';
 import { extOf } from './systems.js';
 import { fitToBox, pcAspect } from './fit.js';
@@ -106,6 +107,10 @@ export class V86Runner extends Runner {
 
   async readAllFiles() {
     return [];
+  }
+
+  sendKey(key, pressed) {
+    this.emulator?.keyboard_send_scancodes(pressed ? key.scan : releaseScancodes(key));
   }
 
   async screenshot() {

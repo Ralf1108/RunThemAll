@@ -487,6 +487,20 @@ select {
 .msg-files .more { list-style: none; margin-left: -1rem; color: var(--muted); font-family: inherit; }
 .msg-dialog.wide { width: min(760px, 100vw - 2rem); }
 .run-options { margin-top: .75rem; }
+
+/* Virtual keyboard between toolbar and picture */
+.keys-panel { display: flex; flex-wrap: wrap; gap: .3rem; margin: -.25rem 0 .75rem; align-items: center; }
+.keys-panel .key {
+  font: inherit; font-size: .8rem; min-width: 2.4rem; padding: .3rem .5rem; cursor: pointer;
+  color: var(--text); background: var(--surface); border: 1px solid var(--border); border-bottom-width: 3px; border-radius: 6px;
+}
+.keys-panel .key:hover { border-color: var(--accent); }
+.keys-panel .key:active { transform: translateY(1px); }
+.keys-panel .key[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.keys-panel .key.wide { min-width: 4rem; }
+.keys-panel .sep { width: .6rem; }
+.keys-panel .hint { margin: 0 0 0 .4rem; font-size: .78rem; }
+#btn-keys[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); }
 .report-form { display: grid; gap: .6rem; margin-top: .75rem; max-height: min(62vh, 640px); overflow: auto; padding-right: .25rem; }
 .report-field { display: grid; gap: .25rem; font-size: .85rem; color: var(--muted); }
 .report-field input, .report-field select, .report-field textarea {

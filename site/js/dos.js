@@ -211,6 +211,11 @@ export class DosRunner extends Runner {
 
   get supportsPause() { return true; }
 
+  sendKey(key, pressed) {
+    if (this.ci) this.ci.sendKeyEvent(key.dos, pressed);
+    else super.sendKey(key, pressed);
+  }
+
   async screenshot() {
     const image = await this.ci?.screenshot();
     return image ? toPng(image) : super.screenshot();

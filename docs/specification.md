@@ -56,7 +56,15 @@ side the supported platforms and the emulators (3.3). The interface is in Englis
    - All toolbar buttons have an icon. *Sound* and *Play/Pause* show the current state: green with
      *Sound on* / *Play* while it is on or running, red with *Sound off* / *Pause* after a click.
    - *Fullscreen*: the emulator area goes fullscreen.
-   - Toolbar order: *Save*, *Fullscreen*, *Sound*, *Play/Pause*, *Options*, *Console*, *Report*, *Quit* (red).
+   - Toolbar order: *Save*, *Fullscreen*, *Sound*, *Play/Pause*, *Options*, *Keys*, *Console*, *Report*, *Quit* (red).
+   - *Keys*: a virtual keyboard row (Esc, Tab, Enter, Backspace, Space, F1–F12, Ins/Del/Home/End/PgUp/PgDn,
+     arrows, sticky Ctrl/Alt/Shift, Ctrl+Alt+Del) for keys the browser keeps (Esc releases the mouse and
+     cannot be changed by a page) – also the way to send Esc in Firefox. `js/keys.js` holds the key table;
+     js-dos gets `ci.sendKeyEvent` (GLFW codes), v86 scancodes, Boxedwine and EmulatorJS a keyboard event
+     on the picture with `keyCode` set. Tested with all four (DOS prompt F3, KolibriOS Ctrl+Alt+Del,
+     SkiFree arrows, EmulatorJS Start/arrow input).
+   - *Fullscreen* in Chrome/Edge also locks the Esc key (Keyboard Lock API): Esc goes to the program,
+     holding Esc leaves fullscreen.
    - *Console*: shows the messages of the emulator below the picture; it turns red when a crash was recognised.
    - *Options*: the settings of the running emulator (Wine version, threads, resolution, colour depth,
      virtual environment / CPU speed, start parameters / memory; EmulatorJS has none) and *Restart*.

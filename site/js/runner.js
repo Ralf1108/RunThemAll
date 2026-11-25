@@ -3,6 +3,7 @@
 
 import { crc32, createZip } from './zip.js';
 import { toPng } from './report.js';
+import { dispatchKey } from './keys.js';
 
 /**
  * @typedef {object} RunnerUi
@@ -96,6 +97,17 @@ export class Runner {
 
   /** Enters fullscreen mode. */
   fullscreen() {}
+
+  /**
+   * Presses or releases a key of the virtual keyboard inside the emulator. By default
+   * it is sent as a browser keyboard event on the picture (Boxedwine, EmulatorJS).
+   * @param {import('./keys.js').VirtualKey} key
+   * @param {boolean} pressed
+   */
+  sendKey(key, pressed) {
+    const target = [...this.ui.screen.querySelectorAll('canvas')].find((c) => c.offsetWidth > 0) ?? this.ui.screen;
+    dispatchKey(target, key, pressed);
+  }
 
   /**
    * A PNG of what the emulator shows right now, or null. By default the visible canvas
