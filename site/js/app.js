@@ -7,6 +7,7 @@ import { EmulatorJsRunner, findBiosInWorkspace } from './ejs.js';
 import { V86Runner } from './v86.js';
 import { KIND_LABELS } from './exe.js';
 import { SYSTEMS, SYSTEM_BY_ID } from './systems.js';
+import { platformStyle } from './platforms.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -330,6 +331,7 @@ async function start(overrides = {}) {
   hideDemoDetail();
   $('demos').hidden = true;
   $('run').hidden = false;
+  window.scrollTo({ top: 0 }); // the demos may have been scrolled into view
   const what = program.kind === 'game' ? SYSTEM_BY_ID.get(opts.system).label : EMULATOR_NAMES[program.emulator];
   $('run-title').textContent = `${program.path} (${what})`;
 
@@ -544,7 +546,7 @@ function demoOptionsForm(demo) {
     el('p', { className: 'hint' }, 'Gilt nur für diese Demo und wird gespeichert. ', reset));
 }
 
-/** Shows description, credits and the start button of a demo next to its tree entry. */
+/** Shows description, credits and the start button of a demo below the carousel. */
 function showDemoDetail(demo, anchor, optionsOpen = false) {
   const start = el('button', { type: 'button', className: 'wx-btn wx-go wx-small', textContent: 'Starten' });
   start.addEventListener('click', () => launchDemo(demo, start));
@@ -563,13 +565,15 @@ function showDemoDetail(demo, anchor, optionsOpen = false) {
   const link = el('a', { href: demo.homepage, textContent: demo.author, rel: 'noopener' });
   $('demo-detail').replaceChildren(
     close,
-    el('h3', { textContent: demo.title }),
-    el('p', { className: 'demo-meta', textContent: `${demo.platform} · ${demo.emulator}` }),
-    el('p', { textContent: demo.description }),
-    el('p', { className: 'demo-meta' }, 'von ', link, ` · ${demo.license}`),
+    el('div', { className: 'demo-info' },
+      el('h3', { textContent: demo.title }),
+      el('p', { className: 'demo-meta', textContent: `${demo.platform} · ${demo.emulator} · ${demo.start}` }),
+      el('p', { textContent: demo.description }),
+      el('p', { className: 'demo-meta' }, 'von ', link, ` · ${demo.license}`)),
     el('div', { className: 'demo-actions' }, start, optionsButton),
     form,
   );
+  $('demo-detail').style.setProperty('--tile', platformStyle(demo.platform).color);
   $('demo-tree').querySelectorAll('[aria-current]').forEach((b) => b.removeAttribute('aria-current'));
   anchor.setAttribute('aria-current', 'true');
   demoAnchor = anchor;
@@ -584,61 +588,82 @@ function hideDemoDetail() {
   demoAnchor = null;
 }
 
-/** Places the popover left of the selected entry (below it when the menu sits under the main column). */
+/** Points the arrow of the info panel at the tile of the selected demo. */
 function placeDemoDetail() {
   const pop = $('demo-detail');
   if (pop.hidden || !demoAnchor) return;
-  const item = demoAnchor.getBoundingClientRect();
-  const side = $('demos').getBoundingClientRect();
-  const gap = 12;
-  const narrow = side.left - 320 - gap < 8;
-  pop.classList.toggle('below', narrow);
-  pop.style.width = narrow ? `${side.width}px` : '';
-  const { width, height } = pop.getBoundingClientRect();
-  const maxTop = window.innerHeight - height - 8;
-  const top = narrow ? Math.min(item.bottom + 6, maxTop) : Math.min(Math.max(item.top - 8, 8), maxTop);
-  pop.style.left = `${narrow ? side.left : side.left - width - gap}px`;
-  pop.style.top = `${Math.max(top, 8)}px`;
-  // Arrow points at the middle of the entry.
-  pop.style.setProperty('--arrow', `${Math.min(Math.max(item.top + item.height / 2 - top, 16), height - 16)}px`);
+  const tile = demoAnchor.closest('.demo-tile').getBoundingClientRect();
+  const panel = pop.getBoundingClientRect();
+  const x = Math.min(Math.max(tile.left + tile.width / 2 - panel.left, 24), panel.width - 24);
+  pop.style.setProperty('--arrow', `${x}px`);
 }
 
-window.addEventListener('resize', placeDemoDetail);
-window.addEventListener('scroll', placeDemoDetail, { passive: true });
-$('demos').addEventListener('scroll', placeDemoDetail, { passive: true });
+// Carousel: arrow buttons scroll by about one view, fading edges show there is more.
+const carousel = $('demo-tree');
+function updateCarousel() {
+  const max = carousel.scrollWidth - carousel.clientWidth;
+  const atStart = carousel.scrollLeft <= 2;
+  const atEnd = carousel.scrollLeft >= max - 2;
+  $('demo-prev').disabled = atStart;
+  $('demo-next').disabled = atEnd;
+  $('demo-prev').parentElement.hidden = max <= 2;
+  carousel.parentElement.classList.toggle('more-left', !atStart);
+  carousel.parentElement.classList.toggle('more-right', !atEnd);
+  placeDemoDetail();
+}
+const scrollCarousel = (dir) => {
+  const tile = carousel.querySelector('.demo-tile');
+  const step = tile ? tile.offsetWidth + parseFloat(getComputedStyle(carousel).columnGap || '0') : 260;
+  const tiles = Math.max(1, Math.floor(carousel.clientWidth / step));
+  carousel.scrollBy({ left: dir * tiles * step, behavior: 'smooth' });
+};
+$('demo-prev').addEventListener('click', () => scrollCarousel(-1));
+$('demo-next').addEventListener('click', () => scrollCarousel(1));
+carousel.addEventListener('scroll', updateCarousel, { passive: true });
+new ResizeObserver(updateCarousel).observe(carousel);
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && !$('demo-detail').hidden) {
     demoAnchor?.focus();
     hideDemoDetail();
   }
 });
-document.addEventListener('pointerdown', (e) => {
-  if (!$('demo-detail').hidden && !e.target.closest('#demo-detail, .demo-item')) hideDemoDetail();
-});
 
-/** Builds the tree: one group per platform (in order of first appearance), demos below. */
+/** Builds the carousel: one tile per platform (in order of first appearance), its demos inside. */
 function renderDemoTree(list) {
   const groups = new Map();
   for (const demo of list) {
     if (!groups.has(demo.platform)) groups.set(demo.platform, []);
     groups.get(demo.platform).push(demo);
   }
-  $('demo-tree').replaceChildren(...[...groups].map(([platform, demos]) => {
+  carousel.replaceChildren(...[...groups].map(([platform, demos]) => {
+    const { icon, color } = platformStyle(platform);
     const items = demos.map((demo) => {
       const button = el('button', { type: 'button', className: 'demo-item', title: demo.description },
         el('span', { className: 'demo-name', textContent: demo.title }),
         el('span', { className: 'demo-file', textContent: demo.start }));
       button.addEventListener('click', () => {
         if (demoAnchor === button) hideDemoDetail();
-        else showDemoDetail(demo, button);
+        else {
+          showDemoDetail(demo, button);
+          button.closest('.demo-tile').scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+        }
       });
       button.addEventListener('dblclick', () => showDemoDetail(demo, button).click());
       return el('li', {}, button);
     });
-    return el('details', { className: 'demo-group', open: true },
-      el('summary', {}, platform, el('span', { className: 'demo-count', textContent: String(demos.length) })),
+    const iconBox = el('span', { className: 'tile-icon' });
+    iconBox.innerHTML = icon; // own static SVG markup from platforms.js
+    const tile = el('article', { className: 'demo-tile' },
+      el('header', { className: 'tile-head' }, iconBox,
+        el('div', {},
+          el('h3', { textContent: platform }),
+          el('span', { className: 'tile-count', textContent: demos.length === 1 ? '1 Demo' : `${demos.length} Demos` }))),
       el('ul', {}, ...items));
+    tile.setAttribute('role', 'listitem');
+    tile.style.setProperty('--tile', color);
+    return tile;
   }));
+  updateCarousel();
 }
 
 // Own operating system: any disk image boots as a complete PC (v86).

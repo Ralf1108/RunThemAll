@@ -44,6 +44,24 @@
       <p id="pick-error" class="error" hidden></p>
     </section>
 
+    <!-- Demos: one tile per platform, scrolls sideways -->
+    <section id="demos" class="wx-card demos" aria-labelledby="demos-title" hidden>
+      <div class="demos-head">
+        <div>
+          <h2 id="demos-title">Demos</h2>
+          <p class="muted">Freie Programme, Spiele und Betriebssysteme zum Ausprobieren – einfach eine Demo anklicken.</p>
+        </div>
+        <div class="carousel-nav">
+          <button type="button" id="demo-prev" class="wx-btn wx-small carousel-btn" aria-label="Weiter links" title="Weiter links"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+          <button type="button" id="demo-next" class="wx-btn wx-small carousel-btn" aria-label="Weiter rechts" title="Weiter rechts"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+        </div>
+      </div>
+      <div class="carousel-frame">
+        <div id="demo-tree" class="demo-carousel" role="list" aria-label="Demos nach Plattform"></div>
+      </div>
+      <div id="demo-detail" class="demo-detail" role="region" aria-label="Demo-Info" hidden></div>
+    </section>
+
     <!-- Step 2: choose program + options -->
     <section id="choose" class="wx-card" hidden>
       <div class="choose-head">
@@ -172,14 +190,6 @@
       </details>
     </section>
   </main>
-
-  <!-- Demo menu: platforms as groups, demos below -->
-  <aside id="demos" class="sidebar" aria-labelledby="demos-title" hidden>
-    <h2 id="demos-title">Demos</h2>
-    <p class="muted">Freie Programme und Spiele zum Ausprobieren.</p>
-    <nav id="demo-tree" class="demo-tree" aria-label="Demos nach Plattform"></nav>
-    <div id="demo-detail" class="demo-detail" hidden></div>
-  </aside>
   </div>
 
   <footer class="site-footer">
