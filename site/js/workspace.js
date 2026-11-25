@@ -67,6 +67,16 @@ export async function fromFileList(fileList) {
 }
 
 /**
+ * From files kept for a restart (see restart.js), with their original paths.
+ * @param {string} name
+ * @param {{path:string, blob:Blob}[]} items
+ * @returns {Workspace}
+ */
+export function fromStoredFiles(name, items) {
+  return { name, files: items.map(({ path, blob }) => fromFile(path, blob)) };
+}
+
+/**
  * From a directory picked with showDirectoryPicker (Chromium). The handle is
  * kept so changed files can be written back later.
  * @param {FileSystemDirectoryHandle} dirHandle

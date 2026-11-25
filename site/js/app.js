@@ -1,5 +1,6 @@
 import { audioSuspended, isMuted, setMuted } from './audio.js';
-import { fromDataTransfer, fromDirectoryHandle, fromFileList, findPrograms, totalSize } from './workspace.js';
+import { fromDataTransfer, fromDirectoryHandle, fromFileList, fromStoredFiles, findPrograms, totalSize } from './workspace.js';
+import { ASK_ABOVE_BYTES, saveRestart, takeRestart } from './restart.js';
 import { fetchWithProgress } from './runner.js';
 import { WindowsRunner, canUseThreads, clearPersistentStorage } from './emulator.js';
 import { DosRunner } from './dos.js';
@@ -61,6 +62,10 @@ async function openWorkspace(loader, autostart) {
         .find((r) => r.value.toLowerCase() === autostart.program.toLowerCase());
       if (radio) radio.checked = true;
       updateSystemPanel();
+      if (autostart.bios?.length) {
+        chosenBios = autostart.bios;
+        $('bios-chosen').textContent = chosenBios.map((f) => f.name).join(', ');
+      }
       if (autostart.system) {
         $('opt-system').value = autostart.system;
         updateBiosInfo();
@@ -283,6 +288,7 @@ function markCrash(reason) {
   if (!runInfo || runInfo.crash) return;
   runInfo.crash = reason.split('\n').slice(0, 6).join('\n');
   setConsoleOpen(true);
+  $('btn-console').classList.add('wx-toggle', 'state-off');
   const button = $('btn-report');
   button.classList.add('wx-toggle', 'state-off');
   button.querySelector('span').textContent = 'Report crash';
@@ -532,8 +538,6 @@ function setConsoleOpen(open) {
   if ($('console').hidden !== open) return;
   $('console').hidden = !open;
   button.setAttribute('aria-expanded', String(open));
-  button.classList.toggle('state-on', open);
-  button.classList.toggle('state-warn', !open);
   button.title = open ? 'Hide the messages of the emulator' : 'Show the messages of the emulator';
   if (open) {
     consoleOut.scrollTop = consoleOut.scrollHeight;
@@ -541,6 +545,90 @@ function setConsoleOpen(open) {
   }
 }
 $('btn-console').addEventListener('click', () => setConsoleOpen($('console').hidden));
+
+// Options while running: change the settings of this emulator and restart the program with them.
+/** Which emulator runs the program: windows, dos, v86 or emulatorjs. */
+function runningKind(program, opts) {
+  if (program.kind === 'game') return SYSTEM_BY_ID.get(opts.system)?.emulator === 'v86' ? 'v86' : 'emulatorjs';
+  return program.emulator;
+}
+
+/** Restarts the running program with other options: keeps the files for one reload, then reloads. */
+async function restartWith(options) {
+  const { program, opts } = runInfo;
+  const { biosFiles, ...rest } = { ...opts, ...options };
+  try {
+    if (currentDemo) {
+      for (const [key, value] of Object.entries(options)) storeDemoOption(currentDemo, key, value);
+      await saveRestart({ demoId: currentDemo.id, program: program.path, options: {} });
+    } else {
+      const files = [];
+      for (const f of workspace.files) files.push({ path: f.path, blob: new Blob([await f.load()]) });
+      await saveRestart({ program: program.path, system: opts.system, options: rest, name: workspace.name,
+        files, dirHandle: workspace.dirHandle, bios: biosFiles ?? [] });
+    }
+  } catch (err) {
+    showDialog('Restart failed', `The files could not be kept for the restart: ${err.message || err}`, [], true);
+    return;
+  }
+  if (emulator) emulator.running = false; // skip the beforeunload prompt
+  location.reload();
+}
+
+$('btn-options').addEventListener('click', () => {
+  if (!runInfo) return;
+  const { program, opts } = runInfo;
+  const kind = runningKind(program, opts);
+  const inputs = {};
+  const rows = (DEMO_OPTION_FIELDS[kind] ?? []).map(([key, label, sourceId]) => {
+    let input;
+    if (sourceId) {
+      input = $(sourceId).cloneNode(true);
+      input.removeAttribute('id');
+      input.value = String(opts[key] ?? '');
+    } else {
+      input = el('input', { type: 'text', value: opts[key] ?? '', placeholder: 'e.g. s for Sound Blaster', spellcheck: false });
+    }
+    inputs[key] = input;
+    return el('label', {}, label, input);
+  });
+  if (kind === 'windows') {
+    const keep = el('input', { type: 'checkbox', checked: opts.persistent });
+    inputs.persistent = keep;
+    rows.push(el('label', { className: 'check' }, keep, ' Keep the virtual environment in the browser'));
+  }
+  const body = rows.length
+    ? el('div', { className: 'demo-options run-options' }, ...rows)
+    : el('p', { className: 'hint', textContent: 'This emulator has no settings here. Restart starts the game again from the beginning.' });
+  const canSave = !$('btn-changes').hidden;
+  showDialog('Options',
+    `Restart starts ${program.path} again with these settings, without opening it again.`
+      + (canSave ? ' Changed files that are not saved are lost.' : ''),
+    [], false, [
+      { label: 'Cancel' },
+      ...(canSave ? [{ label: 'Save first …', run: () => $('btn-changes').click() }] : []),
+      { label: 'Restart', primary: true, run: () => {
+        const chosen = Object.fromEntries(Object.entries(inputs).map(([key, input]) => {
+          if (input.type === 'checkbox') return [key, input.checked];
+          const value = input.value.trim();
+          return [key, ['bpp', 'memory'].includes(key) ? Number(value) : value];
+        }));
+        const size = currentDemo ? 0 : totalSize(workspace);
+        if (size <= ASK_ABOVE_BYTES) {
+          restartWith(chosen);
+          return;
+        }
+        showDialog('Keep the files for the restart?',
+          `To start ${program.path} again without opening it again, its files (${formatSize(size)}) are kept in this `
+            + 'browser\'s storage for a moment. They are deleted as soon as the page has restarted (if that does not '
+            + 'happen, at your next visit of this page). Nothing leaves your computer.',
+          [], false, [
+            { label: 'Cancel' },
+            { label: `Keep ${formatSize(size)} and restart`, primary: true, run: () => restartWith(chosen) },
+          ]);
+      } },
+    ], body);
+});
 
 // Report: a prefilled GitHub issue with what is known about the running program.
 /** Option of the "Platform" dropdown of the issue form for the running program. */
@@ -696,7 +784,7 @@ window.addEventListener('beforeunload', (e) => {
 // ---------------------------------------------------------------------------
 // Demo launcher: free programs/games fetched at build time (see demos/demos.json)
 
-async function launchDemo(demo, button) {
+async function launchDemo(demo, button = el('button')) {
   const label = button.textContent;
   button.disabled = true;
   try {
@@ -1079,14 +1167,29 @@ $('input-own-os').addEventListener('change', (e) => {
   if (file) openWorkspace(() => fromFileList([file]), { program: file.name, system: 'pc' });
 });
 
-fetch('demos/demos.json')
+const demoList = fetch('demos/demos.json')
   .then((r) => (r.ok ? r.json() : null))
   .then((list) => {
-    if (!list?.length) return;
+    if (!list?.length) return [];
     renderDemoTree(list);
     $('demos').hidden = !$('run').hidden;
+    return list;
   })
-  .catch(() => {});
+  .catch(() => []);
+
+// After "Options → Restart": start the same program again with the new settings.
+takeRestart().then(async (plan) => {
+  if (!plan) return;
+  if (plan.demoId) {
+    const demo = (await demoList).find((d) => d.id === plan.demoId);
+    if (demo) launchDemo(demo);
+    return;
+  }
+  const autostart = { program: plan.program, system: plan.system, options: plan.options, bios: plan.bios };
+  let handle = plan.dirHandle;
+  if (handle && (await handle.queryPermission?.({ mode: 'readwrite' })) !== 'granted') handle = null;
+  openWorkspace(async () => (handle ? fromDirectoryHandle(handle) : fromStoredFiles(plan.name, plan.files)), autostart);
+});
 
 // ---------------------------------------------------------------------------
 // Footer

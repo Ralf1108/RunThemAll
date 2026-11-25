@@ -486,6 +486,7 @@ select {
 }
 .msg-files .more { list-style: none; margin-left: -1rem; color: var(--muted); font-family: inherit; }
 .msg-dialog.wide { width: min(760px, 100vw - 2rem); }
+.run-options { margin-top: .75rem; }
 .report-form { display: grid; gap: .6rem; margin-top: .75rem; max-height: min(62vh, 640px); overflow: auto; padding-right: .25rem; }
 .report-field { display: grid; gap: .25rem; font-size: .85rem; color: var(--muted); }
 .report-field input, .report-field select, .report-field textarea {

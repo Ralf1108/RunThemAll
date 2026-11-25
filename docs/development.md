@@ -90,6 +90,7 @@ site/                  the website (this is what gets published)
   js/platforms.js      logos and colours of the demo platforms
   js/audio.js          unlocks sound the browser holds back
   js/report.js         recognises crashes, builds the prefilled GitHub issue
+  js/restart.js        keeps the files for one reload when restarting with other options
   js/zip.js            reads and writes ZIP files (no dependencies)
   boxedwine/, jsdos/, emulatorjs/, v86/, demos/   created by the fetch script (not in git)
 demos/demos.json       list of demos

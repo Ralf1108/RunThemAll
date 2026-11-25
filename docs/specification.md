@@ -56,7 +56,16 @@ side the supported platforms and the emulators (3.3). The interface is in Englis
    - All toolbar buttons have an icon. *Sound* and *Play/Pause* show the current state: green with
      *Sound on* / *Play* while it is on or running, red with *Sound off* / *Pause* after a click.
    - *Fullscreen*: the emulator area goes fullscreen.
-   - *Console* (orange while closed, green while open): shows the messages of the emulator below the picture.
+   - Toolbar order: *Save*, *Fullscreen*, *Sound*, *Play/Pause*, *Options*, *Console*, *Report*, *Quit* (red).
+   - *Console*: shows the messages of the emulator below the picture; it turns red when a crash was recognised.
+   - *Options*: the settings of the running emulator (Wine version, threads, resolution, colour depth,
+     virtual environment / CPU speed, start parameters / memory; EmulatorJS has none) and *Restart*.
+     The emulators cannot be stopped and started again cleanly in one page, so the page reloads:
+     a demo is started again with the new settings (saved as its demo options); for own files
+     `js/restart.js` keeps the files, start options, BIOS files and the folder handle in IndexedDB for
+     this one reload. Above 10 MB the user is asked first. Every page load deletes what was kept, and a
+     restart older than 10 minutes is not used. A folder is used directly again if the browser still
+     allows writing to it, otherwise the kept copy is used (then without writing back).
    - *Report*: prepares a GitHub issue (form `bug_report.yml`, fields filled through the address) with the
      program, platform, emulator and version, start options, SHA-256 of the started file and the last console
      lines (as many as fit into the address). The dialog shows all fields of the form editable (title, what,
@@ -70,7 +79,7 @@ side the supported platforms and the emulators (3.3). The interface is in Englis
      canvas reads back black).
    - Crash detection (`js/report.js`): console lines with clear signs (Wine "Unhandled page fault/exception",
      Emscripten "Aborted(", WebAssembly RuntimeError, DOSBox "E_Exit", "Kernel panic" …), uncaught
-     WebAssembly errors and a failed start open the console and turn *Report* red (*Report crash*).
+     WebAssembly errors and a failed start open the console and turn *Console* and *Report* red (*Report crash*).
      DOM exceptions of the browser (e.g. pointer lock refused) do not count.
    - There is no status line: while loading, the loading screen shows the steps and progress; afterwards
      the *Play/Pause* button shows the state. Hints (no sound yet, mouse in v86, crash) appear below the picture.
