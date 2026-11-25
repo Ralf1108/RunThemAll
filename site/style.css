@@ -50,6 +50,15 @@ a { color: var(--accent); }
 .wrap { width: min(960px, 100% - 2rem); margin-inline: auto; }
 
 .site-header { padding: 2rem 0 1rem; }
+.site-header .wrap { position: relative; }
+.github-link {
+  position: absolute; top: .35rem; right: 0;
+  display: inline-flex; align-items: center; gap: .45rem;
+  padding: .4rem .8rem; border: 1px solid var(--border); border-radius: 999px;
+  background: var(--surface); color: var(--text); text-decoration: none; font-size: .9rem; font-weight: 600;
+}
+.github-link:hover { border-color: var(--accent); color: var(--accent); }
+@media (max-width: 560px) { .github-link span { display: none; } .github-link { padding: .45rem; } }
 .logo { margin: 0; font-size: 1.75rem; display: flex; align-items: center; gap: .6rem; }
 .logo-mark {
   width: 1.6rem; height: 1.35rem; border-radius: 4px;
