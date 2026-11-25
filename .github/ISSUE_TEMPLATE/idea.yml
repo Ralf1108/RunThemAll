@@ -1,0 +1,20 @@
+name: Idea or wish
+description: A new platform, a new demo or a better way to do something.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: What would you like RunThemAll to do?
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why would it help?
+  - type: textarea
+    id: links
+    attributes:
+      label: Links
+      description: For a demo, where it can be downloaded and under which licence. For a platform, a browser emulator that could run it.

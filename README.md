@@ -68,6 +68,7 @@ Where they come from: [demos/README.md](demos/README.md)
 - A few consoles need an original **BIOS file** (marked "BIOS" on the page). You have to add it yourself.
 - Programs inside the emulator **cannot go online**.
 - Works best in **Chrome or Edge**.
+- Something does not work, or you have an idea? [Open an issue](https://github.com/Ralf1108/RunThemAll/issues/new/choose).
 
 ## Privacy
 

@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Problem inside an emulator
+    url: https://github.com/Ralf1108/RunThemAll/blob/main/docs/systems.md
+    about: What runs and what does not (3D graphics, .NET, BIOS files). Please check here first.

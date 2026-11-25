@@ -1,0 +1,55 @@
+name: Something does not work
+description: A program, game, demo or the page itself does not work as expected.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time! Please do not attach games or programs you are not allowed to share.
+  - type: input
+    id: what
+    attributes:
+      label: What did you try to run?
+      description: Name of the program, game, demo or operating system.
+      placeholder: e.g. "Keen Dreams demo" or "my own Windows 95 program"
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - DOS
+        - Windows 3.x
+        - Windows 95 – XP
+        - Operating system (CD, floppy or hard disk image)
+        - Console or handheld
+        - Home computer
+        - Arcade
+        - The page itself
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead? Error messages and screenshots help a lot.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How can we see it ourselves?
+      description: The steps, and where the program can be downloaded if it is free.
+      placeholder: |
+        1. Open the file ...
+        2. Click Start
+        3. ...
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and system
+      placeholder: e.g. Chrome 131 on Windows 11
+    validations:
+      required: true
