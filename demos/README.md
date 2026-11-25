@@ -1,228 +1,187 @@
-# Demos und Quellenverzeichnis der Spiele
+# Demos and their sources
 
-`demos.json` listet freie Programme, Spiele und Betriebssysteme, die auf der Startseite von Run Them All als Demo
-angeboten werden: mindestens eines pro Emulator (Boxedwine, js-dos, EmulatorJS) bzw. System.
+[← Back to the README](../README.md)
 
-Die Dateien selbst liegen **nicht** in diesem Repository. `scripts/fetch-runtimes.mjs` lädt sie beim
-Build aus ihren Original-Releases (Downloads werden in `vendor/demos/` zwischengespeichert) und legt
-sie unter `site/demos/` ab. Damit werden sie zusammen mit der Webseite veröffentlicht.
+`demos.json` lists the free programs, games and operating systems offered as demos on the start page.
 
-Stand der Recherche: 24.11.2026.
+- The files are **not** in this repository (with a few exceptions in [local/](local/README.md)).
+- `scripts/fetch-runtimes.mjs` downloads them from their original releases (cached in `vendor/demos/`)
+  into `site/demos/`, so they are published together with the website.
+- Research as of November 2026.
 
-## Aufnahmekriterien
+## Rules for adding a demo
 
-1. Die Lizenz muss die Weitergabe ausdrücklich erlauben (freie Lizenz oder ausdrückliche Freigabe).
-2. Fester Download-Link aus einem offiziellen Release, möglichst ein GitHub-Release mit Versionsnummer.
-3. Das Spiel muss ohne Original-BIOS laufen (z. B. Amiga nur mit dem freien AROS-Kickstart).
-4. Keine Fan-Spiele zu fremden Marken.
+1. The licence must clearly allow sharing (free licence or explicit permission).
+2. A fixed download link from an official release, ideally a versioned GitHub release.
+3. It must run without an original BIOS (e.g. Amiga only with the free AROS Kickstart).
+4. No fan games of other people's brands.
 
-## Aufgenommene Demos
+## Included demos
 
-### SkiFree 1.04 (32 Bit)
+### Operating systems
 
-| | |
+**DOSBox (DOS prompt)**: js-dos (DOSBox)
+- File: `demos/os/DOSBOX.BAT`, our own start file from `demos/local/os/` (shows a short help and stops at `C:\>`)
+- Licence: DOSBox and js-dos GPL-2.0 (see [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md)); the start file is part of Run Them All (MIT)
+
+**Tiny Core Linux 17.1**: v86, boots from CD
+- Authors: Robert Shingledecker and the Tiny Core team, http://tinycorelinux.net/
+- Download: http://tinycorelinux.net/17.x/x86/release/TinyCore-17.1.iso
+- File: `demos/os/TinyCore-17.1.iso` (27,262,976 bytes, unchanged)
+- Licence: GPL-2.0 (Linux kernel, BusyBox, …), source: http://tinycorelinux.net/17.x/x86/release/src/
+- Boots to the graphical desktop with 128 MB RAM (tested 24 Nov 2026)
+
+**KolibriOS 0.7.7.0+8930**: v86, boots from floppy
+- Authors: KolibriOS team, https://kolibrios.org/
+- File: `demos/os/kolibri.img` (1,474,560 bytes), stored in the repository under `demos/local/os/`, origin see [local/README.md](local/README.md)
+- Licence: GPL-2.0, source: https://git.kolibrios.org/KolibriOS/kolibrios (commit `d50642c`)
+- Boots to the desktop in a few seconds (tested 24 Nov 2026)
+
+**ReactOS 0.4.15 (live CD)**: v86 with 512 MB RAM, boots from CD
+- Authors: ReactOS project, https://reactos.org/
+- Download: https://github.com/reactos/reactos/releases/download/0.4.15-release/ReactOS-0.4.15-release-1-gdbb43bbaeb2-x86-live.zip
+- File: `demos/os/reactos-0.4.15-live-<start>-<end>.iso.zst`: the ISO (300,941,312 bytes) split into 287 parts
+  of 1 MB, each compressed with zstd (~64 MB in total). v86 only loads the parts ReactOS reads. This keeps
+  every file under the 100 MB limit of GitHub Pages.
+- Licence: GPL-2.0 (and other free licences for some parts), source: https://github.com/reactos/reactos/tree/0.4.15-release
+- Boots to the welcome dialog of the live CD (tested 25 Nov 2026, at most 5 minutes)
+
+### Windows (32 bit)
+
+**SkiFree 1.04**: Boxedwine
+- Author: Chris Pirih, https://ski.ihoc.net/
+- Taken from: the Boxedwine web release 26R1.0, file `SingleThreaded/ski32.zip` in
+  https://github.com/danoon2/Boxedwine/releases/download/26R1.0/Boxedwine26R1Web.zip
+- File: `demos/windows/ski32.zip` (39,491 bytes), starts `ski32.exe`
+- Licence: **no explicit licence.** The author offers the 32-bit version for free on his website, and
+  Boxedwine includes it as an example. SkiFree first came out in 1991 as a Microsoft product
+  (Microsoft Entertainment Pack), licensed from the author.
+- Does not strictly meet rule 1. **Kept on purpose** (decision of 24 Nov 2026), because the author offers it
+  himself and Boxedwine distributes it. Will be removed if the rights holder objects.
+
+**OpenTTD 15.3 with OpenGFX 8.0**: Boxedwine with Wine 6 (the Wine 11 file system lacks `winhttp.dll`)
+- Authors: OpenTTD team (game), OpenTTD team and contributors (OpenGFX), https://www.openttd.org/
+- Download: https://cdn.openttd.org/openttd-releases/15.3/openttd-15.3-windows-win32.zip and
+  https://cdn.openttd.org/opengfx-releases/8.0/opengfx-8.0-all.zip
+- File: `demos/windows/openttd-15.3.zip`: the Windows ZIP without its top folder, plus `baseset/opengfx-8.0.tar`
+  from the OpenGFX ZIP. Files unchanged.
+- Licence: GPL-2.0 (OpenTTD and OpenGFX), source: https://www.openttd.org/downloads/openttd-releases/latest, https://github.com/OpenTTD
+- Needs the Wine modules `winhttp` and `jsproxy`, added by the fetch script. The message about missing
+  graphics acceleration at start is harmless. Runs (tested 24 Nov 2026).
+
+### Windows 3.x (16 bit)
+
+**Castle of the Winds 1.1A (full version)**: Boxedwine with Wine 6
+- Author: Rick Saada (SaadaSoft), published 1993 by Epic MegaGames,
+  https://classicdosgames.com/game/castle_of_the_winds.html
+- Download: https://classicdosgames.com/files/games/saadasoft/castl11a.zip
+- File: `demos/win16/castl11a.zip` (695,273 bytes, unchanged). Two demo entries: part 1 starts `CASTLE1.EXE`,
+  part 2 starts `CASTLE2.EXE`.
+- Licence: **no explicit licence.** According to classicdosgames.com the author released it as freeware
+  ("Author Rick Saada has generously released this game as freeware"). The start dialog still shows
+  the old shareware text from 1993.
+- Like SkiFree, does not strictly meet rule 1 but was released by the author. Will be removed if the rights
+  holder objects. Runs (tested 24 Nov 2026).
+
+### DOS
+
+**Keen Dreams 1.13 (shareware)**: js-dos
+- Authors: id Software, published by Softdisk (1991/1992), https://classicdosgames.com/game/Keen_Dreams.html
+- Download: https://classicdosgames.com/online/zip/keendr13.zip (the same 24 files as the original ZIP
+  https://classicdosgames.com/files/games/id/keendr13.zip, but packed with Deflate instead of the old
+  "Implode" method that Run Them All cannot unpack)
+- File: `demos/dos/keendr13.zip` (358,813 bytes), starts `START.EXE` (the game requires this menu)
+- Licence: shareware, fully playable. `LICENSE.DOC` allows sharing as long as no files are added or removed.
+
+**Star Wars: Dark Forces 0.163D (English shareware demo)**: js-dos
+- Author: LucasArts (1994), https://classicdosgames.com/game/Star_Wars:_Dark_Forces.html
+- Download: https://classicdosgames.com/online/zip/dforces1.zip, the version of the online player: demo plus the
+  optional cut scenes and a ready sound setup `IMUSE.INI` (Sound Blaster 16). The original ZIP has no sound setup
+  and stays silent.
+- File: `demos/dos/dforces1.zip` (9,913,878 bytes), starts `DF.EXE`
+- Licence: demo with one playable level. `README.TXT`: LucasArts allows copies and electronic distribution
+  as long as no money is charged.
+
+**Indiana Jones and the Fate of Atlantis (English demo)**: js-dos
+- Author: LucasArts (1992), https://classicdosgames.com/game/Indiana_Jones_and_the_Fate_of_Atlantis.html
+- Download: https://classicdosgames.com/online/zip/fatetdt.zip, the installed "Interactive Demonstration"
+  (the original ZIP only contains a DOS installer)
+- File: `demos/dos/fatetdt.zip` (659,362 bytes), starts `PLAYFATE.EXE s` (Sound Blaster; without the parameter the
+  demo expects a Roland MT-32 and stays silent)
+- Licence: demo. `READ.ME`: "You may freely copy and distribute this disk provided you do not alter or
+  eliminate any copyright or trademark notices."
+
+**Boppin' 1.1 (shareware episode)**: js-dos
+- Authors: Accursed Toys (Jennifer Diane Reitz, Michael Lee Reitz), published by Apogee Software (1994),
+  https://classicdosgames.com/game/Boppin%27.html
+- Download: https://classicdosgames.com/files/games/accursed/1bop11.zip (Apogee installer)
+- File: `demos/dos/boppin-sw11.zip`, stored in the repository under `demos/local/dos/`: installed once in DOSBox and
+  set to Sound Blaster, origin see [local/README.md](local/README.md). Starts `BOPSW.EXE`.
+- Licence: shareware. `VENDOR.DOC`: "Everyone can -- and is encouraged! -- to copy, upload and generally pass
+  around this Program without charging for it."
+- The full version is not included: classicdosgames calls it freeware, but its `LICENSE.DOC` forbids sharing
+  without Apogee's permission, and the author's website mentions no release.
+
+All DOS demos run (tested 25 Nov 2026).
+
+### Consoles and home computers
+
+**T-Rex 64 1.0.2**: Commodore 64, EmulatorJS with VICE (`vice_x64sc`)
+- Author: Maciej Małecki, https://github.com/maciejmalecki/trex64
+- Download: https://github.com/maciejmalecki/trex64/releases/download/1.0.2/trex.zip
+- File: `demos/c64/rex.d64` (174,848 bytes, taken from the ZIP)
+- Licence: MIT, https://github.com/maciejmalecki/trex64/blob/master/LICENSE
+
+**Nova the Squirrel 1.0.6a**: NES, EmulatorJS with FCEUmm
+- Author: NovaSquirrel, https://github.com/NovaSquirrel/NovaTheSquirrel
+- Download: https://github.com/NovaSquirrel/NovaTheSquirrel/releases/download/v1.0.6a/nova.nes
+- File: `demos/nes/nova.nes` (262,160 bytes, unchanged)
+- Licence: GPL-3.0, https://github.com/NovaSquirrel/NovaTheSquirrel/blob/master/LICENSE.txt, source: tag `v1.0.6a`
+
+**µCity 1.3**: Game Boy Color, EmulatorJS with Gambatte
+- Author: Antonio Niño Díaz, https://github.com/AntonioND/ucity
+- Download: https://github.com/AntonioND/ucity/releases/download/v1.3/ucity.gbc
+- File: `demos/gb/ucity.gbc` (131,072 bytes, unchanged)
+- Licence: GPL-3.0, https://github.com/AntonioND/ucity/blob/master/gpl-3.0.txt, source: tag `v1.3`
+
+## Checked but not included
+
+| Candidate | System | Licence | Reason |
+|---|---|---|---|
+| [Plouf! 1.1](https://agateau.com/projects/plouf/) (Aurélien Gâteau) | Amiga | GPL-3.0 | does not start with the free AROS Kickstart (AMOS program needs the real one) |
+| [Lupengo](https://lupengo.sourceforge.net/lupamiga.php.html) (Carlo Borreo) | Amiga | GPL | does not start with AROS (blue screen) |
+| [Blocky Skies 0.73](http://alpine9000.github.io/blockyskies/) (alpine9000) | Amiga | code BSD-2, music CC-BY 4.0, **graphics "All rights reserved"**, one sound CC-BY-NC 3.0 ([LEGAL](http://alpine9000.github.io/blockyskies/LEGAL.html)) | runs fine with AROS, but sharing the graphics is not allowed; only with the author's permission |
+| [Famidash](https://github.com/tfdsoft/famidash) (tfdsoft) | NES | MIT | fan game of another brand (Geometry Dash) |
+| [8 bit island](https://gpowerf.itch.io/8-bit-island) (gpowerf) | C64 | MIT (per itch.io) | only on itch.io, no fixed download link |
+| [Galactor](https://drludos.itch.io/galactor) (Dr. Ludos) | NES | code MIT, graphics/sound CC-BY | only on itch.io |
+| [Sprilo](https://cmrn.itch.io/sprilo) (cmrn) | NES | MIT | only on itch.io |
+| [Jump N Bump, Amiga port](https://earok.itch.io/jump-n-bump) (earok) | Amiga | GPL-3.0 | only on itch.io |
+| [Calculator 2.0 / 1.0](https://github.com/siciliajuan/win31-calc-unified/releases) (Juan Sicilia) | Windows 3.x | MIT | crashes in Boxedwine at start ("Unhandled page fault on read access to FFFFFFFF"), also its `SETUP.EXE`; built with Open Watcom, cause unknown |
+| [Tobu Tobu Girl](https://github.com/SimonLarsen/tobutobugirl) (Simon Larsen) | Game Boy | code MIT, graphics CC-BY | no GitHub release with a ROM |
+
+Open questions:
+- **Win16 programs built with Open Watcom** (Calculator, a self-compiled WineMine) crash in Boxedwine at start;
+  Castle of the Winds (other compiler) runs.
+- **Amiga demo** still missing. Blocky Skies would work technically but needs the author's permission.
+
+## Format of `demos.json`
+
+| Field | Meaning |
 |---|---|
-| System / Emulator | Windows (32 Bit) / Boxedwine |
-| Autor | Chris Pirih |
-| Projektseite | https://ski.ihoc.net/ |
-| Bezogen von | Boxedwine-Web-Release 26R1.0, Datei `SingleThreaded/ski32.zip` in https://github.com/danoon2/Boxedwine/releases/download/26R1.0/Boxedwine26R1Web.zip |
-| Datei auf der Seite | `demos/windows/ski32.zip` (39.491 Byte), gestartet wird `ski32.exe` |
-| Lizenz | **keine ausdrückliche Lizenz.** Der Autor bietet die 32-Bit-Version auf seiner Seite kostenlos zum Download an, Boxedwine legt sie seinem Release als Beispiel bei. SkiFree erschien 1991 ursprünglich als Microsoft-Produkt (Microsoft Entertainment Pack), das Microsoft beim Autor lizenziert hatte. |
-| Hinweis | Erfüllt Kriterium 1 nicht streng. **Bewusst beibehalten** (Entscheidung vom 24.11.2026), weil der Autor die Datei selbst kostenlos anbietet und Boxedwine sie mit seinem Release verteilt. Bei einem Einwand des Rechteinhabers wird die Demo entfernt. |
-
-### OpenTTD 15.3 mit OpenGFX 8.0 (32 Bit)
-
-| | |
-|---|---|
-| System / Emulator | Windows (32 Bit) / Boxedwine mit Wine 6 (die Demo stellt Wine 6 ein, im Wine-11-Dateisystem fehlt `winhttp.dll`) |
-| Autoren | OpenTTD-Team (Spiel), OpenTTD-Team und Mitwirkende (OpenGFX) |
-| Projektseite | https://www.openttd.org/ |
-| Download | https://cdn.openttd.org/openttd-releases/15.3/openttd-15.3-windows-win32.zip und https://cdn.openttd.org/opengfx-releases/8.0/opengfx-8.0-all.zip |
-| Datei auf der Seite | `demos/windows/openttd-15.3.zip`: das Windows-ZIP ohne den obersten Ordner, dazu `baseset/opengfx-8.0.tar` aus dem OpenGFX-ZIP. Dateien unverändert. |
-| Lizenz | GPL-2.0 (OpenTTD und OpenGFX), Quellcode unter https://www.openttd.org/downloads/openttd-releases/latest bzw. https://github.com/OpenTTD |
-| Hinweis | Läuft in Boxedwine (getestet am 24.11.2026). Braucht die Wine-Module `winhttp` und `jsproxy`, die das Download-Script in `boxedwine/wine6/win16-extras.zip` ergänzt. Beim Start meldet OpenTTD, dass keine Grafikbeschleunigung verfügbar ist, das ist harmlos. |
-
-### Castle of the Winds 1.1A (Vollversion, 16 Bit)
-
-| | |
-|---|---|
-| System / Emulator | Windows 3.x (16 Bit) / Boxedwine mit Wine 6 |
-| Autor | Rick Saada (SaadaSoft), Vertrieb 1993 durch Epic MegaGames |
-| Projektseite | https://classicdosgames.com/game/castle_of_the_winds.html |
-| Download | https://classicdosgames.com/files/games/saadasoft/castl11a.zip |
-| Inhalt | `CASTLE1.EXE` (Teil 1 „A Question of Vengeance“), `CASTLE2.EXE` (Teil 2 „Lifthransir's Bane“), je eine `.HLP`-Hilfedatei |
-| Datei auf der Seite | `demos/win16/castl11a.zip` (695.273 Byte, unverändert). Zwei Demo-Einträge: „Castle of the Winds 1“ startet `CASTLE1.EXE`, „Castle of the Winds 2“ startet `CASTLE2.EXE` |
-| Lizenz | **keine ausdrückliche Lizenz.** Laut classicdosgames.com hat der Autor das Spiel als Freeware freigegeben („Author Rick Saada has generously released this game as freeware“). Für dieses Spiel gibt es dort keine eigene Lizenzdatei. Der Startdialog im Spiel enthält noch den alten Shareware-Text von 1993. |
-| Hinweis | Erfüllt Kriterium 1 nicht streng, aber ähnlich wie SkiFree vom Autor freigegeben. Bei einem Einwand des Rechteinhabers wird die Demo entfernt. Läuft in Boxedwine (getestet am 24.11.2026). |
-
-### Keen Dreams 1.13 (Shareware)
-
-| | |
-|---|---|
-| System / Emulator | DOS / js-dos (DOSBox) |
-| Autoren | id Software, Vertrieb Softdisk (1991/1992) |
-| Projektseite | https://classicdosgames.com/game/Keen_Dreams.html |
-| Download | https://classicdosgames.com/online/zip/keendr13.zip (dieselben 24 Dateien wie das Original-ZIP https://classicdosgames.com/files/games/id/keendr13.zip, aber mit Deflate statt dem alten PKZIP-Verfahren „Implode“ gepackt, das Run Them All nicht entpacken kann) |
-| Datei auf der Seite | `demos/dos/keendr13.zip` (358.813 Byte), gestartet wird `START.EXE` (das Spiel selbst verlangt den Start über dieses Menü) |
-| Lizenz | Shareware, voll spielbar. `LICENSE.DOC` im ZIP erlaubt die Weitergabe, solange keine Dateien hinzugefügt oder entfernt werden. |
-| Hinweis | Läuft (getestet am 25.11.2026). |
-
-### Star Wars: Dark Forces 0.163D (englische Shareware-Demo)
-
-| | |
-|---|---|
-| System / Emulator | DOS / js-dos (DOSBox) |
-| Autor | LucasArts (1994) |
-| Projektseite | https://classicdosgames.com/game/Star_Wars:_Dark_Forces.html |
-| Download | https://classicdosgames.com/online/zip/dforces1.zip, die Fassung der Online-Version: Demo plus die optionalen Zwischensequenzen (`dforces2.zip`, `dforces3.zip`) und eine fertige Soundkonfiguration `IMUSE.INI` (Sound Blaster 16). Das Original-ZIP https://classicdosgames.com/files/games/lucasarts/dforces1.zip hat keine Soundkonfiguration, dort bleibt das Spiel ohne Einrichtung stumm. |
-| Datei auf der Seite | `demos/dos/dforces1.zip` (9.913.878 Byte), gestartet wird `DF.EXE` |
-| Lizenz | Demo mit einem spielbaren Level. `README.TXT` im ZIP: LucasArts erlaubt Kopien und elektronische Weitergabe, solange kein Geld dafür verlangt wird. |
-| Hinweis | Läuft (getestet am 25.11.2026). |
-
-### Indiana Jones and the Fate of Atlantis (englische Demo)
-
-| | |
-|---|---|
-| System / Emulator | DOS / js-dos (DOSBox) |
-| Autor | LucasArts (1992) |
-| Projektseite | https://classicdosgames.com/game/Indiana_Jones_and_the_Fate_of_Atlantis.html |
-| Download | https://classicdosgames.com/online/zip/fatetdt.zip, die bereits installierte Fassung der „Interactive Demonstration“ (das Original-ZIP https://classicdosgames.com/files/games/lucasarts/fatetdt.zip enthält nur ein DOS-Installationsprogramm mit gepackten Daten) |
-| Datei auf der Seite | `demos/dos/fatetdt.zip` (659.362 Byte), gestartet wird `PLAYFATE.EXE s` (Sound Blaster; ohne Parameter erwartet die Demo eine Roland-MT-32, die es in DOSBox hier nicht gibt, und bleibt stumm). |
-| Lizenz | Demo. `READ.ME` (v2 der Demo): „You may freely copy and distribute this disk provided you do not alter or eliminate any copyright or trademark notices.“ |
-| Hinweis | Läuft (getestet am 25.11.2026). |
-
-### Boppin’ 1.1 (Shareware-Episode)
-
-| | |
-|---|---|
-| System / Emulator | DOS / js-dos (DOSBox) |
-| Autoren | Accursed Toys (Jennifer Diane Reitz, Michael Lee Reitz), Vertrieb Apogee Software (1994) |
-| Projektseite | https://classicdosgames.com/game/Boppin%27.html |
-| Download | https://classicdosgames.com/files/games/accursed/1bop11.zip (Apogee-Installationspaket) |
-| Datei auf der Seite | `demos/dos/boppin-sw11.zip`, liegt im Repository unter `demos/local/dos/`: das Paket einmal in DOSBox installiert und mit `SETUP.EXE` auf Sound Blaster (Effekte und Musik) eingestellt, Herkunft siehe [local/README.md](local/README.md). Gestartet wird `BOPSW.EXE`. |
-| Lizenz | Shareware. `VENDOR.DOC`: „Everyone can -- and is encouraged! -- to copy, upload and generally pass around this Program without charging for it.“ |
-| Hinweis | Die Vollversion ist nicht aufgenommen: classicdosgames nennt sie Freeware, ihre `LICENSE.DOC` verbietet aber die Weitergabe ohne Erlaubnis von Apogee, und die Seite der Autorin (jenniverse.com) erwähnt keine Freigabe. Läuft (getestet am 25.11.2026). |
-
-### T-Rex 64 1.0.2
-
-| | |
-|---|---|
-| System / Emulator | Commodore 64 / EmulatorJS mit VICE (`vice_x64sc`) |
-| Autor | Maciej Małecki |
-| Projektseite | https://github.com/maciejmalecki/trex64, https://maciejmalecki.itch.io/trex64 |
-| Download | https://github.com/maciejmalecki/trex64/releases/download/1.0.2/trex.zip |
-| Inhalt | `rex.d64`, `rex.prg`, `00readme.md` |
-| Datei auf der Seite | `demos/c64/rex.d64` (174.848 Byte, aus dem ZIP übernommen) |
-| Lizenz | MIT |
-| Lizenztext | https://github.com/maciejmalecki/trex64/blob/master/LICENSE |
-
-### Nova the Squirrel 1.0.6a
-
-| | |
-|---|---|
-| System / Emulator | NES / EmulatorJS mit FCEUmm |
-| Autor | NovaSquirrel |
-| Projektseite | https://github.com/NovaSquirrel/NovaTheSquirrel |
-| Download | https://github.com/NovaSquirrel/NovaTheSquirrel/releases/download/v1.0.6a/nova.nes |
-| Datei auf der Seite | `demos/nes/nova.nes` (262.160 Byte, unverändert) |
-| Lizenz | GPL-3.0 |
-| Lizenztext | https://github.com/NovaSquirrel/NovaTheSquirrel/blob/master/LICENSE.txt |
-| Quellcode | Tag `v1.0.6a` im Projekt-Repository |
-
-### µCity 1.3
-
-| | |
-|---|---|
-| System / Emulator | Game Boy Color / EmulatorJS mit Gambatte |
-| Autor | Antonio Niño Díaz |
-| Projektseite | https://github.com/AntonioND/ucity |
-| Download | https://github.com/AntonioND/ucity/releases/download/v1.3/ucity.gbc |
-| Datei auf der Seite | `demos/gb/ucity.gbc` (131.072 Byte, unverändert) |
-| Lizenz | GPL-3.0 |
-| Lizenztext | https://github.com/AntonioND/ucity/blob/master/gpl-3.0.txt |
-| Quellcode | Tag `v1.3` im Projekt-Repository |
-
-### DOSBox (DOS-Eingabeaufforderung)
-
-| | |
-|---|---|
-| System / Emulator | Betriebssystem (DOS) / js-dos (DOSBox) |
-| Datei auf der Seite | `demos/os/DOSBOX.BAT`, eigene Startdatei aus `demos/local/os/` (zeigt eine kurze Hilfe und endet an der Eingabe `C:\>`) |
-| Lizenz | DOSBox und js-dos GPL-2.0 (siehe THIRD_PARTY_NOTICES.md); die Startdatei gehört zu Run Them All (MIT) |
-
-### Tiny Core Linux 17.1
-
-| | |
-|---|---|
-| System / Emulator | Betriebssystem (PC, bootet von CD) / v86 |
-| Autoren | Robert Shingledecker und das Tiny-Core-Team |
-| Projektseite | http://tinycorelinux.net/ |
-| Download | http://tinycorelinux.net/17.x/x86/release/TinyCore-17.1.iso |
-| Datei auf der Seite | `demos/os/TinyCore-17.1.iso` (27.262.976 Byte, unverändert) |
-| Lizenz | GPL-2.0 (Linux-Kernel, BusyBox u. a.), Quellcode unter http://tinycorelinux.net/17.x/x86/release/src/ |
-| Hinweis | Bootet in v86 mit 128 MB RAM bis zum grafischen Desktop (getestet am 24.11.2026). |
-
-### KolibriOS 0.7.7.0+8930
-
-| | |
-|---|---|
-| System / Emulator | Betriebssystem (PC, bootet von Diskette) / v86 |
-| Autoren | KolibriOS-Team |
-| Projektseite | https://kolibrios.org/ |
-| Datei auf der Seite | `demos/os/kolibri.img` (1.474.560 Byte), liegt im Repository unter `demos/local/os/`, Herkunft siehe [local/README.md](local/README.md) |
-| Lizenz | GPL-2.0, Quellcode https://git.kolibrios.org/KolibriOS/kolibrios (Commit `d50642c`) |
-| Hinweis | Bootet in v86 in wenigen Sekunden bis zum Desktop (getestet am 24.11.2026). |
-
-### ReactOS 0.4.15 (Live-CD)
-
-| | |
-|---|---|
-| System / Emulator | Betriebssystem (PC, bootet von CD) / v86 mit 512 MB RAM |
-| Autoren | ReactOS-Projekt |
-| Projektseite | https://reactos.org/ |
-| Download | https://github.com/reactos/reactos/releases/download/0.4.15-release/ReactOS-0.4.15-release-1-gdbb43bbaeb2-x86-live.zip |
-| Datei auf der Seite | `demos/os/reactos-0.4.15-live-<start>-<ende>.iso.zst`: die ISO (300.941.312 Byte) in 287 Teile zu 1 MB zerlegt und einzeln mit zstd komprimiert (zusammen ca. 64 MB). v86 lädt nur die Teile, die ReactOS liest, und entpackt sie selbst. So bleibt jede Datei unter der 100-MB-Grenze von GitHub Pages. |
-| Lizenz | GPL-2.0 (und weitere freie Lizenzen einzelner Teile), Quellcode https://github.com/reactos/reactos/tree/0.4.15-release |
-| Hinweis | Bootet in v86 bis zum Begrüßungsdialog der Live-CD (getestet am 25.11.2026, im Test-Browser nach höchstens 5 Minuten). |
-
-## Geprüft und nicht aufgenommen
-
-| Kandidat | System | Lizenz | Quelle | Grund |
-|---|---|---|---|---|
-| Plouf! 1.1 (Aurélien Gâteau) | Amiga | GPL-3.0 ([LICENSE](https://github.com/agateau/plouf/blob/master/LICENSE)) | https://agateau.com/projects/plouf/plouf-1.1.adf, Quellcode https://github.com/agateau/plouf | startet mit dem freien AROS-Kickstart nicht (bleibt auf der Workbench stehen; AMOS-Programm braucht das echte Kickstart) |
-| Lupengo (Carlo Borreo) | Amiga | GPL | https://lupengo.sourceforge.net/lupamiga.php.html (ADF unter `lupengo.adf.html`) | startet mit AROS nicht (blauer Bildschirm) |
-| Blocky Skies 0.73 (alpine9000 / Enable Software) | Amiga | Code BSD-2, Musik CC-BY 4.0 (Simone Bernacchia), **Grafik „All rights reserved“** (Chipmunk u. a.), ein Soundeffekt CC-BY-NC 3.0 | http://alpine9000.github.io/blockyskies/ (`downloads/BlockySkiesPAL_BootDisk_v0_73.lha`), [LEGAL](http://alpine9000.github.io/blockyskies/LEGAL.html), Quellcode https://github.com/alpine9000/blockyskies | läuft mit AROS einwandfrei, aber keine Erlaubnis zur Weitergabe der Grafik; käme nur mit Zustimmung des Autors in Frage |
-| Famidash (tfdsoft) | NES | MIT ([LICENSE](https://github.com/tfdsoft/famidash/blob/main/LICENSE)) | https://github.com/tfdsoft/famidash | Fan-Spiel zu einer fremden Marke (Geometry Dash) |
-| 8 bit island (gpowerf) | C64 | MIT (laut itch.io) | https://gpowerf.itch.io/8-bit-island | nur über itch.io erhältlich, kein fester Download-Link |
-| Galactor (Dr. Ludos) | NES | Code MIT, Grafik/Ton CC-BY | https://drludos.itch.io/galactor | nur über itch.io erhältlich |
-| Sprilo (cmrn) | NES | MIT | https://cmrn.itch.io/sprilo | nur über itch.io erhältlich |
-| Jump N Bump, Amiga-Port (earok) | Amiga | GPL-3.0 | https://earok.itch.io/jump-n-bump | nur über itch.io erhältlich |
-| Calculator 2.0 / 1.0 (win31-calc-unified, Juan Sicilia) | Windows 3.x (16 Bit) | MIT ([LICENSE](https://github.com/siciliajuan/win31-calc-unified/blob/HEAD/LICENSE)) | https://github.com/siciliajuan/win31-calc-unified/releases (v2.0.0, 1.0) | stürzt in Boxedwine (Wine 6, Single- und Multithread) direkt beim Start ab („Unhandled page fault on read access to FFFFFFFF“); `SETUP.EXE` aus demselben Release genauso. Gebaut mit Open Watcom, Ursache noch offen (getestet am 24.11.2026) |
-| Tobu Tobu Girl (Simon Larsen) | Game Boy | Code MIT, Grafik CC-BY | https://github.com/SimonLarsen/tobutobugirl | kein Release mit ROM auf GitHub |
-
-## Offene Fragen
-
-- **Mit Open Watcom gebaute Win16-Programme** (Calculator, selbst kompiliertes WineMine) stürzen in Boxedwine beim Start ab, Castle of the Winds (anderer Compiler) läuft. Ursache noch offen.
-- **Amiga-Demo**: fehlt noch. Blocky Skies wäre technisch geeignet, braucht aber die Zustimmung des Autors.
-
-## Format von `demos.json`
-
-| Feld | Bedeutung |
-|---|---|
-| `id` | eindeutiger Name |
-| `title`, `platform`, `emulator`, `description` | Anzeige auf der Startseite |
-| `author`, `homepage`, `license` | Credits (werden auf der Karte angezeigt) |
-| `url` | Download aus dem Original-Release |
-| `local` | statt `url`: Datei unter `demos/local/` im Repository (siehe [local/README.md](local/README.md)) |
-| `entry` | optional: Datei innerhalb eines ZIP, die übernommen wird |
-| `strip` | optional: Ordner am Anfang der Pfade im ZIP, der entfernt wird |
-| `add` | optional: weitere Dateien aus anderen Downloads, die ins ZIP kommen (`url`, `entry`, `path`) |
-| `wine` | optional: Wine-Version, die die Demo braucht (`wine6` oder `wine11`) |
-| `args` | optional: Parameter für das DOS-Programm, z. B. die Soundkarte |
-| `memory` | optional: Arbeitsspeicher in MB für v86 |
-| `chunk` | optional: großes Disk-Image in zstd-komprimierte Teile dieser Größe zerlegen, die v86 bei Bedarf lädt |
-| `cycles` | optional: feste DOSBox-Geschwindigkeit (Zyklen) für diese Demo |
-| `note` | optional: Hinweis zur Herkunft |
-| `file` | Pfad unter `site/demos/` |
-| `start` | Programm bzw. Spieldatei, die gestartet wird |
-| `system` | optional: System aus `site/js/systems.js`, z. B. ein EmulatorJS-System oder `pc` für v86 |
+| `id` | unique name |
+| `title`, `platform`, `emulator`, `description` | shown on the start page (one tile per `platform`, in file order) |
+| `author`, `homepage`, `license` | credits shown in the demo info |
+| `url` | download from the original release |
+| `local` | instead of `url`: a file under `demos/local/` (see [local/README.md](local/README.md)) |
+| `entry` | optional: file inside a ZIP to take |
+| `strip` | optional: folder at the start of the paths in the ZIP to remove |
+| `add` | optional: more files from other downloads to put into the ZIP (`url`, `entry`, `path`) |
+| `wine` | optional: Wine version the demo needs (`wine6` or `wine11`) |
+| `args` | optional: command line arguments for the DOS program, e.g. the sound card |
+| `cycles` | optional: fixed DOSBox speed (cycles) |
+| `memory` | optional: RAM in MB for v86 |
+| `chunk` | optional: split a large disk image into zstd-compressed parts of this size, loaded on demand by v86 |
+| `note` | optional: note on the origin |
+| `file` | path under `site/demos/` |
+| `start` | program or game file to start |
+| `system` | optional: system from `site/js/systems.js`, e.g. an EmulatorJS system or `pc` for v86 |

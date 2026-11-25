@@ -5,3 +5,4 @@
 
 # Demo files are shipped byte for byte (DOS batch files need CRLF)
 demos/local/** binary
+demos/local/README.md text eol=lf
