@@ -28,7 +28,7 @@ export function shortName(name, taken) {
   if (isShortName(name) && !taken.has(name.toUpperCase())) return name;
   const dot = name.lastIndexOf('.');
   const clean = (s) => s.toUpperCase().replace(DOS_CLEAN, '');
-  const base = clean(dot > 0 ? name.slice(0, dot) : name) || 'DATEI';
+  const base = clean(dot > 0 ? name.slice(0, dot) : name) || 'FILE';
   const ext = clean(dot > 0 ? name.slice(dot + 1) : '').slice(0, 3);
   for (let n = 1; ; n++) {
     const suffix = `~${n}`;
@@ -119,7 +119,7 @@ export class DosRunner extends Runner {
    * @param {DosOptions} opts
    */
   async start(workspace, program, opts) {
-    if (this.running) throw new Error('Der Emulator läuft bereits. Bitte Seite neu laden.');
+    if (this.running) throw new Error('The emulator is already running. Please reload the page.');
     this.running = true;
     this.workspace = workspace;
     const { status, log, dosContainer } = this.ui;
@@ -127,7 +127,7 @@ export class DosRunner extends Runner {
 
     const version = await fetch('jsdos/version.json').then((r) => r.json()).then((v) => v.jsdos).catch(() => '');
     this.ui.emulatorInfo(`js-dos ${version} · DOSBox`.replace('  ', ' '));
-    this.ui.steps(['Emulator herunterladen (js-dos, DOSBox)', 'Programmdateien einlesen', 'DOSBox starten']);
+    this.ui.steps(['Download the emulator (js-dos, DOSBox)', 'Read the program files', 'Start DOSBox']);
     this.ui.step(0);
     const base = new URL('jsdos/', document.baseURI).href;
     await prefetch(['js-dos.js', 'js-dos.css', 'emulators/emulators.js', 'emulators/wdosbox.js',
@@ -140,7 +140,7 @@ export class DosRunner extends Runner {
     );
     const { toDos, fromDos } = mapToDosPaths(files.map((f) => f.path));
     this.fromDos = fromDos;
-    for (const [orig, dos] of toDos) if (orig !== dos) log(`Kurzname: ${orig} → ${dos}`, false);
+    for (const [orig, dos] of toDos) if (orig !== dos) log(`Short name: ${orig} → ${dos}`, false);
 
     const initFs = files.map((f) => {
       this.remember(f.path, f.data);
@@ -150,7 +150,7 @@ export class DosRunner extends Runner {
     log(`js-dos: DOSBox, Zyklen ${opts.cycles}\n${dosboxConf}`, false);
 
     this.ui.step(2);
-    status('Starte DOSBox …');
+    status('Starting DOSBox …');
     this.props = window.Dos(dosContainer, {
       dosboxConf,
       initFs,
@@ -168,7 +168,7 @@ export class DosRunner extends Runner {
         log(`js-dos: ${event}`, false);
         if (event === 'ci-ready') {
           this.ci = arg;
-          status('Läuft');
+          status('Running');
           this.ui.ready();
         }
       },

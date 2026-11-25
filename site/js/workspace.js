@@ -30,8 +30,8 @@ function cleanPath(path) {
 }
 
 /**
- * Removes a folder prefix shared by all files, so "Spiel/SPIEL.EXE" becomes
- * "SPIEL.EXE" when everything lives inside "Spiel/".
+ * Removes a folder prefix shared by all files, so "Game/GAME.EXE" becomes
+ * "GAME.EXE" when everything lives inside "Game/".
  */
 function stripCommonRoot(files) {
   if (files.length === 0) return files;

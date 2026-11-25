@@ -31,18 +31,18 @@ export function listZip(data) {
   for (let i = data.length - 22, min = Math.max(0, i - 0xffff); i >= min; i--) {
     if (view.getUint32(i, true) === SIG_EOCD) { eocd = i; break; }
   }
-  if (eocd < 0) throw new Error('Keine gültige ZIP-Datei (Verzeichnis nicht gefunden).');
+  if (eocd < 0) throw new Error('Not a valid ZIP file (directory not found).');
 
   const count = view.getUint16(eocd + 10, true);
   let offset = view.getUint32(eocd + 16, true);
   if (count === 0xffff || offset === 0xffffffff) {
-    throw new Error('ZIP64-Archive werden nicht unterstützt.');
+    throw new Error('ZIP64 archives are not supported.');
   }
 
   const entries = [];
   for (let n = 0; n < count; n++) {
     if (view.getUint32(offset, true) !== SIG_CENTRAL) {
-      throw new Error('Beschädigtes ZIP-Verzeichnis.');
+      throw new Error('Damaged ZIP directory.');
     }
     const flags = view.getUint16(offset + 8, true);
     const method = view.getUint16(offset + 10, true);
@@ -81,15 +81,15 @@ async function inflateRaw(bytes) {
  * @param {ReturnType<typeof listZip>[number]} entry
  */
 export async function readZipEntry(data, entry) {
-  if (entry.flags & 0x1) throw new Error(`Verschlüsselte Datei nicht unterstützt: ${entry.name}`);
+  if (entry.flags & 0x1) throw new Error(`Encrypted file not supported: ${entry.name}`);
   const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
   const lo = entry.localOffset;
-  if (view.getUint32(lo, true) !== SIG_LOCAL) throw new Error(`Beschädigter Eintrag: ${entry.name}`);
+  if (view.getUint32(lo, true) !== SIG_LOCAL) throw new Error(`Damaged entry: ${entry.name}`);
   const start = lo + 30 + view.getUint16(lo + 26, true) + view.getUint16(lo + 28, true);
   const raw = data.subarray(start, start + entry.compressedSize);
   if (entry.method === 0) return raw.slice();
   if (entry.method === 8) return inflateRaw(raw);
-  throw new Error(`Kompressionsverfahren ${entry.method} nicht unterstützt: ${entry.name}`);
+  throw new Error(`Compression method ${entry.method} not supported: ${entry.name}`);
 }
 
 /**
@@ -99,7 +99,7 @@ export async function readZipEntry(data, entry) {
 export function readZipEntryRaw(data, entry) {
   const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
   const lo = entry.localOffset;
-  if (view.getUint32(lo, true) !== SIG_LOCAL) throw new Error(`Beschädigter Eintrag: ${entry.name}`);
+  if (view.getUint32(lo, true) !== SIG_LOCAL) throw new Error(`Damaged entry: ${entry.name}`);
   const start = lo + 30 + view.getUint16(lo + 26, true) + view.getUint16(lo + 28, true);
   return {
     method: entry.method,

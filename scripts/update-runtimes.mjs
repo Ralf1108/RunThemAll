@@ -47,7 +47,7 @@ async function getText(url) {
 /** Reads `const NAME = '...';` from the fetch script. */
 function readConst(source, name) {
   const m = source.match(new RegExp(`^const ${name} = '([^']*)';`, 'm'));
-  if (!m) throw new Error(`Konstante ${name} nicht in fetch-runtimes.mjs gefunden.`);
+  if (!m) throw new Error(`Constant ${name} not found in fetch-runtimes.mjs.`);
   return m[1];
 }
 
@@ -60,7 +60,7 @@ function writeConst(source, name, value) {
 async function latestBoxedwine() {
   const release = await getJson('https://api.github.com/repos/danoon2/Boxedwine/releases/latest');
   const asset = release.assets.find((a) => /Web\.zip$/i.test(a.name));
-  if (!asset) throw new Error(`Boxedwine ${release.tag_name}: kein Web-Release (…Web.zip) gefunden.`);
+  if (!asset) throw new Error(`Boxedwine ${release.tag_name}: no web release (…Web.zip) found.`);
   return { BOXEDWINE_TAG: release.tag_name, BOXEDWINE_ASSET: asset.name };
 }
 
@@ -69,11 +69,11 @@ async function latestJsDos() {
   const version = meta['dist-tags'].latest;
   const pkg = meta.versions[version];
   const emulators = pkg.devDependencies?.emulators ?? pkg.dependencies?.emulators;
-  if (!emulators) throw new Error(`js-dos ${version}: Version von emulators nicht gefunden.`);
+  if (!emulators) throw new Error(`js-dos ${version}: emulators version not found.`);
   const emulatorsVersion = emulators.replace(/^[\^~]/, '');
   // DOSBox is a git submodule of the emulators repository.
   const sub = await getJson(`https://api.github.com/repos/caiiiycuk/emulators/contents/native/dosbox?ref=v${emulatorsVersion}`);
-  if (sub.type !== 'submodule') throw new Error(`emulators ${emulatorsVersion}: native/dosbox ist kein Submodul mehr.`);
+  if (sub.type !== 'submodule') throw new Error(`emulators ${emulatorsVersion}: native/dosbox is no longer a submodule.`);
   return { JSDOS_VERSION: version, EMULATORS_VERSION: emulatorsVersion, DOSBOX_COMMIT: sub.sha };
 }
 
@@ -90,7 +90,7 @@ async function packageJsonFromTarball(url) {
     if (name === 'package/package.json') return JSON.parse(text(pos + 512, size));
     pos += 512 + Math.ceil(size / 512) * 512;
   }
-  throw new Error(`${url}: package.json fehlt`);
+  throw new Error(`${url}: package.json missing`);
 }
 
 async function latestV86() {
@@ -99,11 +99,11 @@ async function latestV86() {
   // Only the package.json inside the tarball carries the commit ("0.5.476+g9457e7a").
   const pkg = await packageJsonFromTarball(meta.dist.tarball);
   const short = (pkg.version.match(/\+g([0-9a-f]+)/) ?? [])[1] || meta.gitHead;
-  if (!short) throw new Error(`v86 ${version}: Commit nicht gefunden.`);
+  if (!short) throw new Error(`v86 ${version}: commit not found.`);
   const commit = (await getJson(`https://api.github.com/repos/copy/v86/commits/${short}`)).sha;
   const script = await getText(`https://raw.githubusercontent.com/copy/v86/${commit}/bios/fetch-and-build-seabios.sh`);
   const seabios = (script.match(/git checkout rel-([0-9.]+)/) ?? [])[1];
-  if (!seabios) throw new Error(`v86 ${version}: SeaBIOS-Version nicht gefunden.`);
+  if (!seabios) throw new Error(`v86 ${version}: SeaBIOS version not found.`);
   return { V86_VERSION: version, V86_COMMIT: commit, SEABIOS_VERSION: seabios };
 }
 
@@ -123,28 +123,28 @@ async function main() {
     try {
       wanted = await latest();
     } catch (err) {
-      console.log(`${label}: Prüfung fehlgeschlagen – ${err.message}`);
+      console.log(`${label}: check failed – ${err.message}`);
       continue;
     }
     const diffs = Object.entries(wanted).filter(([name, value]) => readConst(source, name) !== value);
     if (diffs.length === 0) {
-      console.log(`${label}: aktuell (${Object.values(wanted)[0]})`);
+      console.log(`${label}: up to date (${Object.values(wanted)[0]})`);
       continue;
     }
-    console.log(`${label}: Update verfügbar`);
+    console.log(`${label}: update available`);
     for (const [name, value] of diffs) {
       console.log(`  ${name}: ${readConst(source, name)} → ${value}`);
       changes.push([name, readConst(source, name), value]);
     }
   }
-  console.log('EmulatorJS: wird bei jedem Download automatisch in der neuesten stabilen Version geholt.');
+  console.log('EmulatorJS: always downloaded in its newest stable version.');
 
   if (changes.length === 0) {
-    console.log('\nAlles aktuell.');
+    console.log('\nEverything is up to date.');
     return;
   }
   if (!apply) {
-    console.log('\nNichts geändert. Mit --apply übernehmen und herunterladen.');
+    console.log('\nNothing changed. Use --apply to write the new versions and download them.');
     return;
   }
 
@@ -153,23 +153,23 @@ async function main() {
   for (const [name, , value] of changes) source = writeConst(source, name, value);
   const newRelease = `https://github.com/danoon2/Boxedwine/releases/download/${readConst(source, 'BOXEDWINE_TAG')}/${readConst(source, 'BOXEDWINE_ASSET')}`;
   await writeFile(FETCH_SCRIPT, source);
-  console.log('\nscripts/fetch-runtimes.mjs aktualisiert.');
+  console.log('\nscripts/fetch-runtimes.mjs updated.');
   if (newRelease !== oldRelease) {
     const demos = await readFile(DEMOS, 'utf8');
     if (demos.includes(oldRelease)) {
       await writeFile(DEMOS, demos.split(oldRelease).join(newRelease));
-      console.log('demos/demos.json: Download-Link der SkiFree-Demo auf das neue Boxedwine-Release gesetzt.');
+      console.log('demos/demos.json: SkiFree download link set to the new Boxedwine release.');
     }
   }
 
-  console.log('\nLade die neuen Versionen herunter …\n');
+  console.log('\nDownloading the new versions …\n');
   const run = spawnSync(process.execPath, [FETCH_SCRIPT, '--force'], { stdio: 'inherit', cwd: ROOT });
   if (run.status !== 0) {
-    console.log('\nDer Download ist fehlgeschlagen. Die neue Version hat vermutlich einen anderen Aufbau;');
-    console.log('scripts/fetch-runtimes.mjs muss angepasst werden (Änderungen mit git diff ansehen oder zurücknehmen).');
+    console.log('\nThe download failed. The new version is probably built differently;');
+    console.log('scripts/fetch-runtimes.mjs has to be adapted (see or undo the changes with git diff).');
     process.exit(run.status ?? 1);
   }
-  console.log('\nFertig. Jetzt die Demos testen (npm run serve) und danach committen.');
+  console.log('\nDone. Now test the demos (npm run serve) and then commit.');
 }
 
 main().catch((err) => {

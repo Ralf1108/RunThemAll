@@ -47,7 +47,7 @@ export class EmulatorJsRunner extends Runner {
    * @param {EjsOptions} opts
    */
   async start(workspace, program, opts) {
-    if (this.running) throw new Error('Der Emulator läuft bereits. Bitte Seite neu laden.');
+    if (this.running) throw new Error('The emulator is already running. Please reload the page.');
     this.running = true;
     this.workspace = workspace;
     const { status, log, ejsContainer } = this.ui;
@@ -57,7 +57,7 @@ export class EmulatorJsRunner extends Runner {
     const data = new URL('emulatorjs/data/', document.baseURI).href;
     const ejsVersion = await fetch('emulatorjs/version.json').then((r) => r.json()).then((v) => v.version).catch(() => '');
     this.ui.emulatorInfo(`EmulatorJS ${ejsVersion} · ${system.label} · Core ${system.core}`.replace('  ', ' '));
-    this.ui.steps([`Emulator herunterladen (EmulatorJS, Core ${system.core})`, 'Spiel einlesen', 'Emulator starten']);
+    this.ui.steps([`Download the emulator (EmulatorJS, core ${system.core})`, 'Read the game', 'Start the emulator']);
 
     // 1. Download EmulatorJS and the core with a progress bar (EmulatorJS then hits the cache).
     this.ui.step(0);
@@ -66,7 +66,7 @@ export class EmulatorJsRunner extends Runner {
 
     // 2. Game file. CD images with a .cue sheet are passed as ZIP together with their tracks.
     this.ui.step(1);
-    status('Lese Spiel …');
+    status('Reading the game …');
     const entry = workspace.files.find((f) => f.path === program);
     const [dir, name] = splitPath(program);
     let game;
@@ -77,7 +77,7 @@ export class EmulatorJsRunner extends Runner {
         const refPath = dir ? `${dir}/${ref}` : ref;
         const track = workspace.files.find((f) => f.path.toLowerCase() === refPath.toLowerCase());
         if (track) parts.push({ name: ref, data: await track.load() });
-        else log(`Spur fehlt: ${ref}`, true);
+        else log(`Track missing: ${ref}`, true);
       }
       game = new File([createZip(parts)], name.replace(/\.cue$/i, '.zip'));
     } else {
@@ -93,8 +93,8 @@ export class EmulatorJsRunner extends Runner {
       biosParts.push({ name: f.name, data: new Uint8Array(await f.arrayBuffer()) });
     }
     if (system.bios?.required && biosParts.length === 0) {
-      throw new Error(`${system.label} braucht eine BIOS-Datei (${system.bios.files.join(', ')}). `
-        + 'Lege sie mit ins ZIP/in den Ordner oder wähle sie vor dem Start aus.');
+      throw new Error(`${system.label} needs a BIOS file (${system.bios.files.join(', ')}). `
+        + 'Put it into the ZIP/folder or choose it before starting.');
     }
     let biosUrl = '';
     if (biosParts.length) {
@@ -104,7 +104,7 @@ export class EmulatorJsRunner extends Runner {
       log(`BIOS: ${system.bios.builtin}`, false);
     }
 
-    log(`EmulatorJS: ${system.label}, Core ${system.core}, Spiel ${game.name}`, false);
+    log(`EmulatorJS: ${system.label}, core ${system.core}, game ${game.name}`, false);
     this.ui.step(2);
     ejsContainer.hidden = false;
     ejsContainer.replaceChildren(Object.assign(document.createElement('div'), { id: 'ejs-player' }));
@@ -117,12 +117,11 @@ export class EmulatorJsRunner extends Runner {
       EJS_gameName: name.replace(/\.[^.]+$/, ''),
       EJS_biosUrl: biosUrl,
       EJS_startOnLoaded: true,
-      EJS_language: 'de-GER',
       EJS_volume: opts.sound ? 0.5 : 0,
       EJS_Buttons: { netplay: false },
       EJS_defaultOptions: system.options ?? {},
       EJS_onGameStart: () => {
-        status('Läuft');
+        status('Running');
         this.ui.ready();
       },
     });

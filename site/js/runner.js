@@ -69,9 +69,9 @@ export class Runner {
    */
   async writeBack() {
     const root = this.workspace?.dirHandle;
-    if (!root) throw new Error('Kein Ordner mit Schreibzugriff geöffnet.');
+    if (!root) throw new Error('No folder with write access is open.');
     if ((await root.requestPermission({ mode: 'readwrite' })) !== 'granted') {
-      throw new Error('Schreibzugriff wurde nicht erlaubt.');
+      throw new Error('Write access was not allowed.');
     }
     const files = await this.changedFiles();
     for (const f of files) {
@@ -98,7 +98,7 @@ export class Runner {
 /** Downloads a file and reports progress. */
 export async function fetchWithProgress(url, onProgress) {
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`${url} konnte nicht geladen werden (HTTP ${res.status}).`);
+  if (!res.ok) throw new Error(`Could not load ${url} (HTTP ${res.status}).`);
   const total = Number(res.headers.get('Content-Length')) || 0;
   if (!res.body) return new Uint8Array(await res.arrayBuffer());
   const reader = res.body.getReader();
@@ -146,7 +146,7 @@ export function loadScript(src) {
     const s = document.createElement('script');
     s.src = src;
     s.onload = ok;
-    s.onerror = () => fail(new Error(`${src} konnte nicht geladen werden.`));
+    s.onerror = () => fail(new Error(`Could not load ${src}.`));
     document.body.appendChild(s);
   });
 }
@@ -157,7 +157,7 @@ export function loadStylesheet(href) {
     l.rel = 'stylesheet';
     l.href = href;
     l.onload = ok;
-    l.onerror = () => fail(new Error(`${href} konnte nicht geladen werden.`));
+    l.onerror = () => fail(new Error(`Could not load ${href}.`));
     document.head.prepend(l); // before our own styles, so ours win on equal specificity
   });
 }

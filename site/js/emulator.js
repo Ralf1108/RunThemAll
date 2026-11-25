@@ -32,7 +32,7 @@ export class WindowsRunner extends Runner {
    * @param {WindowsOptions} opts
    */
   async start(workspace, program, opts) {
-    if (this.running) throw new Error('Der Emulator läuft bereits. Bitte Seite neu laden.');
+    if (this.running) throw new Error('The emulator is already running. Please reload the page.');
     this.running = true;
     this.workspace = workspace;
     const { status, log, canvas } = this.ui;
@@ -41,7 +41,7 @@ export class WindowsRunner extends Runner {
 
     const threaded = opts.threads === 'mt' || (opts.threads === 'auto' && canUseThreads());
     if (threaded && !canUseThreads()) {
-      throw new Error('Multithreading ist in diesem Browser bzw. auf diesem Server nicht verfügbar.');
+      throw new Error('Multithreading is not available in this browser or on this server.');
     }
     const build = threaded ? 'mt' : 'st';
     const buildBase = new URL(`boxedwine/${build}/`, document.baseURI).href;
@@ -50,7 +50,7 @@ export class WindowsRunner extends Runner {
     const info = `Boxedwine ${tag} · ${wineLabel} · ${threaded ? 'Multithreaded' : 'Singlethreaded'}`.replace('  ', ' ');
     this.ui.emulatorInfo(info);
     log(info, false);
-    this.ui.steps(['Emulator und Wine-Dateisystem herunterladen', 'Programmdateien einlesen', 'Wine starten']);
+    this.ui.steps(['Download the emulator and the Wine file system', 'Read the program files', 'Start Wine']);
 
     // 1. Download emulator + Wine file system (progress bar), read the user's files.
     this.ui.step(0);
@@ -92,7 +92,7 @@ export class WindowsRunner extends Runner {
       printErr: (...a) => log(a.join(' '), true),
       setStatus: (text) => {
         if (text === 'Running...') {
-          status('Läuft');
+          status('Running');
           this.ui.ready();
         } else if (text) {
           status(text);
@@ -115,14 +115,14 @@ export class WindowsRunner extends Runner {
         }
 
         const done = () => {
-          self.ui.step(2, 'Der erste Start kann etwas dauern.');
-          status('Starte Wine …');
+          self.ui.step(2, 'The first start can take a while.');
+          status('Starting Wine …');
           Module.removeRunDependency('runthemall-fs');
         };
         if (opts.persistent) {
           FS.mount(IDBFS, { autoPersist: true }, rootDir);
           FS.syncfs(true, (err) => {
-            if (err) log(`Persistenter Speicher nicht verfügbar: ${err}`, true);
+            if (err) log(`Persistent storage not available: ${err}`, true);
             done();
           });
         } else {

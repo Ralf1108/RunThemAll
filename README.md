@@ -13,10 +13,7 @@ browser. Nothing to install, nothing uploaded.**
 
 No account, no setup. Your files never leave your computer.
 
-Just want to look around? Click one of the **demos** below "Programm öffnen" and press **Starten**.
-
-> The website itself is in German. The buttons are: *Programm öffnen* = open program,
-> *Starten* = start, *Optionen* = options, *Vollbild* = fullscreen, *Beenden* = quit.
+Just want to look around? Click one of the **demos** below "Open a program" and press **Start**.
 
 ## What runs?
 
@@ -27,7 +24,7 @@ Just want to look around? Click one of the **demos** below "Programm öffnen" an
 - **Consoles**: NES, SNES, Game Boy, Game Boy Advance, Nintendo DS, N64, Sega Master System,
   Mega Drive, PlayStation and more
 - **Whole operating systems** from a CD, floppy or hard disk image (`.iso`, `.img`, `.vhd`),
-  e.g. Linux, ReactOS or your own Windows 98 CD: use **"Eigenes Betriebssystem starten"**
+  e.g. Linux, ReactOS or your own Windows 98 CD: use **"Start your own operating system"**
 
 Full list of systems and file types: [docs/systems.md](docs/systems.md)
 
@@ -45,14 +42,14 @@ Where they come from and their licences: [demos/README.md](demos/README.md)
 ## Tips
 
 - **No sound?** Click once into the picture. Browsers only play sound after a click.
-- **Fullscreen**: button *Vollbild*. The picture always keeps the shape of the original screen.
+- **Fullscreen**: button *Fullscreen*. The picture always keeps the shape of the original screen.
 - **Mouse in operating systems**: click into the picture to capture the mouse, press `Esc` to release it.
-- **Save games**: *Geänderte Dateien sichern* downloads all new and changed files as a ZIP.
-  If you opened a folder in Chrome or Edge, *In Ordner zurückschreiben* writes them straight back
+- **Save games**: *Save changed files* downloads all new and changed files as a ZIP.
+  If you opened a folder in Chrome or Edge, *Write back to folder* writes them straight back
   into that folder.
-- **Settings**: each demo has an *Optionen* button (e.g. speed, memory, Windows version).
+- **Settings**: each demo has an *Options* button (e.g. speed, memory, Windows version).
 - **Windows programs** get a small virtual PC that is kept in your browser. To delete it, use
-  *Virtuelle Umgebung zurücksetzen* at the bottom of the page.
+  *Reset virtual environment* at the bottom of the page.
 
 ## Good to know
 

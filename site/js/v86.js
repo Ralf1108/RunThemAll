@@ -21,7 +21,7 @@ export function diskSlot(path, size) {
   return 'hda';
 }
 
-const SLOT_LABELS = { cdrom: 'CD-ROM', fda: 'Diskette', hda: 'Festplatte' };
+const SLOT_LABELS = { cdrom: 'CD-ROM', fda: 'floppy', hda: 'hard disk' };
 
 /**
  * @typedef {object} V86Options
@@ -39,7 +39,7 @@ export class V86Runner extends Runner {
    * @param {V86Options} opts
    */
   async start(workspace, program, opts) {
-    if (this.running) throw new Error('Der Emulator läuft bereits. Bitte Seite neu laden.');
+    if (this.running) throw new Error('The emulator is already running. Please reload the page.');
     this.running = true;
     this.workspace = workspace;
     const { status, log, v86Container } = this.ui;
@@ -49,7 +49,7 @@ export class V86Runner extends Runner {
     const slot = diskSlot(program, entry.size);
     const memory = opts.memory || 128;
     this.ui.emulatorInfo(`v86 ${info.v86 ?? ''} · ${SLOT_LABELS[slot]} · ${memory} MB RAM`.replace('  ', ' '));
-    this.ui.steps(['Emulator herunterladen (v86, SeaBIOS)', `Image einlesen (${SLOT_LABELS[slot]})`, 'PC starten']);
+    this.ui.steps(['Download the emulator (v86, SeaBIOS)', `Read the image (${SLOT_LABELS[slot]})`, 'Start the PC']);
 
     // 1. Emulator and BIOS with a progress bar.
     this.ui.step(0);
@@ -61,7 +61,7 @@ export class V86Runner extends Runner {
 
     // 2. Disk image: in memory, or (large demo images) as zstd parts that v86 loads on demand.
     this.ui.step(1);
-    status('Lese Image …');
+    status('Reading the image …');
     let image;
     if (entry.remote) {
       image = { url: entry.remote.url, size: entry.remote.size, async: true, use_parts: true,
@@ -71,11 +71,11 @@ export class V86Runner extends Runner {
       image = { buffer: bytes.byteOffset === 0 && bytes.byteLength === bytes.buffer.byteLength
         ? bytes.buffer : bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) };
     }
-    log(`v86: ${splitPath(program)[1]} als ${SLOT_LABELS[slot]} (${(entry.size / 1048576).toFixed(1)} MB${entry.remote ? ', wird in Teilen nachgeladen' : ''}), ${memory} MB RAM`, false);
+    log(`v86: ${splitPath(program)[1]} as ${SLOT_LABELS[slot]} (${(entry.size / 1048576).toFixed(1)} MB${entry.remote ? ', loaded in parts on demand' : ''}), ${memory} MB RAM`, false);
 
     // 3. Boot.
     this.ui.step(2);
-    status('Starte PC …');
+    status('Starting the PC …');
     const { V86 } = await import(base + 'libv86.mjs');
     v86Container.hidden = false;
     const text = Object.assign(document.createElement('div'), { className: 'v86-text' });
@@ -97,7 +97,7 @@ export class V86Runner extends Runner {
       autostart: true,
     });
     this.emulator.add_listener('emulator-started', () => {
-      status('Läuft – zum Steuern mit der Maus ins Bild klicken');
+      status('Running – click into the picture to use the mouse');
       this.ui.ready();
     });
     v86Container.addEventListener('click', () => this.emulator?.lock_mouse());

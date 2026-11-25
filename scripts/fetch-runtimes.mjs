@@ -92,12 +92,12 @@ async function exists(path) {
 
 async function download(url, target) {
   if (!force && await exists(target)) {
-    console.log(`  vorhanden: ${target}`);
+    console.log(`  present: ${target}`);
     return;
   }
-  console.log(`  lade ${url}`);
+  console.log(`  downloading ${url}`);
   const res = await fetch(url, { redirect: 'follow' });
-  if (!res.ok) throw new Error(`Download fehlgeschlagen (${res.status}): ${url}`);
+  if (!res.ok) throw new Error(`Download failed (${res.status}): ${url}`);
   await mkdir(dirname(target), { recursive: true });
   await writeFile(target, new Uint8Array(await res.arrayBuffer()));
 }
@@ -134,7 +134,7 @@ async function fetchBoxedwine() {
   const entries = new Map(listZip(archive).map((e) => [e.name, e]));
   for (const [from, to] of Object.entries(BOXEDWINE_FILES)) {
     const entry = entries.get(from);
-    if (!entry) throw new Error(`Im Boxedwine-Release fehlt: ${from}`);
+    if (!entry) throw new Error(`Missing in the Boxedwine release: ${from}`);
     await writeOut(join(out, to), await readZipEntry(archive, entry));
     console.log(`  ${to}`);
   }
@@ -150,7 +150,7 @@ async function fetchBoxedwine() {
 }
 
 async function buildWin16Overlay(webRootEntry, releaseArchive, target) {
-  console.log('Wine 6: 16-Bit-Module ergänzen ...');
+  console.log('Wine 6: adding 16-bit modules ...');
   const fullPath = join(VENDOR, 'TinyCore15Wine6.0.zip');
   await download(WINE6_FULL_FS, fullPath); // ~140 MB, slow server
 
@@ -159,13 +159,13 @@ async function buildWin16Overlay(webRootEntry, releaseArchive, target) {
   const full = new Uint8Array(await readFile(fullPath));
   const missing = listZip(full)
     .filter((e) => (WIN16_MODULE.test(e.name) || EXTRA_MODULES.includes(e.name)) && !present.has(e.name));
-  if (missing.length === 0) throw new Error('Keine fehlenden 16-Bit-Module gefunden – Dateisystem geändert?');
+  if (missing.length === 0) throw new Error('No missing 16-bit modules found – did the file system change?');
 
   // Copy the entries still compressed, exactly as in the full file system.
   const files = missing.map((e) => ({ name: e.name, raw: readZipEntryRaw(full, e) }));
   const zip = new Uint8Array(await createZip(files).arrayBuffer());
   await writeOut(target, zip);
-  console.log(`  wine6/win16-extras.zip (${files.length} Module, ${(zip.length / 1024).toFixed(0)} KB)`);
+  console.log(`  wine6/win16-extras.zip (${files.length} modules, ${(zip.length / 1024).toFixed(0)} KB)`);
 }
 
 async function fetchJsDos() {
@@ -177,7 +177,7 @@ async function fetchJsDos() {
   const files = readTar(gunzipSync(await readFile(tarball)));
   for (const [from, to] of Object.entries(JSDOS_FILES)) {
     const data = files.get(from);
-    if (!data) throw new Error(`Im js-dos-Paket fehlt: ${from}`);
+    if (!data) throw new Error(`Missing in the js-dos package: ${from}`);
     await writeOut(join(out, to), data);
     console.log(`  ${to}`);
   }
@@ -209,7 +209,7 @@ async function fetchV86() {
   const files = readTar(gunzipSync(await readFile(tarball)));
   for (const [from, to] of Object.entries(V86_FILES)) {
     const data = files.get(from);
-    if (!data) throw new Error(`Im v86-Paket fehlt: ${from}`);
+    if (!data) throw new Error(`Missing in the v86 package: ${from}`);
     await writeOut(join(out, to), data);
     console.log(`  ${to}`);
   }
@@ -235,7 +235,7 @@ async function fetchV86() {
 
 async function npmPackage(name, version = 'latest') {
   const res = await fetch(`${EJS_REGISTRY}${name}/${version}`);
-  if (!res.ok) throw new Error(`npm: @emulatorjs/${name}@${version} nicht gefunden (${res.status})`);
+  if (!res.ok) throw new Error(`npm: @emulatorjs/${name}@${version} not found (${res.status})`);
   return res.json();
 }
 
@@ -248,7 +248,7 @@ async function npmFiles(meta) {
 async function fetchEmulatorJs() {
   const loader = await npmPackage('emulatorjs');
   const version = loader.version;
-  console.log(`EmulatorJS ${version} (neueste stabile Version)`);
+  console.log(`EmulatorJS ${version} (newest stable version)`);
   const out = join(SITE, 'emulatorjs');
   const data = join(out, 'data');
 
@@ -259,7 +259,7 @@ async function fetchEmulatorJs() {
   }
   const scripts = EJS_SCRIPTS.map((f) => {
     const content = files.get(`package/data/src/${f}`);
-    if (!content) throw new Error(`Im EmulatorJS-Paket fehlt: data/src/${f}`);
+    if (!content) throw new Error(`Missing in the EmulatorJS package: data/src/${f}`);
     return new TextDecoder().decode(content);
   });
   await writeOut(join(data, 'emulator.min.js'), scripts.join(';\n'));
@@ -279,7 +279,7 @@ async function fetchEmulatorJs() {
         await writeOut(join(data, 'cores', 'reports', name.slice('package/reports/'.length)), content);
       }
     }
-    if (count === 0) throw new Error(`Core ${core}: keine .data-Dateien gefunden`);
+    if (count === 0) throw new Error(`Core ${core}: no .data files found`);
     const repo = (meta.repository?.url || '').replace(/^git\+/, '').replace(/\.git$/, '');
     cores.push({ core, version: meta.version, repo, license: meta.license || '' });
     console.log(`  core ${core} ${meta.version}`);
@@ -299,23 +299,23 @@ function coresPage(version, source, cores) {
     + `<td>${esc(c.version)}</td><td><a href="${esc(c.repo)}">${esc(c.repo.replace('https://github.com/', ''))}</a></td>`
     + `<td>${esc(c.license)}</td></tr>`).join('\n');
   return `<!doctype html>
-<html lang="de"><head><meta charset="utf-8"><title>Run Them All – EmulatorJS-Cores</title>
+<html lang="en"><head><meta charset="utf-8"><title>Run Them All – EmulatorJS cores</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>body{font:15px/1.5 system-ui,sans-serif;margin:2rem auto;max-width:1000px;padding:0 1rem}
 table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #ccc;padding:.35rem .5rem;text-align:left}
 code{font-size:.9em}</style></head><body>
-<h1>Konsolen- und Heimcomputer-Emulation</h1>
-<p>Run Them All nutzt <a href="https://emulatorjs.org">EmulatorJS</a> ${esc(version)}
+<h1>Console and home computer emulation</h1>
+<p>Run Them All uses <a href="https://emulatorjs.org">EmulatorJS</a> ${esc(version)}
 (<a href="https://github.com/EmulatorJS/EmulatorJS">GitHub</a>, GPL-3.0,
-<a href="LICENSE-GPL-3.0.txt">Lizenz</a>, <a href="source/EmulatorJS-${esc(version)}-source.tar.gz">Quellcode</a>)
-mit den folgenden libretro-Cores. Sie werden unverändert aus den npm-Paketen <code>@emulatorjs/core-*</code>
-übernommen. Jede Core-Datei enthält ihren eigenen Lizenztext; der Quellcode liegt in den verlinkten Repositories.
-Einige Cores (z. B. Snes9x, Genesis Plus GX, PicoDrive, FBNeo, MAME 2003-Plus) erlauben keine kommerzielle Nutzung.</p>
-<table><thead><tr><th>System</th><th>Core</th><th>Version</th><th>Quellcode</th><th>Lizenzdatei</th></tr></thead>
+<a href="LICENSE-GPL-3.0.txt">licence</a>, <a href="source/EmulatorJS-${esc(version)}-source.tar.gz">source</a>)
+with the following libretro cores. They are taken unchanged from the npm packages <code>@emulatorjs/core-*</code>.
+Every core file contains its own licence text; the source code is in the linked repositories.
+Some cores (e.g. Snes9x, Genesis Plus GX, PicoDrive, FBNeo, MAME 2003-Plus) do not allow commercial use.</p>
+<table><thead><tr><th>System</th><th>Core</th><th>Version</th><th>Source</th><th>Licence file</th></tr></thead>
 <tbody>
 ${rows}
 </tbody></table>
-<p><a href="../">Zurück zu Run Them All</a></p>
+<p><a href="../">Back to Run Them All</a></p>
 </body></html>
 `;
 }
@@ -348,7 +348,7 @@ async function bundleDemo(demo, data) {
     await download(extra.url, cached);
     const archive = new Uint8Array(await readFile(cached));
     const entry = listZip(archive).find((e) => e.name === extra.entry);
-    if (!entry) throw new Error(`Demo ${demo.id}: ${extra.entry} nicht in ${extra.url}`);
+    if (!entry) throw new Error(`Demo ${demo.id}: ${extra.entry} not in ${extra.url}`);
     files.push({ name: extra.path, raw: readZipEntryRaw(archive, entry) });
   }
   return new Uint8Array(await createZip(files).arrayBuffer());
@@ -387,7 +387,7 @@ async function fetchDemos() {
       await writeOut(join(SITE, 'demos', demo.file), new Uint8Array(await readFile(join(ROOT, 'demos', demo.local))));
       const { local, ...rest } = demo;
       published.push(rest);
-      console.log(`  ${demo.file} (${demo.title}, aus demos/local)`);
+      console.log(`  ${demo.file} (${demo.title}, from demos/local)`);
       continue;
     }
     const cached = join(VENDOR, 'demos', demo.id, decodeURIComponent(demo.url.split('/').pop()));
@@ -398,7 +398,7 @@ async function fetchDemos() {
     if (demo.strip || demo.add) data = await bundleDemo(demo, data);
     if (demo.entry) {
       const entry = listZip(data).find((e) => e.name === demo.entry);
-      if (!entry) throw new Error(`Demo ${demo.id}: ${demo.entry} nicht im Archiv`);
+      if (!entry) throw new Error(`Demo ${demo.id}: ${demo.entry} not in the archive`);
       data = await readZipEntry(data, entry);
     }
     const { url, entry, strip, add, chunk, ...rest } = demo;
@@ -406,7 +406,7 @@ async function fetchDemos() {
       // Large disk images: zstd-compressed parts that v86 loads on demand.
       const parts = await writeImageParts(join(SITE, 'demos', demo.file), data, chunk);
       published.push({ ...rest, source: url, image: { size: data.length, chunk } });
-      console.log(`  ${demo.file} (${demo.title}, ${parts.count} Teile, ${(parts.bytes / 1048576).toFixed(0)} MB komprimiert)`);
+      console.log(`  ${demo.file} (${demo.title}, ${parts.count} parts, ${(parts.bytes / 1048576).toFixed(0)} MB compressed)`);
       continue;
     }
     await writeOut(join(SITE, 'demos', demo.file), data);
@@ -423,7 +423,7 @@ async function main() {
   await fetchV86();
   await fetchDemos();
   await fetchCoi();
-  console.log('Fertig.');
+  console.log('Done.');
 }
 
 main().catch((err) => {

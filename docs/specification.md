@@ -43,10 +43,10 @@ How Run Them All works inside. As of November 2026.
    - Complete PC: RAM
    - All: sound
 4. **Start**: the right emulator is loaded. Then:
-   - *Geänderte Dateien sichern*: download new and changed files as a ZIP.
-   - *In Ordner zurückschreiben* (folders with write access only): write them back. Nothing is ever deleted.
-   - *Vollbild*: the emulator area goes fullscreen.
-   - *Beenden*: reloads the page.
+   - *Save changed files*: download new and changed files as a ZIP.
+   - *Write back to folder* (folders with write access only): write them back. Nothing is ever deleted.
+   - *Fullscreen*: the emulator area goes fullscreen.
+   - *Quit*: reloads the page.
    - A badge shows which emulator runs (e.g. "Boxedwine 26R1.0 · Wine 6 · Multithreaded").
    - A message box tells what was saved, or that nothing changed.
    - EmulatorJS and v86 have no save/write back; EmulatorJS handles saves in its own menu.
@@ -65,8 +65,8 @@ How Run Them All works inside. As of November 2026.
 - `demos/demos.json` lists free programs (source, author, licence, start file, system, options).
 - The build script downloads them into `site/demos/`.
 - The start page shows them in a carousel: one tile per platform with logo, the demos inside.
-  Clicking a demo shows its info with *Starten* and *Optionen* (per-demo options, saved in `localStorage`).
-- *Starten* opens the file like a user file, preselects program and system and starts at once.
+  Clicking a demo shows its info with *Start* and *Options* (per-demo options, saved in `localStorage`).
+- *Start* opens the file like a user file, preselects program and system and starts at once.
 - Sources and licences: [demos/README.md](../demos/README.md).
 
 ### 3.3 Picture and sound
@@ -113,7 +113,7 @@ CD tracks next to a `.cue` are not listed; the `.cue` is started with all its tr
 - `.iso` with an El Torito boot record (`CD001` at `0x8801`) → complete PC (v86), as CD-ROM.
 - `.img`/`.ima`/`.vfd`/`.flp`/`.vhd`/`.raw` with a boot sector (`0x55AA`) → complete PC,
   as floppy (standard floppy sizes) or hard disk.
-- *Eigenes Betriebssystem starten* always starts the chosen image as a complete PC.
+- *Start your own operating system* always starts the chosen image as a complete PC.
 
 ## 5. Emulators
 

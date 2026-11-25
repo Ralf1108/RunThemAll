@@ -44,9 +44,9 @@ async function openWorkspace(loader, autostart) {
   showError('');
   try {
     const ws = await loader();
-    if (!ws || ws.files.length === 0) throw new Error('Keine Dateien gefunden.');
+    if (!ws || ws.files.length === 0) throw new Error('No files found.');
     const found = await findPrograms(ws);
-    if (found.length === 0) throw new Error('Kein startbares Programm oder Spiel gefunden.');
+    if (found.length === 0) throw new Error('No program or game found that can be started.');
     workspace = ws;
     programs = found;
     showChooser();
@@ -90,8 +90,8 @@ $('input-folder').addEventListener('change', (e) => {
 });
 
 $('folder-hint').textContent = hasDirectoryPicker
-  ? 'Bei geöffneten Ordnern können geänderte Dateien (z. B. Spielstände) zurück in den Ordner geschrieben werden.'
-  : 'Geänderte Dateien (z. B. Spielstände) kannst du nach dem Spielen als ZIP sichern.';
+  ? 'For opened folders, changed files (e.g. save games) can be written back into the folder.'
+  : 'You can save changed files (e.g. save games) as a ZIP after playing.';
 
 const dropzone = $('dropzone');
 dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('over'); });
@@ -111,7 +111,7 @@ window.addEventListener('drop', (e) => e.preventDefault());
 
 function showChooser() {
   $('ws-summary').textContent =
-    `${workspace.name}: ${workspace.files.length} Datei(en), ${formatSize(totalSize(workspace))}`;
+    `${workspace.name}: ${workspace.files.length} file(s), ${formatSize(totalSize(workspace))}`;
 
   const list = $('program-list');
   list.replaceChildren(...programs.map((p, i) => {
@@ -137,7 +137,7 @@ function showChooser() {
     } else {
       kind.textContent = KIND_LABELS[p.kind];
     }
-    kind.title = `Läuft mit ${EMULATOR_NAMES[p.emulator]}`;
+    kind.title = `Runs with ${EMULATOR_NAMES[p.emulator]}`;
     label.append(radio, name, kind, size);
     label.addEventListener('dblclick', () => start());
     radio.addEventListener('change', updateSystemPanel);
@@ -169,7 +169,7 @@ function updateSystemPanel() {
   const candidates = program.systems.map((id) => SYSTEM_BY_ID.get(id));
   const others = SYSTEMS.filter((s) => !program.systems.includes(s.id));
   const option = (s) => Object.assign(document.createElement('option'), { value: s.id, textContent: s.label });
-  const group = Object.assign(document.createElement('optgroup'), { label: 'Andere Systeme' });
+  const group = Object.assign(document.createElement('optgroup'), { label: 'Other systems' });
   group.append(...others.map(option));
   select.replaceChildren(...candidates.map(option), group);
   select.value = candidates[0].id;
@@ -185,14 +185,14 @@ function updateBiosInfo() {
   let text;
   let warn = false;
   if (!bios || (bios.files.length === 0 && !bios.builtin)) {
-    text = 'Kein BIOS nötig.';
+    text = 'No BIOS needed.';
   } else if (have.length) {
     text = `BIOS: ${have.join(', ')}`;
   } else if (bios.required) {
-    text = `Benötigt eine BIOS-Datei: ${bios.files.join(', ')}. Lege sie mit ins ZIP/in den Ordner oder füge sie hier hinzu.`;
+    text = `Needs a BIOS file: ${bios.files.join(', ')}. Put it into the ZIP/folder or add it here.`;
     warn = true;
   } else {
-    text = [bios.builtin ? `Kein BIOS nötig (${bios.builtin}).` : 'Kein BIOS nötig.',
+    text = [bios.builtin ? `No BIOS needed (${bios.builtin}).` : 'No BIOS needed.',
       bios.note, bios.files.length ? `Optional: ${bios.files.join(', ')}` : ''].filter(Boolean).join(' ');
   }
   info.textContent = text;
@@ -217,8 +217,8 @@ $('btn-reset').addEventListener('click', () => {
 
 const threadsAvailable = canUseThreads();
 $('thread-info').textContent = threadsAvailable
-  ? 'Multithreading ist verfügbar, „Automatisch“ nutzt die schnellere Variante.'
-  : 'Multithreading ist hier nicht verfügbar (Seite nicht „cross-origin isolated“). Es wird die Singlethread-Variante genutzt.';
+  ? 'Multithreading is available, "Automatic" uses the faster version.'
+  : 'Multithreading is not available here (page is not "cross-origin isolated"). The single-threaded version is used.';
 if (!threadsAvailable) $('opt-threads').querySelector('option[value="mt"]').disabled = true;
 
 // Remember options between visits.
@@ -292,13 +292,13 @@ function setStep(index, detail = '') {
   $('loader-progress').hidden = true;
   $('loader-detail').textContent = detail;
 }
-const mb = (n) => (n / 1048576).toFixed(1).replace('.', ',');
+const mb = (n) => (n / 1048576).toFixed(1);
 function setProgress(loaded, total) {
   const bar = $('loader-progress');
   bar.hidden = false;
   if (total > 0) {
     bar.value = Math.min(1, loaded / total);
-    $('loader-detail').textContent = `${mb(loaded)} von ${mb(total)} MB`;
+    $('loader-detail').textContent = `${mb(loaded)} of ${mb(total)} MB`;
   } else {
     bar.removeAttribute('value');
     $('loader-detail').textContent = `${mb(loaded)} MB`;
@@ -310,7 +310,7 @@ function hideLoader() {
   // The browser may hold back the sound until the next click or key press (see audio.js).
   setTimeout(() => {
     if (!$('opt-sound').checked || !audioSuspended()) return;
-    message('Kein Ton? Einmal ins Bild klicken oder eine Taste drücken, dann gibt der Browser den Ton frei.');
+    message('No sound? Click into the picture or press a key once, then the browser allows sound.');
     const clear = () => setTimeout(() => { if (!audioSuspended()) message(''); }, 300);
     window.addEventListener('pointerdown', clear, { once: true, capture: true });
     window.addEventListener('keydown', clear, { once: true, capture: true });
@@ -344,7 +344,7 @@ async function start(overrides = {}) {
   if (program.kind === 'win16' && opts.wine === 'wine11') {
     // The Wine 11 file system of the web release has no 16-bit Windows support.
     opts.wine = 'wine6';
-    log('16-Bit-Programm: Wine 11 unterstützt hier kein Win16, verwende Wine 6.', false);
+    log('16-bit program: Wine 11 has no Win16 support here, using Wine 6.', false);
   }
   const Runner = opts.system && SYSTEM_BY_ID.get(opts.system).emulator === 'v86'
     ? V86Runner
@@ -356,8 +356,8 @@ async function start(overrides = {}) {
     await emulator.start(workspace, program.path, opts);
   } catch (err) {
     console.error(err);
-    status(`Fehler: ${err.message || err}`);
-    $('loader-detail').textContent = `Fehler: ${err.message || err}`;
+    status(`Error: ${err.message || err}`);
+    $('loader-detail').textContent = `Error: ${err.message || err}`;
     log(String(err?.stack || err), true);
   }
 }
@@ -377,7 +377,7 @@ function showDialog(title, text, files = [], error = false) {
   $('msg-text').textContent = text;
   const max = 20;
   $('msg-files').replaceChildren(...files.slice(0, max).map((f) => Object.assign(document.createElement('li'), { textContent: f })),
-    ...(files.length > max ? [Object.assign(document.createElement('li'), { className: 'more', textContent: `… und ${files.length - max} weitere` })] : []));
+    ...(files.length > max ? [Object.assign(document.createElement('li'), { className: 'more', textContent: `… and ${files.length - max} more` })] : []));
   $('msg-files').hidden = files.length === 0;
   dialog.classList.toggle('error', error);
   dialog.showModal();
@@ -385,21 +385,21 @@ function showDialog(title, text, files = [], error = false) {
 }
 $('msg-ok').addEventListener('click', () => $('msg-dialog').close());
 
-const NOTHING_CHANGED = 'Seit dem Start hat das Programm keine Dateien geändert oder neu angelegt. '
-  + 'Spielstände entstehen meist erst, wenn du im Programm speicherst.';
+const NOTHING_CHANGED = 'The program has not changed or created any files since it started. '
+  + 'Save games usually only appear after you save in the program.';
 
 $('btn-download').addEventListener('click', async () => {
   try {
     const files = (await emulator?.downloadChanges()) ?? [];
     message('');
     if (files.length) {
-      showDialog('Geänderte Dateien gesichert',
-        `${files.length === 1 ? 'Eine Datei wurde' : `${files.length} Dateien wurden`} als ZIP in deinen Downloads gespeichert:`, files);
+      showDialog('Changed files saved',
+        `${files.length === 1 ? 'One file was' : `${files.length} files were`} saved as a ZIP to your downloads:`, files);
     } else {
-      showDialog('Nichts zu sichern', NOTHING_CHANGED);
+      showDialog('Nothing to save', NOTHING_CHANGED);
     }
   } catch (err) {
-    showDialog('Sichern fehlgeschlagen', String(err.message || err), [], true);
+    showDialog('Saving failed', String(err.message || err), [], true);
   }
 });
 
@@ -408,13 +408,13 @@ $('btn-writeback').addEventListener('click', async () => {
     const files = await emulator.writeBack();
     message('');
     if (files.length) {
-      showDialog('In Ordner zurückgeschrieben',
-        `${files.length === 1 ? 'Eine Datei wurde' : `${files.length} Dateien wurden`} in den geöffneten Ordner „${workspace.name}“ geschrieben:`, files);
+      showDialog('Written back to folder',
+        `${files.length === 1 ? 'One file was' : `${files.length} files were`} written to the opened folder "${workspace.name}":`, files);
     } else {
-      showDialog('Nichts zurückzuschreiben', NOTHING_CHANGED);
+      showDialog('Nothing to write back', NOTHING_CHANGED);
     }
   } catch (err) {
-    showDialog('Zurückschreiben fehlgeschlagen', String(err.message || err), [], true);
+    showDialog('Writing back failed', String(err.message || err), [], true);
   }
 });
 
@@ -426,7 +426,7 @@ $('btn-fullscreen').addEventListener('click', () => {
 });
 
 $('btn-restart').addEventListener('click', () => {
-  if (!confirm('Programm beenden? Nicht gesicherte Änderungen gehen verloren.')) return;
+  if (!confirm('Quit the program? Unsaved changes will be lost.')) return;
   if (emulator) emulator.running = false; // skip the beforeunload prompt
   location.reload();
 });
@@ -447,17 +447,17 @@ async function launchDemo(demo, button) {
       const name = demo.file.split('/').pop();
       const remote = { url: new URL(`demos/${demo.file}.zst`, document.baseURI).href, ...demo.image };
       const ws = { name, files: [{ path: name, size: demo.image.size, remote,
-        read: async () => new Uint8Array(0), load: async () => { throw new Error('Image wird in Teilen geladen.'); } }] };
+        read: async () => new Uint8Array(0), load: async () => { throw new Error('The image is loaded in parts.'); } }] };
       await openWorkspace(async () => ws, { program: demo.start, system: demo.system, options: demoOptions(demo) });
       return;
     }
     const data = await fetchWithProgress(`demos/${demo.file}`, (loaded, total) => {
-      button.textContent = total ? `Lade … ${Math.round((loaded / total) * 100)} %` : 'Lade …';
+      button.textContent = total ? `Loading … ${Math.round((loaded / total) * 100)} %` : 'Loading …';
     });
     const file = new File([data], demo.file.split('/').pop());
     await openWorkspace(() => fromFileList([file]), { program: demo.start, system: demo.system, options: demoOptions(demo) });
   } catch (err) {
-    showError(`Demo konnte nicht geladen werden: ${err.message || err}`);
+    showError(`Could not load the demo: ${err.message || err}`);
   } finally {
     button.disabled = false;
     button.textContent = label;
@@ -488,10 +488,10 @@ function demoEmulator(demo) {
  * Start parameters (args) are a text field.
  */
 const DEMO_OPTION_FIELDS = {
-  windows: [['wine', 'Wine-Version', 'opt-wine'], ['threads', 'Ausführung', 'opt-threads'],
-    ['resolution', 'Auflösung', 'opt-resolution'], ['bpp', 'Farbtiefe', 'opt-bpp']],
-  dos: [['cycles', 'CPU-Geschwindigkeit', 'opt-cycles'], ['args', 'Startparameter', null]],
-  v86: [['memory', 'Arbeitsspeicher', 'opt-memory']],
+  windows: [['wine', 'Wine version', 'opt-wine'], ['threads', 'Threads', 'opt-threads'],
+    ['resolution', 'Resolution', 'opt-resolution'], ['bpp', 'Colour depth', 'opt-bpp']],
+  dos: [['cycles', 'CPU speed', 'opt-cycles'], ['args', 'Start parameters', null]],
+  v86: [['memory', 'Memory', 'opt-memory']],
   emulatorjs: [],
 };
 
@@ -527,15 +527,15 @@ function demoOptionsForm(demo) {
       input.value = String(current[key]);
       input.querySelectorAll('option').forEach((o) => { o.selected = o.value === String(current[key]); });
     } else {
-      input = el('input', { type: 'text', value: current[key] ?? '', placeholder: 'z. B. s für Sound Blaster', spellcheck: false });
+      input = el('input', { type: 'text', value: current[key] ?? '', placeholder: 'e.g. s for Sound Blaster', spellcheck: false });
     }
     input.addEventListener('change', () => storeDemoOption(demo, key, input.value.trim()));
     return el('label', {}, label, input);
   });
   const sound = el('input', { type: 'checkbox', checked: current.sound });
   sound.addEventListener('change', () => storeDemoOption(demo, 'sound', sound.checked));
-  rows.push(el('label', { className: 'check' }, sound, ' Ton'));
-  const reset = el('button', { type: 'button', className: 'linklike', textContent: 'Auf Standard zurücksetzen' });
+  rows.push(el('label', { className: 'check' }, sound, ' Sound'));
+  const reset = el('button', { type: 'button', className: 'linklike', textContent: 'Reset to defaults' });
   reset.addEventListener('click', () => {
     const all = savedDemoOptions();
     delete all[demo.id];
@@ -543,14 +543,14 @@ function demoOptionsForm(demo) {
     showDemoDetail(demo, demoAnchor, true);
   });
   return el('div', { className: 'demo-options' }, ...rows,
-    el('p', { className: 'hint' }, 'Gilt nur für diese Demo und wird gespeichert. ', reset));
+    el('p', { className: 'hint' }, 'Only for this demo, remembered in your browser. ', reset));
 }
 
 /** Shows description, credits and the start button of a demo below the carousel. */
 function showDemoDetail(demo, anchor, optionsOpen = false) {
-  const start = el('button', { type: 'button', className: 'wx-btn wx-go wx-small', textContent: 'Starten' });
+  const start = el('button', { type: 'button', className: 'wx-btn wx-go wx-small', textContent: 'Start' });
   start.addEventListener('click', () => launchDemo(demo, start));
-  const optionsButton = el('button', { type: 'button', className: 'wx-btn wx-small', textContent: 'Optionen' });
+  const optionsButton = el('button', { type: 'button', className: 'wx-btn wx-small', textContent: 'Options' });
   optionsButton.setAttribute('aria-expanded', String(optionsOpen));
   const form = demoOptionsForm(demo);
   form.hidden = !optionsOpen;
@@ -559,8 +559,8 @@ function showDemoDetail(demo, anchor, optionsOpen = false) {
     optionsButton.setAttribute('aria-expanded', String(!form.hidden));
     placeDemoDetail();
   });
-  const close = el('button', { type: 'button', className: 'demo-close', title: 'Schließen', textContent: '×' });
-  close.setAttribute('aria-label', 'Schließen');
+  const close = el('button', { type: 'button', className: 'demo-close', title: 'Close', textContent: '×' });
+  close.setAttribute('aria-label', 'Close');
   close.addEventListener('click', hideDemoDetail);
   const link = el('a', { href: demo.homepage, textContent: demo.author, rel: 'noopener' });
   $('demo-detail').replaceChildren(
@@ -569,7 +569,7 @@ function showDemoDetail(demo, anchor, optionsOpen = false) {
       el('h3', { textContent: demo.title }),
       el('p', { className: 'demo-meta', textContent: `${demo.platform} · ${demo.emulator} · ${demo.start}` }),
       el('p', { textContent: demo.description }),
-      el('p', { className: 'demo-meta' }, 'von ', link, ` · ${demo.license}`)),
+      el('p', { className: 'demo-meta' }, 'by ', link, ` · ${demo.license}`)),
     el('div', { className: 'demo-actions' }, start, optionsButton),
     form,
   );
@@ -689,15 +689,15 @@ fetch('demos/demos.json')
 
 $('btn-clear').addEventListener('click', async () => {
   if (emulator?.running) {
-    alert('Bitte zuerst das laufende Programm beenden.');
+    alert('Please quit the running program first.');
     return;
   }
-  if (!confirm('Virtuelle Umgebung zurücksetzen?\n\n'
-    + 'Das betrifft nur Daten, die Windows-Programme hier im Browser abgelegt haben: '
-    + 'Einstellungen, dort installierte Programme und Spielstände.\n\n'
-    + 'Dateien auf deinem Computer bleiben unberührt. Beim nächsten Start wird die Umgebung neu eingerichtet.')) return;
+  if (!confirm('Reset the virtual environment?\n\n'
+    + 'This only affects data that Windows programs stored here in the browser: '
+    + 'settings, programs installed there and save games.\n\n'
+    + 'Files on your computer are not touched. The environment is set up again on the next start.')) return;
   await clearPersistentStorage();
-  alert('Die virtuelle Umgebung wurde zurückgesetzt. Beim nächsten Start eines Windows-Programms wird sie neu eingerichtet.');
+  alert('The virtual environment was reset. It is set up again when you next start a Windows program.');
 });
 
 fetch('jsdos/version.json')

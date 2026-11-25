@@ -26,37 +26,37 @@ export const SYSTEMS = [
   // Home computers
   { id: 'c64', label: 'Commodore 64', core: 'vice_x64sc',
     ext: ['d64', 'd71', 'd81', 'g64', 'x64', 't64', 'prg', 'p00', 'crt'],
-    bios: { required: false, files: [], builtin: 'C64-ROMs sind im VICE-Core enthalten' }, options: VICE_OPTIONS },
+    bios: { required: false, files: [], builtin: 'C64 ROMs are included in the VICE core' }, options: VICE_OPTIONS },
   { id: 'c128', label: 'Commodore 128', core: 'vice_x128', ext: [],
-    bios: { required: false, files: [], builtin: 'ROMs im VICE-Core enthalten' }, options: VICE_OPTIONS },
+    bios: { required: false, files: [], builtin: 'ROMs included in the VICE core' }, options: VICE_OPTIONS },
   { id: 'vic20', label: 'Commodore VIC-20', core: 'vice_xvic', ext: ['20', '40', '60', 'a0', 'b0'],
-    bios: { required: false, files: [], builtin: 'ROMs im VICE-Core enthalten' }, options: VICE_OPTIONS },
+    bios: { required: false, files: [], builtin: 'ROMs included in the VICE core' }, options: VICE_OPTIONS },
   { id: 'plus4', label: 'Commodore Plus/4', core: 'vice_xplus4', ext: [],
-    bios: { required: false, files: [], builtin: 'ROMs im VICE-Core enthalten' }, options: VICE_OPTIONS },
+    bios: { required: false, files: [], builtin: 'ROMs included in the VICE core' }, options: VICE_OPTIONS },
   { id: 'pet', label: 'Commodore PET', core: 'vice_xpet', ext: [],
-    bios: { required: false, files: [], builtin: 'ROMs im VICE-Core enthalten' }, options: VICE_OPTIONS },
+    bios: { required: false, files: [], builtin: 'ROMs included in the VICE core' }, options: VICE_OPTIONS },
   { id: 'amiga', label: 'Amiga', core: 'puae', ext: ['adf', 'adz', 'dms', 'ipf', 'hdf', 'hdz', 'lha', 'uae'],
-    bios: { required: false, builtin: 'freier AROS-Kickstart im PUAE-Core enthalten',
-      note: 'Original-Kickstart verbessert die Kompatibilität',
+    bios: { required: false, builtin: 'free AROS Kickstart included in the PUAE core',
+      note: 'an original Kickstart improves compatibility',
       files: ['kick33180.A500', 'kick34005.A500', 'kick37175.A500', 'kick37350.A600', 'kick40063.A600',
         'kick39106.A1200', 'kick40068.A1200', 'kick39106.A4000', 'kick40068.A4000', 'kick34005.CDTV',
         'kick40060.CD32'] } },
   { id: 'zxspectrum', label: 'ZX Spectrum', core: 'fuse', ext: ['tzx', 'z80', 'sna', 'szx'],
-    bios: { required: false, files: [], builtin: 'Spectrum-ROMs im Fuse-Core enthalten' } },
+    bios: { required: false, files: [], builtin: 'Spectrum ROMs included in the Fuse core' } },
   { id: 'zx81', label: 'ZX81', core: '81', ext: ['p', '81'],
-    bios: { required: false, files: [], builtin: 'ROM im Core enthalten' } },
+    bios: { required: false, files: [], builtin: 'ROM included in the core' } },
   { id: 'cpc', label: 'Amstrad CPC', core: 'cap32', ext: ['cdt', 'sna'],
-    bios: { required: false, files: [], builtin: 'CPC-ROMs im Caprice32-Core enthalten' } },
+    bios: { required: false, files: [], builtin: 'CPC ROMs included in the Caprice32 core' } },
 
   // Nintendo
   { id: 'nes', label: 'NES', core: 'fceumm', ext: ['nes', 'unf', 'unif', 'fds'],
-    bios: { required: false, files: ['disksys.rom'], note: 'disksys.rom nur für Famicom-Disk-System (.fds)' } },
+    bios: { required: false, files: ['disksys.rom'], note: 'disksys.rom only for the Famicom Disk System (.fds)' } },
   { id: 'snes', label: 'SNES', core: 'snes9x', ext: ['sfc', 'smc', 'fig', 'swc', 'bs'] },
   { id: 'gb', label: 'Game Boy / Color', core: 'gambatte', ext: ['gb', 'gbc', 'dmg'] },
   { id: 'gba', label: 'Game Boy Advance', core: 'mgba', ext: ['gba', 'agb'],
-    bios: { required: false, files: ['gba_bios.bin'], builtin: 'HLE-BIOS im mGBA-Core enthalten' } },
+    bios: { required: false, files: ['gba_bios.bin'], builtin: 'HLE BIOS included in the mGBA core' } },
   { id: 'nds', label: 'Nintendo DS', core: 'melonds', ext: ['nds'],
-    bios: { required: false, files: ['bios7.bin', 'bios9.bin', 'firmware.bin'], builtin: 'freies BIOS im melonDS-Core' } },
+    bios: { required: false, files: ['bios7.bin', 'bios9.bin', 'firmware.bin'], builtin: 'free BIOS included in the melonDS core' } },
   { id: 'n64', label: 'Nintendo 64', core: 'mupen64plus_next', ext: ['n64', 'z64', 'v64'] },
   { id: 'vb', label: 'Virtual Boy', core: 'beetle_vb', ext: ['vb', 'vboy'] },
 
@@ -68,12 +68,12 @@ export const SYSTEMS = [
   { id: 'segaCD', label: 'Sega Mega-CD', core: 'genesis_plus_gx', ext: [],
     bios: { required: true, files: ['bios_CD_U.bin', 'bios_CD_E.bin', 'bios_CD_J.bin'] } },
   { id: 'segaSaturn', label: 'Sega Saturn', core: 'yabause', ext: [],
-    bios: { required: false, files: ['saturn_bios.bin'], builtin: 'HLE-BIOS im Yabause-Core' } },
+    bios: { required: false, files: ['saturn_bios.bin'], builtin: 'HLE BIOS included in the Yabause core' } },
 
   // Sony
   { id: 'psx', label: 'PlayStation', core: 'pcsx_rearmed', ext: ['pbp'],
     bios: { required: false, files: ['scph5500.bin', 'scph5501.bin', 'scph5502.bin', 'scph1001.bin'],
-      builtin: 'HLE-BIOS im PCSX-ReARMed-Core' } },
+      builtin: 'HLE BIOS included in the PCSX ReARMed core' } },
   { id: 'psp', label: 'PlayStation Portable', core: 'ppsspp', ext: ['cso'] },
 
   // Atari
@@ -88,7 +88,7 @@ export const SYSTEMS = [
 
   // Others
   { id: 'pce', label: 'PC Engine / TurboGrafx-16', core: 'mednafen_pce', ext: ['pce', 'sgx'],
-    bios: { required: false, files: ['syscard3.pce'], note: 'syscard3.pce nur für CD-Spiele' } },
+    bios: { required: false, files: ['syscard3.pce'], note: 'syscard3.pce only for CD games' } },
   { id: 'pcfx', label: 'PC-FX', core: 'mednafen_pcfx', ext: [],
     bios: { required: true, files: ['pcfx.rom'] } },
   { id: 'ngp', label: 'Neo Geo Pocket', core: 'mednafen_ngp', ext: ['ngp', 'ngc'] },
@@ -98,7 +98,7 @@ export const SYSTEMS = [
   { id: '3do', label: '3DO', core: 'opera', ext: [],
     bios: { required: true, files: ['panafz10.bin', 'panafz1.bin', 'panafz10-norsa.bin', 'goldstar.bin'] } },
   { id: 'arcade', label: 'Arcade (FBNeo)', core: 'fbneo', ext: [],
-    bios: { required: false, files: ['neogeo.zip'], note: 'neogeo.zip für Neo-Geo-Spiele' } },
+    bios: { required: false, files: ['neogeo.zip'], note: 'neogeo.zip for Neo Geo games' } },
   { id: 'mame', label: 'Arcade (MAME 2003-Plus)', core: 'mame2003_plus', ext: [] },
 
   // Complete PC with its own operating system (CD, floppy or hard disk image)

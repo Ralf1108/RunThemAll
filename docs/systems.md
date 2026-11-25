@@ -25,7 +25,7 @@ Run Them All looks at each file and picks the matching emulator by itself. If it
 | Floppy disk | `.img`, `.ima`, `.vfd`, `.flp` | v86 |
 | Hard disk | `.img`, `.vhd`, `.raw` | v86 |
 
-Use the button **"Eigenes Betriebssystem starten"**. The image boots like a real PC.
+Use the button **"Start your own operating system"**. The image boots like a real PC.
 The RAM size can be changed in the options (default 128 MB).
 
 ## Consoles and home computers
@@ -48,7 +48,7 @@ All run with [EmulatorJS](https://emulatorjs.org) and one libretro core per syst
 
 - Run Them All does **not** ship any copyrighted BIOS files.
 - If a BIOS file with the right name is in your ZIP or folder, it is used automatically.
-- Otherwise add it before starting with **"BIOS-Datei hinzufügen"**.
+- Otherwise add it before starting with **"Add BIOS file"**.
 
 ### Tested so far
 

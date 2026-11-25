@@ -31,7 +31,7 @@ const PLATFORMS = [
   { test: /commodore|c64|amiga/i, icon: 'c64', logo: 'commodore.svg', color: '#8b5cf6' },
   { test: /game\s*boy/i, icon: 'gameboy', logo: 'gameboy.svg', color: '#22a35a' },
   { test: /nes|nintendo|sega|konsole/i, icon: 'nes', logo: 'nes.svg', color: '#e5484d' },
-  { test: /betriebssystem|linux|\bos\b/i, icon: 'os', logo: 'cd.svg', color: '#f07b1e' },
+  { test: /operating system|betriebssystem|linux|\bos\b/i, icon: 'os', logo: 'cd.svg', color: '#f07b1e' },
 ];
 
 /**

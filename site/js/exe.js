@@ -11,10 +11,10 @@
 
 export const KIND_LABELS = {
   dos: 'DOS',
-  win16: 'Windows 16-Bit',
-  win32: 'Windows 32-Bit',
-  bat: 'Batchdatei',
-  unknown: 'Unbekannt',
+  win16: 'Windows 16 bit',
+  win32: 'Windows 32 bit',
+  bat: 'Batch file',
+  unknown: 'Unknown',
 };
 
 /** Number of leading bytes needed in most cases. */

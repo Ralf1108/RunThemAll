@@ -330,7 +330,7 @@ select {
 .v86-text { flex: none; white-space: pre; font: 14px/14px ui-monospace, Consolas, monospace; color: #fff; }
 .v86-canvas { flex: none; image-rendering: pixelated; }
 
-/* Own operating system button inside the "Programm öffnen" card */
+/* Own operating system button inside the "Open a program" card */
 .own-os { margin: 1.5rem auto 0; padding-top: 1.25rem; border-top: 1px solid var(--border); max-width: 560px; }
 .own-os-title { margin: 0 0 .75rem; font-weight: 600; }
 .own-os .hint { margin-top: .6rem; }

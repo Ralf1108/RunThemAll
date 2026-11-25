@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Run Them All – alte Programme und Spiele im Browser</title>
-  <meta name="description" content="Alte DOS- und Windows-Programme sowie Konsolen- und Heimcomputer-Spiele direkt im Browser ausführen. Nichts wird hochgeladen.">
+  <title>Run Them All – old programs and games in your browser</title>
+  <meta name="description" content="Run old DOS and Windows programs, console and home computer games and whole operating systems right in your browser. Nothing is uploaded.">
   <link rel="icon" href="img/logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
   <!-- Adds COOP/COEP headers via service worker where the server cannot (e.g. GitHub Pages). -->
@@ -13,12 +13,12 @@
 <body>
   <header class="site-header">
     <div class="wrap">
-      <a class="github-link" href="https://github.com/Ralf1108/RunThemAll" rel="noopener" title="Quellcode auf GitHub">
+      <a class="github-link" href="https://github.com/Ralf1108/RunThemAll" rel="noopener" title="Source code on GitHub">
         <svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/></svg>
         <span>GitHub</span>
       </a>
       <h1 class="logo"><img class="logo-mark" src="img/logo.svg" alt="" width="44" height="44">Run Them All</h1>
-      <p class="tagline">Alte DOS- und Windows-Programme, C64-, Amiga- und Konsolenspiele direkt im Browser starten. Deine Dateien bleiben auf deinem Rechner.</p>
+      <p class="tagline">Run old DOS and Windows programs, C64, Amiga and console games and whole operating systems right in your browser. Your files stay on your computer.</p>
     </div>
   </header>
 
@@ -26,20 +26,20 @@
   <main>
     <!-- Step 1: choose files -->
     <section id="pick" class="wx-card">
-      <h2>Programm öffnen</h2>
+      <h2>Open a program</h2>
       <div id="dropzone" class="dropzone" tabindex="0">
-        <p class="dz-title">Programm, Spiel, ZIP oder Ordner hierher ziehen</p>
-        <p class="dz-or">oder</p>
+        <p class="dz-title">Drop a program, game, ZIP or folder here</p>
+        <p class="dz-or">or</p>
         <div class="buttons">
-          <button type="button" id="btn-files" class="wx-btn wx-primary">Datei / ZIP öffnen …</button>
-          <button type="button" id="btn-folder" class="wx-btn">Ordner öffnen …</button>
+          <button type="button" id="btn-files" class="wx-btn wx-primary">Open file / ZIP …</button>
+          <button type="button" id="btn-folder" class="wx-btn">Open folder …</button>
         </div>
         <p id="folder-hint" class="hint"></p>
         <div class="own-os">
-          <p class="own-os-title">Oder ein komplettes Betriebssystem starten</p>
-          <button type="button" id="btn-own-os" class="wx-btn">Eigenes Betriebssystem starten …</button>
-          <p class="hint">CD-Image (.iso), Diskette oder Festplatte (.img, .vhd), z.&nbsp;B. von deiner eigenen
-            Windows-98-CD. Das Image bootet wie ein echter PC (mit v86).</p>
+          <p class="own-os-title">Or start a whole operating system</p>
+          <button type="button" id="btn-own-os" class="wx-btn">Start your own operating system …</button>
+          <p class="hint">CD image (.iso), floppy or hard disk (.img, .vhd), e.g. from your own
+            Windows 98 CD. The image boots like a real PC (with v86).</p>
           <input type="file" id="input-own-os" accept=".iso,.img,.ima,.vfd,.flp,.vhd,.raw" hidden>
         </div>
       </div>
@@ -53,27 +53,27 @@
       <div class="demos-head">
         <div>
           <h2 id="demos-title">Demos</h2>
-          <p class="muted">Freie Programme, Spiele und Betriebssysteme zum Ausprobieren – einfach eine Demo anklicken.</p>
+          <p class="muted">Free programs, games and operating systems to try – just click a demo.</p>
         </div>
         <div class="carousel-nav">
-          <button type="button" id="demo-prev" class="wx-btn wx-small carousel-btn" aria-label="Weiter links" title="Weiter links"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
-          <button type="button" id="demo-next" class="wx-btn wx-small carousel-btn" aria-label="Weiter rechts" title="Weiter rechts"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+          <button type="button" id="demo-prev" class="wx-btn wx-small carousel-btn" aria-label="Scroll left" title="Scroll left"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+          <button type="button" id="demo-next" class="wx-btn wx-small carousel-btn" aria-label="Scroll right" title="Scroll right"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
         </div>
       </div>
       <div class="carousel-frame">
-        <div id="demo-tree" class="demo-carousel" role="list" aria-label="Demos nach Plattform"></div>
+        <div id="demo-tree" class="demo-carousel" role="list" aria-label="Demos by platform"></div>
       </div>
-      <div id="demo-detail" class="demo-detail" role="region" aria-label="Demo-Info" hidden></div>
+      <div id="demo-detail" class="demo-detail" role="region" aria-label="Demo info" hidden></div>
     </section>
 
     <!-- Step 2: choose program + options -->
     <section id="choose" class="wx-card" hidden>
       <div class="choose-head">
-        <h2>Programm auswählen</h2>
-        <button type="button" id="btn-reset" class="wx-btn wx-small wx-ghost">Andere Dateien wählen</button>
+        <h2>Choose a program</h2>
+        <button type="button" id="btn-reset" class="wx-btn wx-small wx-ghost">Choose other files</button>
       </div>
       <p id="ws-summary" class="muted"></p>
-      <ul id="program-list" class="program-list" role="radiogroup" aria-label="Programme"></ul>
+      <ul id="program-list" class="program-list" role="radiogroup" aria-label="Programs"></ul>
 
       <div id="system-panel" class="system-panel" hidden>
         <label>System
@@ -81,64 +81,64 @@
         </label>
         <p id="bios-info" class="hint"></p>
         <div class="bios-row">
-          <button type="button" id="btn-bios" class="wx-btn wx-small">BIOS-Datei hinzufügen …</button>
+          <button type="button" id="btn-bios" class="wx-btn wx-small">Add BIOS file …</button>
           <span id="bios-chosen" class="hint"></span>
         </div>
         <input type="file" id="input-bios" multiple hidden>
       </div>
 
       <details class="options">
-        <summary>Optionen</summary>
-        <h3 class="option-head">Windows-Programme (Boxedwine)</h3>
+        <summary>Options</summary>
+        <h3 class="option-head">Windows programs (Boxedwine)</h3>
         <div class="option-grid">
-          <label>Wine-Version
+          <label>Wine version
             <select id="opt-wine">
-              <option value="wine6">Wine 6.0 (kompatibler, mit 16-Bit)</option>
-              <option value="wine11">Wine 11.0 (schneller, nur 32-Bit)</option>
+              <option value="wine6">Wine 6.0 (more compatible, with 16 bit)</option>
+              <option value="wine11">Wine 11.0 (faster, 32 bit only)</option>
             </select>
           </label>
-          <label>Ausführung
+          <label>Threads
             <select id="opt-threads">
-              <option value="auto">Automatisch</option>
+              <option value="auto">Automatic</option>
               <option value="st">Singlethreaded</option>
               <option value="mt">Multithreaded</option>
             </select>
           </label>
-          <label>Auflösung
+          <label>Resolution
             <select id="opt-resolution">
-              <option value="">Standard</option>
+              <option value="">Default</option>
               <option>640x480</option>
               <option>800x600</option>
               <option>1024x768</option>
             </select>
           </label>
-          <label>Farbtiefe
+          <label>Colour depth
             <select id="opt-bpp">
-              <option value="32">32 Bit</option>
-              <option value="16">16 Bit</option>
-              <option value="8">8 Bit (256 Farben)</option>
+              <option value="32">32 bit</option>
+              <option value="16">16 bit</option>
+              <option value="8">8 bit (256 colours)</option>
             </select>
           </label>
-          <label class="check"><input type="checkbox" id="opt-persistent" checked> Virtuelle Umgebung im Browser speichern</label>
+          <label class="check"><input type="checkbox" id="opt-persistent" checked> Keep the virtual environment in the browser</label>
         </div>
         <p id="thread-info" class="hint"></p>
 
-        <h3 class="option-head">DOS-Programme (DOSBox)</h3>
+        <h3 class="option-head">DOS programs (DOSBox)</h3>
         <div class="option-grid">
-          <label>CPU-Geschwindigkeit
+          <label>CPU speed
             <select id="opt-cycles">
-              <option value="auto">Automatisch</option>
-              <option value="max">Maximal</option>
-              <option value="3000">Langsam (286, 3000 Zyklen)</option>
-              <option value="8000">Mittel (386, 8000 Zyklen)</option>
-              <option value="20000">Schnell (486, 20000 Zyklen)</option>
+              <option value="auto">Automatic</option>
+              <option value="max">Maximum</option>
+              <option value="3000">Slow (286, 3000 cycles)</option>
+              <option value="8000">Medium (386, 8000 cycles)</option>
+              <option value="20000">Fast (486, 20000 cycles)</option>
             </select>
           </label>
         </div>
 
-        <h3 class="option-head">Kompletter PC (v86)</h3>
+        <h3 class="option-head">Complete PC (v86)</h3>
         <div class="option-grid">
-          <label>Arbeitsspeicher
+          <label>Memory
             <select id="opt-memory">
               <option value="32">32 MB</option>
               <option value="64">64 MB</option>
@@ -149,14 +149,14 @@
           </label>
         </div>
 
-        <h3 class="option-head">Allgemein</h3>
+        <h3 class="option-head">General</h3>
         <div class="option-grid">
-          <label class="check"><input type="checkbox" id="opt-sound" checked> Ton</label>
+          <label class="check"><input type="checkbox" id="opt-sound" checked> Sound</label>
         </div>
       </details>
 
       <div class="start-row">
-        <button type="button" id="btn-start" class="wx-btn wx-primary wx-large">Starten</button>
+        <button type="button" id="btn-start" class="wx-btn wx-primary wx-large">Start</button>
       </div>
     </section>
 
@@ -164,20 +164,20 @@
     <section id="run" class="run" hidden>
       <div class="toolbar">
         <strong id="run-title"></strong>
-        <span id="run-emulator" class="emu-badge" title="Laufender Emulator"></span>
+        <span id="run-emulator" class="emu-badge" title="Running emulator"></span>
         <span class="spacer"></span>
-        <button type="button" id="btn-writeback" class="wx-btn wx-small" hidden>In Ordner zurückschreiben</button>
-        <button type="button" id="btn-download" class="wx-btn wx-small">Geänderte Dateien sichern</button>
-        <button type="button" id="btn-fullscreen" class="wx-btn wx-small">Vollbild</button>
-        <button type="button" id="btn-restart" class="wx-btn wx-small wx-ghost">Beenden</button>
+        <button type="button" id="btn-writeback" class="wx-btn wx-small" hidden>Write back to folder</button>
+        <button type="button" id="btn-download" class="wx-btn wx-small">Save changed files</button>
+        <button type="button" id="btn-fullscreen" class="wx-btn wx-small">Fullscreen</button>
+        <button type="button" id="btn-restart" class="wx-btn wx-small wx-ghost">Quit</button>
       </div>
       <div class="status-row">
-        <span id="status-text">Vorbereiten …</span>
+        <span id="status-text">Preparing …</span>
         <progress id="status-progress" max="1" hidden></progress>
       </div>
       <div id="screen" class="screen">
         <div id="loader" class="loader">
-          <h3>Umgebung wird vorbereitet</h3>
+          <h3>Preparing the environment</h3>
           <ol id="loader-steps" class="loader-steps"></ol>
           <progress id="loader-progress" max="1" hidden></progress>
           <p id="loader-detail" class="loader-detail"></p>
@@ -189,7 +189,7 @@
       </div>
       <p id="run-message" class="hint"></p>
       <details class="console">
-        <summary>Konsole</summary>
+        <summary>Console</summary>
         <pre id="console-output"></pre>
       </details>
     </section>
@@ -199,24 +199,24 @@
   <footer class="site-footer">
     <div class="wrap">
       <p>
-        Run Them All ist freie Software (<a href="https://opensource.org/license/mit" rel="noopener">MIT</a>).
-        Windows-Programme laufen mit <a href="https://github.com/danoon2/Boxedwine" rel="noopener">Boxedwine</a>
+        Run Them All is free software (<a href="https://opensource.org/license/mit" rel="noopener">MIT</a>).
+        Windows programs run with <a href="https://github.com/danoon2/Boxedwine" rel="noopener">Boxedwine</a>
         <span id="bw-version"></span> (GPL-2.0:
-        <a href="boxedwine/LICENSE-GPL-2.0.txt">Lizenz</a>, <a id="bw-source" href="boxedwine/">Quellcode</a>)
-        und Wine (LGPL), DOS-Programme mit <a href="https://js-dos.com" rel="noopener">js-dos</a>
-        <span id="jsdos-version"></span> und DOSBox (GPL-2.0:
-        <a href="jsdos/LICENSE-GPL-2.0.txt">Lizenz</a>, Quellcode: <span id="jsdos-sources"></span>),
-        komplette PCs mit <a href="https://github.com/copy/v86" rel="noopener">v86</a>
-        <span id="v86-version"></span> (BSD-2-Clause: <a href="v86/LICENSE-BSD-2-Clause.txt">Lizenz</a>,
-        Quellcode: <span id="v86-sources"></span>) und SeaBIOS (LGPL-3.0: <a href="v86/bios/LICENSE-LGPL-3.0.txt">Lizenz</a>),
-        Konsolen und Heimcomputer mit <a href="https://emulatorjs.org" rel="noopener">EmulatorJS</a>
-        <span id="ejs-version"></span> und den <a href="emulatorjs/cores.html">libretro-Cores</a> (GPL-3.0:
-        <a href="emulatorjs/LICENSE-GPL-3.0.txt">Lizenz</a>, <a id="ejs-source" href="emulatorjs/">Quellcode</a>).
+        <a href="boxedwine/LICENSE-GPL-2.0.txt">licence</a>, <a id="bw-source" href="boxedwine/">source</a>)
+        and Wine (LGPL), DOS programs with <a href="https://js-dos.com" rel="noopener">js-dos</a>
+        <span id="jsdos-version"></span> and DOSBox (GPL-2.0:
+        <a href="jsdos/LICENSE-GPL-2.0.txt">licence</a>, source: <span id="jsdos-sources"></span>),
+        complete PCs with <a href="https://github.com/copy/v86" rel="noopener">v86</a>
+        <span id="v86-version"></span> (BSD-2-Clause: <a href="v86/LICENSE-BSD-2-Clause.txt">licence</a>,
+        source: <span id="v86-sources"></span>) and SeaBIOS (LGPL-3.0: <a href="v86/bios/LICENSE-LGPL-3.0.txt">licence</a>),
+        consoles and home computers with <a href="https://emulatorjs.org" rel="noopener">EmulatorJS</a>
+        <span id="ejs-version"></span> and the <a href="emulatorjs/cores.html">libretro cores</a> (GPL-3.0:
+        <a href="emulatorjs/LICENSE-GPL-3.0.txt">licence</a>, <a id="ejs-source" href="emulatorjs/">source</a>).
       </p>
       <p>
-        Alles läuft lokal in deinem Browser, es werden keine Dateien hochgeladen. Seitenaufrufe zählen wir anonym und ohne Cookies mit <a href="https://www.goatcounter.com" rel="noopener">GoatCounter</a>.
-        Windows-Programme bekommen eine virtuelle Umgebung, die nur hier im Browser gespeichert ist.
-        <button type="button" id="btn-clear" class="linklike">Virtuelle Umgebung zurücksetzen</button>
+        Everything runs locally in your browser, no files are uploaded. Page views are counted anonymously and without cookies with <a href="https://www.goatcounter.com" rel="noopener">GoatCounter</a>.
+        Windows programs get a virtual environment that is only stored here in your browser.
+        <button type="button" id="btn-clear" class="linklike">Reset virtual environment</button>
       </p>
     </div>
   </footer>
