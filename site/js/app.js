@@ -636,7 +636,7 @@ function renderDemoTree(list) {
     groups.get(demo.platform).push(demo);
   }
   carousel.replaceChildren(...[...groups].map(([platform, demos]) => {
-    const { icon, color } = platformStyle(platform);
+    const { logo, icon, color } = platformStyle(platform);
     const items = demos.map((demo) => {
       const button = el('button', { type: 'button', className: 'demo-item', title: demo.description },
         el('span', { className: 'demo-name', textContent: demo.title }),
@@ -651,8 +651,9 @@ function renderDemoTree(list) {
       button.addEventListener('dblclick', () => showDemoDetail(demo, button).click());
       return el('li', {}, button);
     });
-    const iconBox = el('span', { className: 'tile-icon' });
-    iconBox.innerHTML = icon; // own static SVG markup from platforms.js
+    const iconBox = el('span', { className: logo ? 'tile-icon logo' : 'tile-icon' });
+    if (logo) iconBox.append(el('img', { src: logo, alt: '', width: 38, height: 38, decoding: 'async' }));
+    else iconBox.innerHTML = icon; // own static SVG markup from platforms.js
     const tile = el('article', { className: 'demo-tile' },
       el('header', { className: 'tile-head' }, iconBox,
         el('div', {},

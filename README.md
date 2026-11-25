@@ -46,7 +46,7 @@ Getestet sind bisher C64 und Amiga; die übrigen Systeme sind eingebunden, aber 
 ## Funktionen
 
 - **Demos** unter „Programm öffnen“: freie Programme, Spiele und Betriebssysteme, je Plattform eine Kachel mit
-  Symbol in einem seitlich scrollbaren Karussell; mit einem Klick starten, Optionen pro Demo (vollständige Liste in [demos/](demos/README.md))
+  Logo in einem seitlich scrollbaren Karussell; mit einem Klick starten, Optionen pro Demo (vollständige Liste in [demos/](demos/README.md))
 - Emulatoren werden erst beim Start geladen, und nur der benötigte. Ein Ladebildschirm zeigt
   die Schritte und den Download-Fortschritt („12,3 von 38,5 MB“); danach kommen die Dateien aus dem Browser-Cache.
 - Während des Laufs zeigt die Seite, welcher Emulator läuft (z. B. „EmulatorJS 4.2.3 · Commodore 64 · Core vice_x64sc“)
@@ -153,7 +153,8 @@ site/                  statische Webseite (wird veröffentlicht)
   js/ejs.js            Spiele mit EmulatorJS
   js/v86.js            komplette PCs (Betriebssysteme) mit v86
   js/fit.js            skaliert das Emulatorbild auf die Fläche (mit Seitenverhältnis)
-  js/platforms.js      Symbole und Farben der Demo-Plattformen
+  js/platforms.js      Logos und Farben der Demo-Plattformen
+  img/platforms/       Plattform-Logos (Quellen in THIRD_PARTY_NOTICES.md)
   js/audio.js          gibt den Ton frei, den der Browser zurückhält
   js/zip.js            ZIP lesen/schreiben (ohne Abhängigkeiten)
   boxedwine/, jsdos/, emulatorjs/, v86/, demos/   werden von scripts/fetch-runtimes.mjs erzeugt (nicht im Git)

@@ -89,6 +89,21 @@ aber nicht aufgenommenen Spielen: [demos/README.md](demos/README.md).
 | Nova the Squirrel 1.0.6a | NovaSquirrel | GPL-3.0 (Quellcode im verlinkten Repository) | github.com/NovaSquirrel/NovaTheSquirrel |
 | µCity 1.3 | Antonio Niño Díaz | GPL-3.0 (Quellcode im verlinkten Repository) | github.com/AntonioND/ucity |
 
+## Plattform-Logos (site/img/platforms/)
+
+Die Logos auf den Demo-Kacheln zeigen nur, zu welcher Plattform eine Demo gehört. Die Marken gehören
+ihren Inhabern (Microsoft, Commodore, Nintendo); Run Them All steht mit ihnen in keiner Verbindung.
+
+| Datei | Motiv | Lizenz | Quelle |
+|---|---|---|---|
+| windows.svg | Windows-Flagge (2002–2012, farbig) | gemeinfrei (Logo aus einfachen Formen), Marke von Microsoft | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Unofficial_Windows_logo_variant_-_2002%E2%80%932012_(Multicolored).svg) |
+| windows3.svg | Windows-Logo von 1992 | gemeinfrei (Logo aus einfachen Formen), Marke von Microsoft | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Windows_logo_-_1992.svg) |
+| dos.svg | MS-DOS-Logo | MIT, [Devicon](https://github.com/devicons/devicon) (konpa) | über [Iconify](https://icon-sets.iconify.design/devicon/msdos/) |
+| commodore.svg | Commodore-Emblem, eingefärbt | CC0, Form von [Simple Icons](https://simpleicons.org/?q=commodore) | Farben selbst gesetzt |
+| nes.svg | NES-Controller | CC BY-SA 3.0, Fant0men | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Nes_controller.svg) |
+| gameboy.svg | Handheld | CC BY 4.0, [Streamline](https://www.streamlinehq.com/) (Plump color) | über [Iconify](https://icon-sets.iconify.design/streamline-plump-color/gameboy/) |
+| cd.svg | CD | Apache-2.0, [Noto Emoji](https://github.com/googlefonts/noto-emoji) (Google) | über [Iconify](https://icon-sets.iconify.design/noto/optical-disk/) |
+
 ## coi-serviceworker v0.1.7
 
 - Projekt: https://github.com/gzuidhof/coi-serviceworker

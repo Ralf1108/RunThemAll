@@ -1,4 +1,6 @@
-// Icons and colours for the demo platforms (own simple line drawings, no brand logos).
+// Logos and colours for the demo platforms. The logo files are in img/platforms/
+// (sources and licences: THIRD_PARTY_NOTICES.md). The line drawings below are the
+// fallback for platforms without a logo.
 
 const svg = (body) => `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor"
   stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
@@ -23,21 +25,25 @@ const ICONS = {
 };
 
 const PLATFORMS = [
-  { test: /windows\s*3|16\s*bit/i, icon: 'win16', color: '#14a38b' },
-  { test: /windows/i, icon: 'win32', color: '#3b82f6' },
-  { test: /\bdos\b/i, icon: 'dos', color: '#d49a12' },
-  { test: /commodore|c64|amiga/i, icon: 'c64', color: '#8b5cf6' },
-  { test: /game\s*boy/i, icon: 'gameboy', color: '#22a35a' },
-  { test: /nes|nintendo|sega|konsole/i, icon: 'nes', color: '#e5484d' },
-  { test: /betriebssystem|linux|\bos\b/i, icon: 'os', color: '#f07b1e' },
+  { test: /windows\s*3|16\s*bit/i, icon: 'win16', logo: 'windows3.svg', color: '#14a38b' },
+  { test: /windows/i, icon: 'win32', logo: 'windows.svg', color: '#3b82f6' },
+  { test: /\bdos\b/i, icon: 'dos', logo: 'dos.svg', color: '#d49a12' },
+  { test: /commodore|c64|amiga/i, icon: 'c64', logo: 'commodore.svg', color: '#8b5cf6' },
+  { test: /game\s*boy/i, icon: 'gameboy', logo: 'gameboy.svg', color: '#22a35a' },
+  { test: /nes|nintendo|sega|konsole/i, icon: 'nes', logo: 'nes.svg', color: '#e5484d' },
+  { test: /betriebssystem|linux|\bos\b/i, icon: 'os', logo: 'cd.svg', color: '#f07b1e' },
 ];
 
 /**
- * Icon (SVG markup) and colour for a platform name from demos.json.
+ * Logo, fallback icon (SVG markup) and colour for a platform name from demos.json.
  * @param {string} platform
- * @returns {{ icon: string, color: string }}
+ * @returns {{ logo: string|null, icon: string, color: string }}
  */
 export function platformStyle(platform) {
   const match = PLATFORMS.find((p) => p.test.test(platform));
-  return { icon: ICONS[match?.icon ?? 'other'], color: match?.color ?? '#7d8697' };
+  return {
+    logo: match?.logo ? `img/platforms/${match.logo}` : null,
+    icon: ICONS[match?.icon ?? 'other'],
+    color: match?.color ?? '#7d8697',
+  };
 }
