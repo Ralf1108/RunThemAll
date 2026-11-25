@@ -73,7 +73,8 @@ and the demo carousel (3.2), the emulators on the right (3.3). The interface is 
 
 - `demos/demos.json` lists free programs (source, author, licence, start file, system, options).
 - The build script downloads them into `site/demos/`.
-- The start page shows them in a carousel: one tile per platform with logo, the demos inside.
+- The start page shows them in a carousel: one tile per platform with logo, name and number of demos.
+  Clicking a tile opens the list of its demos below the carousel; clicking it again (or `Esc`) closes it.
   It scrolls with the arrow buttons, an always visible scroll bar, by dragging with the mouse,
   or natively with touch and trackpad; it snaps to whole tiles.
   Clicking a demo shows its info with *Start* and *Options* (per-demo options, saved in `localStorage`)
@@ -229,7 +230,8 @@ CD tracks next to a `.cue` are not listed; the `.cue` is started with all its tr
 | *Sound on/off* (audio level measured at the speakers) | js-dos and EmulatorJS go silent and come back |
 | *Pause/Resume* (picture and audio compared) | all four emulators stop and continue; Boxedwine does not run on while paused |
 | Arrow keys, space, page down while a program runs | page does not scroll, the emulator still gets the keys |
-| Carousel: drag with the mouse, scroll bar, arrow buttons | scrolls and snaps; a drag never opens a demo |
+| Carousel: drag with the mouse, scroll bar, arrow buttons | scrolls and snaps; a drag never opens a platform |
+| Platform tile → demo list → demo info → *Start* (1440 and 400 px wide) | list and info open below, clicking the tile again closes both |
 
 Not tested yet: drag & drop of files, writing back into a folder, DOS/4GW programs, most consoles and
 home computers, BIOS files, CD images with `.cue`, muting Boxedwine and v86 (their demos make no sound).

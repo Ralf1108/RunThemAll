@@ -649,14 +649,16 @@ function revealDemoDetail() {
   requestAnimationFrame(() => $('demo-detail').scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
 }
 
-/** Points the arrow of the info panel at the tile of the selected demo. */
+/** Points the arrows of the demo list at its category tile and of the info panel at the selected demo. */
 function placeDemoDetail() {
-  const pop = $('demo-detail');
-  if (pop.hidden || !demoAnchor) return;
-  const tile = demoAnchor.closest('.demo-tile').getBoundingClientRect();
-  const panel = pop.getBoundingClientRect();
-  const x = Math.min(Math.max(tile.left + tile.width / 2 - panel.left, 24), panel.width - 24);
-  pop.style.setProperty('--arrow', `${x}px`);
+  const point = (panel, target) => {
+    if (panel.hidden || !target) return;
+    const t = target.getBoundingClientRect();
+    const p = panel.getBoundingClientRect();
+    panel.style.setProperty('--arrow', `${Math.min(Math.max(t.left + t.width / 2 - p.left, 24), p.width - 24)}px`);
+  };
+  point($('demo-list'), carousel.querySelector('.demo-tile[aria-expanded="true"]'));
+  point($('demo-detail'), demoAnchor);
 }
 
 // Carousel: arrow buttons scroll by about one view, fading edges show there is more.
@@ -765,47 +767,75 @@ $('demo-next').addEventListener('click', () => scrollCarousel(1));
 carousel.addEventListener('scroll', updateCarousel, { passive: true });
 new ResizeObserver(updateCarousel).observe(carousel);
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && !$('demo-detail').hidden) {
+  if (e.key !== 'Escape') return;
+  if (!$('demo-detail').hidden) {
     demoAnchor?.focus();
     hideDemoDetail();
+  } else if (!$('demo-list').hidden) {
+    const tile = carousel.querySelector('.demo-tile[aria-expanded="true"]');
+    tile?.focus();
+    tile?.click();
   }
 });
 
-/** Builds the carousel: one tile per platform (in order of first appearance), its demos inside. */
+/** Opens the list of demos of one category below the carousel (or closes it when it is already open). */
+function openCategory(tile, platform, demos) {
+  const list = $('demo-list');
+  const wasOpen = tile.getAttribute('aria-expanded') === 'true';
+  carousel.querySelectorAll('.demo-tile[aria-expanded="true"]').forEach((t) => t.setAttribute('aria-expanded', 'false'));
+  hideDemoDetail();
+  if (wasOpen) {
+    list.hidden = true;
+    return;
+  }
+  tile.setAttribute('aria-expanded', 'true');
+  const items = demos.map((demo) => {
+    const button = el('button', { type: 'button', className: 'demo-item', title: demo.description },
+      el('span', { className: 'demo-name', textContent: demo.title }),
+      el('span', { className: 'demo-file', textContent: demo.start }));
+    button.addEventListener('click', () => {
+      if (demoAnchor === button) hideDemoDetail();
+      else {
+        showDemoDetail(demo, button);
+        revealDemoDetail();
+      }
+    });
+    button.addEventListener('dblclick', () => showDemoDetail(demo, button).click());
+    return el('li', {}, button);
+  });
+  list.replaceChildren(
+    el('h3', { textContent: `${platform} – ${demos.length === 1 ? '1 demo' : `${demos.length} demos`}` }),
+    el('ul', {}, ...items));
+  list.style.setProperty('--tile', platformStyle(platform).color);
+  list.hidden = false;
+  showTile(tile);
+  placeDemoDetail();
+  requestAnimationFrame(() => list.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
+}
+
+/** Builds the carousel: one tile per platform (in order of first appearance); a click opens its demos. */
 function renderDemoTree(list) {
   const groups = new Map();
   for (const demo of list) {
     if (!groups.has(demo.platform)) groups.set(demo.platform, []);
     groups.get(demo.platform).push(demo);
   }
+  $('demo-list').hidden = true;
+  hideDemoDetail();
   carousel.replaceChildren(...[...groups].map(([platform, demos]) => {
     const { logo, icon, color } = platformStyle(platform);
-    const items = demos.map((demo) => {
-      const button = el('button', { type: 'button', className: 'demo-item', title: demo.description },
-        el('span', { className: 'demo-name', textContent: demo.title }),
-        el('span', { className: 'demo-file', textContent: demo.start }));
-      button.addEventListener('click', () => {
-        if (demoAnchor === button) hideDemoDetail();
-        else {
-          showDemoDetail(demo, button);
-          showTile(button.closest('.demo-tile'));
-          revealDemoDetail();
-        }
-      });
-      button.addEventListener('dblclick', () => showDemoDetail(demo, button).click());
-      return el('li', {}, button);
-    });
     const iconBox = el('span', { className: logo ? 'tile-icon logo' : 'tile-icon' });
-    if (logo) iconBox.append(el('img', { src: logo, alt: '', width: 38, height: 38, decoding: 'async' }));
+    if (logo) iconBox.append(el('img', { src: logo, alt: '', width: 56, height: 56, decoding: 'async' }));
     else iconBox.innerHTML = icon; // own static SVG markup from platforms.js
-    const tile = el('article', { className: 'demo-tile' },
-      el('header', { className: 'tile-head' }, iconBox,
-        el('div', {},
-          el('h3', { textContent: platform }),
-          el('span', { className: 'tile-count', textContent: demos.length === 1 ? '1 Demo' : `${demos.length} Demos` }))),
-      el('ul', {}, ...items));
+    const tile = el('button', { type: 'button', className: 'demo-tile', title: `Show the ${platform} demos` },
+      iconBox,
+      el('span', { className: 'tile-name', textContent: platform }),
+      el('span', { className: 'tile-count', textContent: demos.length === 1 ? '1 demo' : `${demos.length} demos` }));
     tile.setAttribute('role', 'listitem');
+    tile.setAttribute('aria-expanded', 'false');
+    tile.setAttribute('aria-controls', 'demo-list');
     tile.style.setProperty('--tile', color);
+    tile.addEventListener('click', () => openCategory(tile, platform, demos));
     return tile;
   }));
   updateCarousel();
