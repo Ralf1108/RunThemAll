@@ -502,7 +502,7 @@ select {
 .keys-panel .key.wide { min-width: 4rem; }
 .keys-panel .sep { width: .6rem; }
 .keys-panel .hint { margin: 0 0 0 .4rem; font-size: .78rem; }
-#btn-keys[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); }
+#btn-keys[aria-expanded="true"], #btn-pad[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
 .report-form { display: grid; gap: .6rem; margin-top: .75rem; max-height: min(62vh, 640px); overflow: auto; padding-right: .25rem; }
 .report-field { display: grid; gap: .25rem; font-size: .85rem; color: var(--muted); }
 .report-field input, .report-field select, .report-field textarea {
@@ -532,3 +532,46 @@ select {
   border: 1px solid var(--border); background: var(--surface); color: var(--text);
 }
 .demo-options .hint { margin: 0; font-size: .8rem; }
+
+/* Touch gamepad over the emulator picture (js/gamepad.js) */
+.gamepad {
+  --gp-size: clamp(110px, 24vmin, 170px);
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 30;
+  display: flex; justify-content: space-between; align-items: flex-end; gap: .5rem;
+  padding: clamp(.5rem, 2vmin, 1.25rem);
+  pointer-events: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+}
+.gamepad[hidden], .screen:has(> .loader:not([hidden])) .gamepad { display: none; }
+.gamepad > * { pointer-events: auto; touch-action: none; }
+.gp-dpad { position: relative; width: var(--gp-size); height: var(--gp-size); opacity: .6; }
+.gp-arm { position: absolute; background: #555; border: 2px solid #999; }
+.gp-up, .gp-down { left: 33%; width: 34%; height: 40%; }
+.gp-left, .gp-right { top: 33%; height: 34%; width: 40%; }
+.gp-up { top: 0; border-radius: 8px 8px 0 0; border-bottom: 0; }
+.gp-down { bottom: 0; border-radius: 0 0 8px 8px; border-top: 0; }
+.gp-left { left: 0; border-radius: 8px 0 0 8px; border-right: 0; }
+.gp-right { right: 0; border-radius: 0 8px 8px 0; border-left: 0; }
+.gp-dpad::after { content: ""; position: absolute; left: 33%; top: 33%; width: 34%; height: 34%; background: #555; }
+.gp-arm.down { background: #8a8a8a; }
+.gp-actions {
+  position: relative; width: var(--gp-size); height: var(--gp-size); opacity: .6;
+  display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+}
+.gp-btn, .gp-small, .gp-settings {
+  font: inherit; color: #ddd; background: #262626; border: 2px solid #bbb; cursor: pointer; padding: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05;
+}
+.gp-btn { border-radius: 50%; }
+.gp-btn b { font-size: calc(var(--gp-size) * .13); }
+.gp-btn small, .gp-small small { font-size: calc(var(--gp-size) * .075); color: #aaa; max-width: 95%; overflow: hidden; white-space: nowrap; }
+.gp-y { grid-area: 1 / 2; } .gp-x { grid-area: 2 / 1; } .gp-b { grid-area: 2 / 3; } .gp-a { grid-area: 3 / 2; }
+.gp-btn.down, .gp-small.down { background: #5a5a5a; }
+.gp-middle { display: flex; gap: .5rem; align-items: center; opacity: .6; }
+.gp-small { border-radius: 8px; padding: .25rem .6rem; min-width: 3.6rem; }
+.gp-small b { font-size: .8rem; font-weight: 600; }
+.gp-settings { border-radius: 50%; width: 2rem; height: 2rem; font-size: 1rem; }
+.gp-settings:hover, .gp-btn:hover, .gp-small:hover { border-color: #fff; }
+
+/* Gamepad mapping dialog */
+.pad-map { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .5rem .75rem; }
+.pad-map label { display: flex; flex-direction: column; gap: .2rem; font-size: .85rem; }

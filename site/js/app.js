@@ -2,6 +2,7 @@ import { audioSuspended, isMuted, setMuted } from './audio.js';
 import { fromDataTransfer, fromDirectoryHandle, fromFileList, fromStoredFiles, findPrograms, totalSize } from './workspace.js';
 import { clearRestart, saveRestart, takeRestart } from './restart.js';
 import { KEY_BY_ID, VIRTUAL_KEYS } from './keys.js';
+import { createGamepad, loadMapping, PAD_BUTTONS, saveMapping } from './gamepad.js';
 import { fetchWithProgress } from './runner.js';
 import { WindowsRunner, canUseThreads, clearPersistentStorage } from './emulator.js';
 import { DosRunner } from './dos.js';
@@ -416,6 +417,11 @@ async function start(overrides = {}) {
     : { dos: DosRunner, windows: WindowsRunner, emulatorjs: EmulatorJsRunner }[program.emulator];
   emulator = new Runner(ui);
   runInfo = { program, opts, crash: null };
+  // Touch gamepad: DOS games for now; shown at once on touch screens.
+  const padFits = runningKind(program, opts) === 'dos';
+  $('btn-pad').hidden = !padFits;
+  gamepad.setMapping(loadMapping(padProgramKey()));
+  setPad(padFits && matchMedia('(pointer: coarse)').matches);
   $('btn-changes').hidden = !emulator.supportsFileSync;
   $('btn-pause').hidden = !emulator.supportsPause;
   setPaused(false);
@@ -832,6 +838,53 @@ document.addEventListener('fullscreenchange', () => {
     panel.hidden = !panel.hidden;
     $('btn-keys').setAttribute('aria-expanded', String(!panel.hidden));
   });
+}
+
+// Touch gamepad over the picture (js/gamepad.js); which key each button sends is set per program.
+const gamepad = createGamepad($('screen'), {
+  send: (key, pressed) => emulator?.sendKey(key, pressed),
+  onSettings: () => showPadMapping(),
+});
+/** Name under which the gamepad mapping of the running program is remembered. */
+function padProgramKey() {
+  return currentDemo ? `demo:${currentDemo.id}` : `file:${runInfo?.program.path ?? ''}`;
+}
+function setPad(on) {
+  gamepad.setVisible(on);
+  $('btn-pad').setAttribute('aria-pressed', String(on));
+  $('btn-pad').title = on ? 'Hide the touch gamepad' : 'Touch gamepad over the picture (for phones and tablets)';
+}
+$('btn-pad').addEventListener('click', () => setPad(!gamepad.visible));
+window.addEventListener('blur', () => gamepad.releaseAll()); // no key may stay pressed
+
+/** Display name of a key in the mapping choice, e.g. "Esc (Escape)", "A". */
+const keyChoiceName = (key) => (key.label === key.id || /^(Key|Digit)/.test(key.id) ? key.label : `${key.label} (${key.id.replace(/([a-z])([A-Z])/g, '$1 $2')})`);
+
+function showPadMapping() {
+  if (!runInfo) return;
+  const mapping = loadMapping(padProgramKey());
+  const selects = {};
+  const rows = PAD_BUTTONS.map(([id, name]) => {
+    const select = el('select', {});
+    select.append(el('option', { value: '', textContent: '– nothing –' }),
+      ...VIRTUAL_KEYS.map((key) => el('option', { value: key.id, textContent: keyChoiceName(key) })));
+    select.value = mapping[id] ?? '';
+    selects[id] = select;
+    return el('label', {}, name, select);
+  });
+  const body = el('div', { className: 'demo-options run-options pad-map' }, ...rows);
+  const apply = (next) => {
+    saveMapping(padProgramKey(), next);
+    gamepad.setMapping(loadMapping(padProgramKey()));
+  };
+  showDialog('Gamepad keys',
+    `Which key each gamepad button sends to ${currentDemo ? currentDemo.title : runInfo.program.path}. `
+      + 'Remembered in your browser for this program. Look into the help or the setup of the game for its keys.',
+    [], false, [
+      { label: 'Cancel' },
+      { label: 'Reset to defaults', run: () => apply(null) },
+      { label: 'Save', primary: true, run: () => apply(Object.fromEntries(Object.entries(selects).map(([id, s]) => [id, s.value]))) },
+    ], body);
 }
 
 $('btn-restart').addEventListener('click', () => {

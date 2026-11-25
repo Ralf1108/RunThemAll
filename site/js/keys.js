@@ -38,7 +38,16 @@ export const VIRTUAL_KEYS = [
   k('Control', 'Ctrl', 'Control', 'ControlLeft', 17, 341, [0x1d], true),
   k('Alt', 'Alt', 'Alt', 'AltLeft', 18, 342, [0x38], true),
   k('Shift', 'Shift', 'Shift', 'ShiftLeft', 16, 340, [0x2a], true),
+  // Letters and digits (for the gamepad mapping); js-dos and keyCode use the ASCII code.
+  ...[...'QWERTYUIOP'].map((c, i) => letter(c, 0x10 + i)),
+  ...[...'ASDFGHJKL'].map((c, i) => letter(c, 0x1e + i)),
+  ...[...'ZXCVBNM'].map((c, i) => letter(c, 0x2c + i)),
+  ...[...'1234567890'].map((c, i) => k(`Digit${c}`, c, c, `Digit${c}`, c.charCodeAt(0), c.charCodeAt(0), [0x02 + i])),
 ];
+
+function letter(c, scan) {
+  return k(`Key${c}`, c, c.toLowerCase(), `Key${c}`, c.charCodeAt(0), c.charCodeAt(0), [scan]);
+}
 
 export const KEY_BY_ID = new Map(VIRTUAL_KEYS.map((key) => [key.id, key]));
 

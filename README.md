@@ -56,10 +56,12 @@ Where they come from: [demos/README.md](demos/README.md)
 
 - **No sound?** Click once into the picture. Browsers only play sound after a click.
 - **Buttons while playing**: *Save*, *Fullscreen*, *Sound on/off*, *Play/Pause*, *Options* (change settings and restart),
-  *Keys* (Esc, F1–F12, Ctrl+Alt+Del …), *Console*, *Report*, *Quit*.
+  *Keys* (Esc, F1–F12, Ctrl+Alt+Del …), *Pad* (DOS), *Console*, *Report*, *Quit*.
   Green means sound on or running, red means sound off or paused.
 - **Mouse in operating systems**: click into the picture to use the mouse, `Esc` releases it. Programs
   that need `Esc` get it from *Keys*, or in fullscreen (Chrome, Edge) from the real key.
+- **Phone or tablet**: DOS games get a touch gamepad over the picture (*Pad*, on by itself on touch screens).
+  The ⚙ on the pad sets which key each button sends; it is remembered per game.
 - **Save games**: *Save* shows the files the program changed. Download it as a ZIP or, in Chrome or
   Edge with an opened folder, write it back directly (*Apply to folder*).
 - **Settings**: every demo has an *Options* button (speed, memory, Windows version).

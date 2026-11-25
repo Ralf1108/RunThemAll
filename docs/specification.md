@@ -56,13 +56,21 @@ side the supported platforms and the emulators (3.3). The interface is in Englis
    - All toolbar buttons have an icon. *Sound* and *Play/Pause* show the current state: green with
      *Sound on* / *Play* while it is on or running, red with *Sound off* / *Pause* after a click.
    - *Fullscreen*: the emulator area goes fullscreen.
-   - Toolbar order: *Save*, *Fullscreen*, *Sound*, *Play/Pause*, *Options*, *Keys*, *Console*, *Report*, *Quit* (red).
+   - Toolbar order: *Save*, *Fullscreen*, *Sound*, *Play/Pause*, *Options*, *Keys*, *Pad* (DOS only), *Console*, *Report*, *Quit* (red).
    - *Keys*: a virtual keyboard row (Esc, Tab, Enter, Backspace, Space, F1–F12, Ins/Del/Home/End/PgUp/PgDn,
      arrows, sticky Ctrl/Alt/Shift, Ctrl+Alt+Del) for keys the browser keeps (Esc releases the mouse and
      cannot be changed by a page) – also the way to send Esc in Firefox. `js/keys.js` holds the key table;
      js-dos gets `ci.sendKeyEvent` (GLFW codes), v86 scancodes, Boxedwine and EmulatorJS a keyboard event
      on the picture with `keyCode` set. Tested with all four (DOS prompt F3, KolibriOS Ctrl+Alt+Del,
      SkiFree arrows, EmulatorJS Start/arrow input).
+   - *Pad* (DOS programs, js-dos): a touch gamepad over the picture (`js/gamepad.js`), inside the emulator
+     area so it also shows in fullscreen. D-pad with 8 directions (the finger may slide), A/B/X/Y, Select,
+     Start; keys stay pressed while touched, several fingers at once. Shown by itself when the device has a
+     coarse pointer (touch screen), otherwise switched on with *Pad*. Defaults: arrows, A = Ctrl, B = Alt,
+     X = Space, Y = Shift, Select = Esc, Start = Enter. The ⚙ button opens a dialog to choose the key of every
+     button (keys of `js/keys.js`, also letters and digits); saved in localStorage `runthemall-gamepad` per
+     demo id or file path. All keys are released when the pad is hidden, the mapping changes or the window
+     loses the focus.
    - *Fullscreen* in Chrome/Edge also locks the Esc key (Keyboard Lock API): Esc goes to the program,
      holding Esc leaves fullscreen.
    - *Console*: shows the messages of the emulator below the picture; it turns red when a crash was recognised.
