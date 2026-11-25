@@ -57,6 +57,10 @@ set a token first: `$env:GITHUB_TOKEN = '...'` (no permissions needed).
 
 No third-party binaries are stored in the repository; they are downloaded when the site is built.
 
+The workflow has two jobs: `build` downloads the emulators and uploads the site, `deploy` publishes it.
+GitHub Pages sometimes fails with a short server error (500); `deploy` then waits a minute and tries
+once more. If that fails too, *Actions → the run → Re-run failed jobs* repeats only the publishing.
+
 ### Why a service worker?
 
 - The fast multithreaded Windows emulator needs `SharedArrayBuffer`.

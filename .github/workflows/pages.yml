@@ -10,9 +10,10 @@ permissions:
   pages: write
   id-token: write
 
+# A running deployment is finished before the next one starts (as in GitHub's own template).
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -39,12 +40,26 @@ jobs:
         with:
           path: site
 
+  # Separate job: deploy-pages in the same job as the upload sometimes did not find the artifact.
+  # GitHub Pages sometimes answers with a short server error (500); then it is tried once more
+  # after a minute. If that fails too, "Re-run failed jobs" repeats only this job.
   deploy:
     needs: build
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url || steps.retry.outputs.page_url }}
     steps:
-      - id: deployment
+      - name: Publish
+        id: deployment
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+
+      - name: Wait before the second try
+        if: steps.deployment.outcome == 'failure'
+        run: sleep 60
+
+      - name: Publish (second try)
+        id: retry
+        if: steps.deployment.outcome == 'failure'
         uses: actions/deploy-pages@v4
