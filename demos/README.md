@@ -132,6 +132,13 @@ All DOS demos run (tested 25 Nov 2026).
 - File: `demos/c64/rex.d64` (174,848 bytes, taken from the ZIP)
 - Licence: MIT, https://github.com/maciejmalecki/trex64/blob/master/LICENSE
 
+**Horizontal Shooter 1.1**: Super Nintendo, EmulatorJS with Snes9x
+- Author: Marcus Rowe (undisbeliever), https://github.com/undisbeliever/horizontal-shooter
+- Download: https://github.com/undisbeliever/horizontal-shooter/releases/download/v1.1/horizontal-shooter-v1.1.zip
+- File: `demos/snes/horizontal-shooter.sfc` (131,072 bytes, taken from the ZIP)
+- Licence: code MIT (https://github.com/undisbeliever/horizontal-shooter/blob/master/LICENSE), graphics CC0 (README)
+- Runs (tested 25 Nov 2026). Controls: D-pad and B, on the keyboard arrow keys and X.
+
 **Nova the Squirrel 1.0.6a**: NES, EmulatorJS with FCEUmm
 - Author: NovaSquirrel, https://github.com/NovaSquirrel/NovaTheSquirrel
 - Download: https://github.com/NovaSquirrel/NovaTheSquirrel/releases/download/v1.0.6a/nova.nes
@@ -158,6 +165,10 @@ All DOS demos run (tested 25 Nov 2026).
 | [Jump N Bump, Amiga port](https://earok.itch.io/jump-n-bump) (earok) | Amiga | GPL-3.0 | only on itch.io |
 | [Calculator 2.0 / 1.0](https://github.com/siciliajuan/win31-calc-unified/releases) (Juan Sicilia) | Windows 3.x | MIT | crashes in Boxedwine at start ("Unhandled page fault on read access to FFFFFFFF"), also its `SETUP.EXE`; built with Open Watcom, cause unknown |
 | [Tobu Tobu Girl](https://github.com/SimonLarsen/tobutobugirl) (Simon Larsen) | Game Boy | code MIT, graphics CC-BY | no GitHub release with a ROM |
+| [Space Rescue Squad](https://github.com/undisbeliever/space-rescue-squad) (undisbeliever) | Super Nintendo | code zlib, **graphics only for this game** | no permission to share the graphics |
+| [Pink Wall](https://github.com/LucianoCSiqueira/pinkwall) (Luciano C. Siqueira, BrunoRNS) | Super Nintendo | GPL-3.0 | possible, but themed on Pink Floyd's "The Wall" (rule 4); Horizontal Shooter preferred |
+| [BomberWorld](https://github.com/1r3n33/bomberworld) (1r3n33) | Super Nintendo | no licence | no licence |
+| SNES games of [retrobrews/snes-games](https://github.com/retrobrews/snes-games) | Super Nintendo | various | approved for distribution in that collection only |
 
 Open questions:
 - **Win16 programs built with Open Watcom** (Calculator, a self-compiled WineMine) crash in Boxedwine at start;

@@ -73,6 +73,7 @@ versions, licence texts and the games that were checked but not included: [demos
 | Boppin' 1.1 (shareware episode) | Accursed Toys / Apogee | shareware, sharing without charge allowed (VENDOR.DOC) | classicdosgames.com, preinstalled in demos/local |
 | ReactOS 0.4.15 (live CD) | ReactOS project | GPL-2.0 | github.com/reactos/reactos |
 | T-Rex 64 1.0.2 | Maciej Małecki | MIT | github.com/maciejmalecki/trex64 |
+| Horizontal Shooter 1.1 | Marcus Rowe (undisbeliever) | MIT (code), CC0 (graphics) | github.com/undisbeliever/horizontal-shooter |
 | Nova the Squirrel 1.0.6a | NovaSquirrel | GPL-3.0 (source in the linked repository) | github.com/NovaSquirrel/NovaTheSquirrel |
 | µCity 1.3 | Antonio Niño Díaz | GPL-3.0 (source in the linked repository) | github.com/AntonioND/ucity |
 
@@ -87,6 +88,7 @@ owners (Microsoft, Commodore, Nintendo); Run Them All is not affiliated with the
 | windows3.svg | Windows logo from 1992 | public domain (simple shapes), trademark of Microsoft | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Windows_logo_-_1992.svg) |
 | dos.svg | MS-DOS logo | MIT, [Devicon](https://github.com/devicons/devicon) (konpa) | via [Iconify](https://icon-sets.iconify.design/devicon/msdos/) |
 | commodore.svg | Commodore emblem, coloured | CC0, shape from [Simple Icons](https://simpleicons.org/?q=commodore) | colours added by us |
+| snes.svg | SNES controller | CC0, DhulKarnain (Open Clip Art Library) | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:SNES_controller.svg) |
 | nes.svg | NES controller | CC BY-SA 3.0, Fant0men | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Nes_controller.svg) |
 | gameboy.svg | handheld | CC BY 4.0, [Streamline](https://www.streamlinehq.com/) (Plump color) | via [Iconify](https://icon-sets.iconify.design/streamline-plump-color/gameboy/) |
 | cd.svg | CD | Apache-2.0, [Noto Emoji](https://github.com/googlefonts/noto-emoji) (Google) | via [Iconify](https://icon-sets.iconify.design/noto/optical-disk/) |

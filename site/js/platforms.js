@@ -29,6 +29,7 @@ const PLATFORMS = [
   { test: /windows/i, icon: 'win32', logo: 'windows.svg', color: '#3b82f6' },
   { test: /\bdos\b/i, icon: 'dos', logo: 'dos.svg', color: '#d49a12' },
   { test: /commodore|c64|amiga/i, icon: 'c64', logo: 'commodore.svg', color: '#8b5cf6' },
+  { test: /super nintendo|\bsnes\b|super famicom/i, icon: 'nes', logo: 'snes.svg', color: '#d6336c' },
   { test: /game\s*boy/i, icon: 'gameboy', logo: 'gameboy.svg', color: '#22a35a' },
   { test: /nes|nintendo|sega|konsole/i, icon: 'nes', logo: 'nes.svg', color: '#e5484d' },
   { test: /operating system|betriebssystem|linux|\bos\b/i, icon: 'os', logo: 'cd.svg', color: '#f07b1e' },

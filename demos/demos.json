@@ -189,6 +189,21 @@
     "system": "c64"
   },
   {
+    "id": "horizontalshooter",
+    "title": "Horizontal Shooter",
+    "platform": "Super Nintendo",
+    "emulator": "EmulatorJS (Snes9x)",
+    "description": "Side-scrolling space shooter for the SNES: steer your ship with the D-pad and shoot with B (on the keyboard: arrow keys and X).",
+    "author": "Marcus Rowe (undisbeliever)",
+    "homepage": "https://github.com/undisbeliever/horizontal-shooter",
+    "license": "MIT (code), CC0 (graphics)",
+    "url": "https://github.com/undisbeliever/horizontal-shooter/releases/download/v1.1/horizontal-shooter-v1.1.zip",
+    "entry": "horizontal-shooter.sfc",
+    "file": "snes/horizontal-shooter.sfc",
+    "start": "horizontal-shooter.sfc",
+    "system": "snes"
+  },
+  {
     "id": "nova",
     "title": "Nova the Squirrel",
     "platform": "NES",

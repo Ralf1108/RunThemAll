@@ -52,4 +52,4 @@ All run with [EmulatorJS](https://emulatorjs.org) and one libretro core per syst
 
 ### Tested so far
 
-C64, Amiga, NES and Game Boy Color. The other systems are included but not tested yet.
+C64, Amiga, Super Nintendo, NES and Game Boy Color. The other systems are included but not tested yet.
