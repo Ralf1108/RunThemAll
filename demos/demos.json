@@ -198,5 +198,22 @@
     "file": "os/kolibri.img",
     "start": "kolibri.img",
     "system": "pc"
+  },
+  {
+    "id": "reactos",
+    "title": "ReactOS 0.4.15 (Live-CD)",
+    "platform": "Betriebssysteme",
+    "emulator": "v86",
+    "description": "Freies Betriebssystem, das wie Windows aussieht und Windows-Programme ausführen soll. Live-CD ohne Installation. Der Start dauert einige Minuten, die CD wird dabei nach und nach geladen.",
+    "author": "ReactOS-Projekt",
+    "homepage": "https://reactos.org/",
+    "license": "GPL-2.0 (Quellcode auf GitHub)",
+    "url": "https://github.com/reactos/reactos/releases/download/0.4.15-release/ReactOS-0.4.15-release-1-gdbb43bbaeb2-x86-live.zip",
+    "entry": "ReactOS-0.4.15-release-1-gdbb43bbaeb2-x86-live.iso",
+    "chunk": 1048576,
+    "file": "os/reactos-0.4.15-live.iso",
+    "start": "reactos-0.4.15-live.iso",
+    "system": "pc",
+    "memory": "512"
   }
 ]

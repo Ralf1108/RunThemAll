@@ -173,6 +173,18 @@ Stand der Recherche: 24.11.2026.
 | Lizenz | GPL-2.0, Quellcode https://git.kolibrios.org/KolibriOS/kolibrios (Commit `d50642c`) |
 | Hinweis | Bootet in v86 in wenigen Sekunden bis zum Desktop (getestet am 24.11.2026). |
 
+### ReactOS 0.4.15 (Live-CD)
+
+| | |
+|---|---|
+| System / Emulator | Betriebssystem (PC, bootet von CD) / v86 mit 512 MB RAM |
+| Autoren | ReactOS-Projekt |
+| Projektseite | https://reactos.org/ |
+| Download | https://github.com/reactos/reactos/releases/download/0.4.15-release/ReactOS-0.4.15-release-1-gdbb43bbaeb2-x86-live.zip |
+| Datei auf der Seite | `demos/os/reactos-0.4.15-live-<start>-<ende>.iso.zst`: die ISO (300.941.312 Byte) in 287 Teile zu 1 MB zerlegt und einzeln mit zstd komprimiert (zusammen ca. 64 MB). v86 lädt nur die Teile, die ReactOS liest, und entpackt sie selbst. So bleibt jede Datei unter der 100-MB-Grenze von GitHub Pages. |
+| Lizenz | GPL-2.0 (und weitere freie Lizenzen einzelner Teile), Quellcode https://github.com/reactos/reactos/tree/0.4.15-release |
+| Hinweis | Bootet in v86 bis zum Begrüßungsdialog der Live-CD (getestet am 25.11.2026, im Test-Browser nach höchstens 5 Minuten). |
+
 ## Geprüft und nicht aufgenommen
 
 | Kandidat | System | Lizenz | Quelle | Grund |
@@ -207,6 +219,8 @@ Stand der Recherche: 24.11.2026.
 | `add` | optional: weitere Dateien aus anderen Downloads, die ins ZIP kommen (`url`, `entry`, `path`) |
 | `wine` | optional: Wine-Version, die die Demo braucht (`wine6` oder `wine11`) |
 | `args` | optional: Parameter für das DOS-Programm, z. B. die Soundkarte |
+| `memory` | optional: Arbeitsspeicher in MB für v86 |
+| `chunk` | optional: großes Disk-Image in zstd-komprimierte Teile dieser Größe zerlegen, die v86 bei Bedarf lädt |
 | `cycles` | optional: feste DOSBox-Geschwindigkeit (Zyklen) für diese Demo |
 | `note` | optional: Hinweis zur Herkunft |
 | `file` | Pfad unter `site/demos/` |

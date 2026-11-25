@@ -10,7 +10,7 @@
 // Usage: node scripts/fetch-runtimes.mjs [--force]
 
 import { mkdir, readFile, writeFile, stat } from 'node:fs/promises';
-import { gunzipSync } from 'node:zlib';
+import { constants as zlibConstants, gunzipSync, zstdCompressSync } from 'node:zlib';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createZip, listZip, readZipEntry, readZipEntryRaw } from '../site/js/zip.js';
@@ -353,6 +353,29 @@ async function bundleDemo(demo, data) {
   return new Uint8Array(await createZip(files).arrayBuffer());
 }
 
+/**
+ * Splits a disk image into fixed-size parts named the way v86 requests them
+ * with `use_parts` (`name-<start>-<end>.iso.zst`) and compresses each with zstd,
+ * which v86 decompresses itself. GitHub Pages allows at most 100 MB per file,
+ * and the browser only downloads the parts the guest system reads.
+ */
+async function writeImageParts(target, data, chunk) {
+  const match = target.match(/\.[^./]+$/);
+  const ext = match ? match[0] : '';
+  const base = target.slice(0, target.length - ext.length);
+  let bytes = 0;
+  let count = 0;
+  for (let start = 0; start < data.length; start += chunk) {
+    const part = new Uint8Array(chunk); // last part padded with zeros (v86 expects full chunks)
+    part.set(data.subarray(start, Math.min(start + chunk, data.length)));
+    const packed = zstdCompressSync(part, { params: { [zlibConstants.ZSTD_c_compressionLevel]: 19 } });
+    await writeOut(`${base}-${start}-${start + chunk}${ext}.zst`, packed);
+    bytes += packed.length;
+    count++;
+  }
+  return { count, bytes };
+}
+
 async function fetchDemos() {
   console.log('Demos');
   const list = JSON.parse(await readFile(join(ROOT, 'demos', 'demos.json'), 'utf8'));
@@ -377,8 +400,15 @@ async function fetchDemos() {
       if (!entry) throw new Error(`Demo ${demo.id}: ${demo.entry} nicht im Archiv`);
       data = await readZipEntry(data, entry);
     }
+    const { url, entry, strip, add, chunk, ...rest } = demo;
+    if (chunk) {
+      // Large disk images: zstd-compressed parts that v86 loads on demand.
+      const parts = await writeImageParts(join(SITE, 'demos', demo.file), data, chunk);
+      published.push({ ...rest, source: url, image: { size: data.length, chunk } });
+      console.log(`  ${demo.file} (${demo.title}, ${parts.count} Teile, ${(parts.bytes / 1048576).toFixed(0)} MB komprimiert)`);
+      continue;
+    }
     await writeOut(join(SITE, 'demos', demo.file), data);
-    const { url, entry, strip, add, ...rest } = demo;
     published.push({ ...rest, source: url });
     console.log(`  ${demo.file} (${demo.title})`);
   }

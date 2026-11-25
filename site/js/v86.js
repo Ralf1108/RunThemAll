@@ -58,13 +58,19 @@ export class V86Runner extends Runner {
       return { buffer: bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) };
     };
 
-    // 2. Disk image.
+    // 2. Disk image: in memory, or (large demo images) as zstd parts that v86 loads on demand.
     this.ui.step(1);
     status('Lese Image …');
-    const bytes = await entry.load();
-    const image = bytes.byteOffset === 0 && bytes.byteLength === bytes.buffer.byteLength
-      ? bytes.buffer : bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
-    log(`v86: ${splitPath(program)[1]} als ${SLOT_LABELS[slot]} (${(entry.size / 1048576).toFixed(1)} MB), ${memory} MB RAM`, false);
+    let image;
+    if (entry.remote) {
+      image = { url: entry.remote.url, size: entry.remote.size, async: true, use_parts: true,
+        fixed_chunk_size: entry.remote.chunk };
+    } else {
+      const bytes = await entry.load();
+      image = { buffer: bytes.byteOffset === 0 && bytes.byteLength === bytes.buffer.byteLength
+        ? bytes.buffer : bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) };
+    }
+    log(`v86: ${splitPath(program)[1]} als ${SLOT_LABELS[slot]} (${(entry.size / 1048576).toFixed(1)} MB${entry.remote ? ', wird in Teilen nachgeladen' : ''}), ${memory} MB RAM`, false);
 
     // 3. Boot.
     this.ui.step(2);
@@ -82,7 +88,7 @@ export class V86Runner extends Runner {
       screen_container: v86Container,
       bios: buffer('bios/seabios.bin'),
       vga_bios: buffer('bios/vgabios.bin'),
-      [slot]: { buffer: image },
+      [slot]: image,
       disable_speaker: !opts.sound,
       acpi: false,
       autostart: true,

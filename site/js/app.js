@@ -440,6 +440,15 @@ async function launchDemo(demo, button) {
   const label = button.textContent;
   button.disabled = true;
   try {
+    if (demo.image) {
+      // Large disk image in parts: v86 downloads only the parts the system reads.
+      const name = demo.file.split('/').pop();
+      const remote = { url: new URL(`demos/${demo.file}.zst`, document.baseURI).href, ...demo.image };
+      const ws = { name, files: [{ path: name, size: demo.image.size, remote,
+        read: async () => new Uint8Array(0), load: async () => { throw new Error('Image wird in Teilen geladen.'); } }] };
+      await openWorkspace(async () => ws, { program: demo.start, system: demo.system, options: demoOptions(demo) });
+      return;
+    }
     const data = await fetchWithProgress(`demos/${demo.file}`, (loaded, total) => {
       button.textContent = total ? `Lade … ${Math.round((loaded / total) * 100)} %` : 'Lade …';
     });
