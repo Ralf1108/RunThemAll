@@ -154,6 +154,7 @@ site/                  statische Webseite (wird veröffentlicht)
   js/v86.js            komplette PCs (Betriebssysteme) mit v86
   js/fit.js            skaliert das Emulatorbild auf die Fläche (mit Seitenverhältnis)
   js/platforms.js      Logos und Farben der Demo-Plattformen
+  img/logo.svg         Logo der Seite (auch Favicon)
   img/platforms/       Plattform-Logos (Quellen in THIRD_PARTY_NOTICES.md)
   js/audio.js          gibt den Ton frei, den der Browser zurückhält
   js/zip.js            ZIP lesen/schreiben (ohne Abhängigkeiten)

@@ -60,11 +60,7 @@ a { color: var(--accent); }
 .github-link:hover { border-color: var(--accent); color: var(--accent); }
 @media (max-width: 560px) { .github-link span { display: none; } .github-link { padding: .45rem; } }
 .logo { margin: 0; font-size: 1.75rem; display: flex; align-items: center; gap: .6rem; }
-.logo-mark {
-  width: 1.6rem; height: 1.35rem; border-radius: 4px;
-  background: var(--surface);
-  border: .2rem solid var(--accent); border-top-width: .45rem;
-}
+.logo-mark { width: 2.75rem; height: 2.75rem; flex: none; }
 .tagline { margin: .25rem 0 0; color: var(--muted); }
 
 main { flex: 1; padding-bottom: 2rem; }
