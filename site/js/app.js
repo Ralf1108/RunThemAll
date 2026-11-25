@@ -412,7 +412,7 @@ $('btn-changes').addEventListener('click', async () => {
   }
   message('');
   if (!files.length) {
-    showDialog('No changed files', NOTHING_CHANGED);
+    showDialog('Save – nothing changed', NOTHING_CHANGED);
     return;
   }
   const paths = files.map((f) => f.path);
@@ -434,7 +434,7 @@ $('btn-changes').addEventListener('click', async () => {
   };
   const canApply = Boolean(workspace?.dirHandle);
   const them = files.length === 1 ? 'it' : 'them';
-  showDialog('Changed files',
+  showDialog('Save – changed files',
     `${fileCount(files.length)} changed or created since the program started.`
       + (canApply ? ` Apply ${them} to the opened folder "${workspace.name}" or download them as a ZIP.`
         : ` Download ${them} as a ZIP to keep ${them}.`),
