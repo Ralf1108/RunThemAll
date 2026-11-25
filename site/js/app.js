@@ -539,6 +539,13 @@ $('btn-pause').addEventListener('click', () => {
   status(paused ? 'Paused' : 'Running');
 });
 
+// Some emulators (js-dos) pause by themselves while the tab is hidden and continue when it is
+// shown again, also after the user paused. Keep the user's pause: set it again after their handlers.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden || !paused || !emulator) return;
+  for (const delay of [0, 200, 800]) setTimeout(() => { if (paused) emulator?.setPaused(true); }, delay);
+});
+
 // Console: messages of the emulator below the picture; orange while closed, green while open.
 function setConsoleOpen(open) {
   const button = $('btn-console');
