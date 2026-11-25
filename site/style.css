@@ -233,8 +233,46 @@ select {
 .screen:fullscreen { width: 100vw; height: 100vh; border-radius: 0; background: #000; }
 /* The emulators fill the area; js/fit.js scales canvases to the new size. */
 
-/* Layout: one column */
-.layout { flex: 1; width: min(1240px, 100% - 2rem); }
+/* Layout: platform list on the left, main column on the right */
+.layout {
+  flex: 1; width: min(1240px, 100% - 2rem);
+  display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 1.25rem; align-items: start;
+}
+.layout:has(> .platforms[hidden]) { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 900px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .layout > .platforms { order: 2; }
+  .platforms #platform-list { columns: 2 180px; }
+}
+
+/* Supported platforms */
+.platforms {
+  margin-top: 1rem;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 1rem .9rem;
+}
+.platforms h2 { margin: 0 0 .5rem; font-size: 1rem; }
+.platform-group { break-inside: avoid; margin-bottom: .6rem; }
+.platform-group h3 {
+  margin: .5rem 0 .25rem; font-size: .72rem; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--muted);
+}
+.platform-group ul { list-style: none; margin: 0; padding: 0; }
+.platform-group li { display: flex; align-items: center; gap: .5rem; padding: .12rem 0; font-size: .84rem; line-height: 1.2; }
+.platform-icon {
+  flex: none; width: 24px; height: 24px; border-radius: 6px; display: grid; place-items: center;
+  color: var(--muted); background: var(--accent-soft);
+}
+.platform-icon svg { width: 16px; height: 16px; }
+.platform-icon.logo { background: #fff; border: 1px solid var(--border); }
+.platform-icon.logo img { width: 20px; height: 20px; object-fit: contain; }
+.platform-name { flex: 1; min-width: 0; }
+.bios-tag {
+  flex: none; font-size: .62rem; font-weight: 700; letter-spacing: .03em; padding: .05rem .3rem;
+  border-radius: 4px; color: var(--muted); border: 1px solid var(--border);
+}
+.platforms-foot { margin: .4rem 0 0; font-size: .75rem; color: var(--muted); }
+.platforms-foot a { display: block; margin-top: .2rem; }
 .site-header .wrap, .site-footer .wrap { width: min(1240px, 100% - 2rem); }
 
 /* Demos: carousel with one tile per platform */

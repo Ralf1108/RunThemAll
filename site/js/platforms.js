@@ -20,6 +20,8 @@ const ICONS = {
   gameboy: svg('<rect x="6" y="2" width="12" height="20" rx="2"/><rect x="8" y="4.5" width="8" height="6.5" rx=".8"/><path d="M10 14v3M8.5 15.5h3"/><circle cx="15.2" cy="16.2" r=".9"/><circle cx="13.8" cy="18.3" r=".9"/>'),
   // Boot CD
   os: svg('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/><path d="M12 5.5a6.5 6.5 0 0 1 6.5 6.5"/>'),
+  // Arcade cabinet joystick
+  arcade: svg('<path d="M6 21h12l-1.5-5h-9z"/><path d="M12 16V8"/><circle cx="12" cy="5.5" r="2.5"/>'),
   // Anything else: chip
   other: svg('<rect x="6" y="6" width="12" height="12" rx="1.5"/><path d="M9 3v3M12 3v3M15 3v3M9 18v3M12 18v3M15 18v3M3 9h3M3 12h3M3 15h3M18 9h3M18 12h3M18 15h3"/>'),
 };
@@ -47,4 +49,51 @@ export function platformStyle(platform) {
     icon: ICONS[match?.icon ?? 'other'],
     color: match?.color ?? '#7d8697',
   };
+}
+
+// ---------------------------------------------------------------------------
+// Supported platforms (sidebar on the start page)
+
+/**
+ * Groups of the sidebar. PC entries are written out; the others list system ids
+ * from systems.js, so the sidebar always matches what the detection supports.
+ * `logo` is a file in img/platforms/, `icon` a line drawing from ICONS.
+ */
+export const SUPPORTED_GROUPS = [
+  { title: 'PC', items: [
+    { label: 'DOS', logo: 'dos.svg' },
+    { label: 'Windows 3.x', logo: 'windows3.svg' },
+    { label: 'Windows 95 – XP', logo: 'windows.svg' },
+    { label: 'Operating systems', note: 'boot a CD, floppy or hard disk image', logo: 'cd.svg' },
+  ] },
+  { title: 'Home computers', icon: 'c64', ids: ['c64', 'c128', 'vic20', 'plus4', 'pet', 'amiga', 'zxspectrum', 'zx81', 'cpc'],
+    logos: { c64: 'commodore.svg', c128: 'commodore.svg', vic20: 'commodore.svg', plus4: 'commodore.svg', pet: 'commodore.svg' } },
+  { title: 'Consoles', icon: 'nes', ids: ['nes', 'snes', 'n64', 'segaMS', 'segaMD', 'sega32x', 'segaCD', 'segaSaturn', 'psx',
+    'atari2600', 'atari5200', 'atari7800', 'jaguar', 'pce', 'pcfx', 'coleco', '3do'],
+    logos: { nes: 'nes.svg', snes: 'snes.svg' } },
+  { title: 'Handhelds', icon: 'gameboy', ids: ['gb', 'gba', 'nds', 'vb', 'segaGG', 'lynx', 'ngp', 'ws', 'psp'],
+    logos: { gb: 'gameboy.svg', gba: 'gameboy.svg' } },
+  { title: 'Arcade', icon: 'arcade', ids: ['arcade', 'mame'] },
+];
+
+/**
+ * The sidebar entries of a group.
+ * @param {object} group one of SUPPORTED_GROUPS
+ * @param {Map<string, object>} systems SYSTEM_BY_ID from systems.js
+ * @returns {{ label: string, note?: string, logo: string|null, icon: string, bios: boolean }[]}
+ */
+export function supportedItems(group, systems) {
+  if (group.items) {
+    return group.items.map((i) => ({ ...i, logo: `img/platforms/${i.logo}`, icon: ICONS.other, bios: false }));
+  }
+  return group.ids.map((id) => {
+    const system = systems.get(id);
+    const logo = group.logos?.[id];
+    return {
+      label: system.label,
+      logo: logo ? `img/platforms/${logo}` : null,
+      icon: ICONS[group.icon] ?? ICONS.other,
+      bios: Boolean(system.bios?.required),
+    };
+  });
 }

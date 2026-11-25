@@ -7,7 +7,7 @@ import { EmulatorJsRunner, findBiosInWorkspace } from './ejs.js';
 import { V86Runner } from './v86.js';
 import { KIND_LABELS } from './exe.js';
 import { SYSTEMS, SYSTEM_BY_ID } from './systems.js';
-import { platformStyle } from './platforms.js';
+import { platformStyle, SUPPORTED_GROUPS, supportedItems } from './platforms.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -330,6 +330,7 @@ async function start(overrides = {}) {
   $('choose').hidden = true;
   hideDemoDetail();
   $('demos').hidden = true;
+  $('platforms').hidden = true; // the emulator gets the full width
   $('run').hidden = false;
   window.scrollTo({ top: 0 }); // the demos may have been scrolled into view
   const what = program.kind === 'game' ? SYSTEM_BY_ID.get(opts.system).label : EMULATOR_NAMES[program.emulator];
@@ -748,6 +749,21 @@ function renderDemoTree(list) {
   }));
   updateCarousel();
 }
+
+/** Sidebar: all supported platforms, grouped, with logo or icon. */
+function renderPlatforms() {
+  $('platform-list').replaceChildren(...SUPPORTED_GROUPS.map((group) => el('section', { className: 'platform-group' },
+    el('h3', { textContent: group.title }),
+    el('ul', {}, ...supportedItems(group, SYSTEM_BY_ID).map((item) => {
+      const icon = el('span', { className: item.logo ? 'platform-icon logo' : 'platform-icon' });
+      if (item.logo) icon.append(el('img', { src: item.logo, alt: '', width: 22, height: 22, decoding: 'async' }));
+      else icon.innerHTML = item.icon; // own static SVG markup from platforms.js
+      const li = el('li', { title: item.note ?? '' }, icon, el('span', { className: 'platform-name', textContent: item.label }));
+      if (item.bios) li.append(el('span', { className: 'bios-tag', textContent: 'BIOS', title: 'Needs an original BIOS file' }));
+      return li;
+    })))));
+}
+renderPlatforms();
 
 // Own operating system: any disk image boots as a complete PC (v86).
 $('btn-own-os').addEventListener('click', () => $('input-own-os').click());

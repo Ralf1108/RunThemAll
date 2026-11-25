@@ -71,7 +71,15 @@ How Run Them All works inside. As of November 2026.
 - *Start* opens the file like a user file, preselects program and system and starts at once.
 - Sources and licences: [demos/README.md](../demos/README.md).
 
-### 3.3 Picture and sound
+### 3.3 Supported platforms
+
+- A sidebar on the left of the start page lists every supported platform, grouped
+  (PC, home computers, consoles, handhelds, arcade), with logo or icon.
+- It is built from `SUPPORTED_GROUPS` in `js/platforms.js` and the system table in `js/systems.js`,
+  so it matches what the detection supports. Systems that need an original BIOS are marked "BIOS".
+- On narrow screens it moves below the demos (two columns); while a program runs it is hidden.
+
+### 3.4 Picture and sound
 
 - The emulator area has a fixed height (75 % of the window, max. 720 px).
 - `js/fit.js` scales the picture to the largest size that fits and keeps the aspect ratio of the
