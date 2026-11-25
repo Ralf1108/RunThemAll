@@ -150,7 +150,8 @@ select {
 
 .run { margin-top: 1rem; }
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
-.toolbar .spacer { flex: 1; }
+/* Title and emulator on the first line, the buttons on their own line below */
+.toolbar .spacer { flex-basis: 100%; height: 0; }
 .toolbar { margin-bottom: .75rem; }
 
 
