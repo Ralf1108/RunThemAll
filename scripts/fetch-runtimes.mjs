@@ -299,13 +299,13 @@ function coresPage(version, source, cores) {
     + `<td>${esc(c.version)}</td><td><a href="${esc(c.repo)}">${esc(c.repo.replace('https://github.com/', ''))}</a></td>`
     + `<td>${esc(c.license)}</td></tr>`).join('\n');
   return `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>Run Them All – EmulatorJS cores</title>
+<html lang="en"><head><meta charset="utf-8"><title>RunThemAll – EmulatorJS cores</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>body{font:15px/1.5 system-ui,sans-serif;margin:2rem auto;max-width:1000px;padding:0 1rem}
 table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #ccc;padding:.35rem .5rem;text-align:left}
 code{font-size:.9em}</style></head><body>
 <h1>Console and home computer emulation</h1>
-<p>Run Them All uses <a href="https://emulatorjs.org">EmulatorJS</a> ${esc(version)}
+<p>RunThemAll uses <a href="https://emulatorjs.org">EmulatorJS</a> ${esc(version)}
 (<a href="https://github.com/EmulatorJS/EmulatorJS">GitHub</a>, GPL-3.0,
 <a href="LICENSE-GPL-3.0.txt">licence</a>, <a href="source/EmulatorJS-${esc(version)}-source.tar.gz">source</a>)
 with the following libretro cores. They are taken unchanged from the npm packages <code>@emulatorjs/core-*</code>.
@@ -315,7 +315,7 @@ Some cores (e.g. Snes9x, Genesis Plus GX, PicoDrive, FBNeo, MAME 2003-Plus) do n
 <tbody>
 ${rows}
 </tbody></table>
-<p><a href="../">Back to Run Them All</a></p>
+<p><a href="../">Back to RunThemAll</a></p>
 </body></html>
 `;
 }

@@ -2,14 +2,14 @@
 
 [← Back to the README](../README.md)
 
-How Run Them All works inside. As of November 2026.
+How RunThemAll works inside. As of November 2026.
 
 ## 1. Goal
 
 - A static website that starts old software and games right in the browser.
 - The user does as little as possible: no installation, no settings, no account.
-- Run Them All is an **aggregator**. All emulation comes from other open source projects, included
-  unchanged. Run Them All only adds:
+- RunThemAll is an **aggregator**. All emulation comes from other open source projects, included
+  unchanged. RunThemAll only adds:
   - one interface to open, pick and start,
   - automatic detection of the right emulator,
   - the glue to the emulators (files in, changed files out),

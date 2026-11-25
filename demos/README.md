@@ -22,7 +22,7 @@
 
 **DOSBox (DOS prompt)**: js-dos (DOSBox)
 - File: `demos/os/DOSBOX.BAT`, our own start file from `demos/local/os/` (shows a short help and stops at `C:\>`)
-- Licence: DOSBox and js-dos GPL-2.0 (see [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md)); the start file is part of Run Them All (MIT)
+- Licence: DOSBox and js-dos GPL-2.0 (see [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md)); the start file is part of RunThemAll (MIT)
 
 **Tiny Core Linux 17.1**: v86, boots from CD
 - Authors: Robert Shingledecker and the Tiny Core team, http://tinycorelinux.net/
@@ -89,7 +89,7 @@
 - Authors: id Software, published by Softdisk (1991/1992), https://classicdosgames.com/game/Keen_Dreams.html
 - Download: https://classicdosgames.com/online/zip/keendr13.zip (the same 24 files as the original ZIP
   https://classicdosgames.com/files/games/id/keendr13.zip, but packed with Deflate instead of the old
-  "Implode" method that Run Them All cannot unpack)
+  "Implode" method that RunThemAll cannot unpack)
 - File: `demos/dos/keendr13.zip` (358,813 bytes), starts `START.EXE` (the game requires this menu)
 - Licence: shareware, fully playable. `LICENSE.DOC` allows sharing as long as no files are added or removed.
 

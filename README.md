@@ -1,14 +1,14 @@
-# Run Them All
+# RunThemAll
 
 **Play old DOS and Windows programs, retro console games and whole operating systems right in your
 browser. Nothing to install, nothing uploaded.**
 
-👉 **[Open Run Them All](https://ralf1108.github.io/RunThemAll/)**
+👉 **[Open RunThemAll](https://ralf1108.github.io/RunThemAll/)**
 
 ## How it works
 
 1. **Open** a file, a ZIP or a folder (or drag it onto the page).
-2. **Pick** the program or game. Run Them All finds out by itself what it is.
+2. **Pick** the program or game. RunThemAll finds out by itself what it is.
 3. **Start.** The right emulator is loaded automatically.
 
 No account, no setup. Your files never leave your computer.
@@ -56,7 +56,7 @@ Where they come from and their licences: [demos/README.md](demos/README.md)
 
 - Emulation is slower than a real PC. It is made for older software.
 - Windows programs using **3D graphics** (OpenGL, Direct3D) do not work, neither do .NET or Java programs.
-- Some consoles need an original **BIOS file**, which you have to add yourself. Run Them All does not
+- Some consoles need an original **BIOS file**, which you have to add yourself. RunThemAll does not
   include any.
 - Programs inside the emulator **cannot go online**.
 - Works best in **Chrome or Edge**. Firefox and Safari work too, but cannot write save games back into a folder.
@@ -75,7 +75,7 @@ Where they come from and their licences: [demos/README.md](demos/README.md)
 
 ## Credits
 
-Run Them All only puts a simple interface on top of great open source emulators:
+RunThemAll only puts a simple interface on top of great open source emulators:
 
 - [Boxedwine](https://github.com/danoon2/Boxedwine) with [Wine](https://www.winehq.org): Windows programs
 - [js-dos](https://js-dos.com) with [DOSBox](https://www.dosbox.com): DOS programs
@@ -87,5 +87,5 @@ Thanks to all authors of the demos, see [demos/README.md](demos/README.md).
 
 ## Licence
 
-Run Them All is free software under the [MIT licence](LICENSE). The included projects have their own
+RunThemAll is free software under the [MIT licence](LICENSE). The included projects have their own
 licences, see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

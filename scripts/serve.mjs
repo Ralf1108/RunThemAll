@@ -76,5 +76,5 @@ createServer(async (req, res) => {
     res.writeHead(500).end(String(err));
   }
 }).listen(PORT, () => {
-  console.log(`Run Them All is running at http://localhost:${PORT}/  (COOP/COEP: ${COI ? 'on' : 'off'})`);
+  console.log(`RunThemAll is running at http://localhost:${PORT}/  (COOP/COEP: ${COI ? 'on' : 'off'})`);
 });

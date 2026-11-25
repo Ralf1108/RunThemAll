@@ -8,7 +8,7 @@ the repository. In `demos.json` the field `local` points to them.
 
 ## `os/DOSBOX.BAT`: DOS prompt
 
-- Our own start file (MIT, part of Run Them All).
+- Our own start file (MIT, part of RunThemAll).
 - DOSBox runs it; it shows a few commands and stops at the `C:\>` prompt, so DOSBox starts like an empty DOS PC.
 
 ## `dos/boppin-sw11.zip`: Boppin' 1.1 shareware episode, installed

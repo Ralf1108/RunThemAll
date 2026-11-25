@@ -76,7 +76,7 @@ export const SUPPORTED_GROUPS = [
   { title: 'Arcade', icon: 'arcade', ids: ['arcade', 'mame'] },
 ];
 
-/** The emulators behind Run Them All (right sidebar), by id. */
+/** The emulators behind RunThemAll (right sidebar), by id. */
 export const EMULATORS = {
   boxedwine: { name: 'Boxedwine' },
   jsdos: { name: 'js-dos' },

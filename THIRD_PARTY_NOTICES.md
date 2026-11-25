@@ -1,6 +1,6 @@
 # Third-party components
 
-Run Them All is an aggregator: these components are **not** part of this repository. They are downloaded
+RunThemAll is an aggregator: these components are **not** part of this repository. They are downloaded
 by `scripts/fetch-runtimes.mjs` and published together with the website. For each one, its licence text
 and source code are published next to it.
 
@@ -41,7 +41,7 @@ licences are in the archives or with the upstream projects.
 - Cores: every core file (`*.data`) contains its own licence text. `emulatorjs/cores.html` lists all cores
   with version, source repository and licence file. **Some cores do not allow commercial use**, e.g.
   Snes9x, Genesis Plus GX, PicoDrive, FBNeo and MAME 2003-Plus.
-- BIOS: Run Them All ships no BIOS files. Some cores include free replacements (AROS Kickstart in PUAE,
+- BIOS: RunThemAll ships no BIOS files. Some cores include free replacements (AROS Kickstart in PUAE,
   HLE BIOS in mGBA, melonDS, PCSX ReARMed, Yabause; VICE, Fuse and Caprice32 bring their own ROMs).
 - Network: EmulatorJS requests `https://cdn.emulatorjs.org/stable/data/version.json` at start to hint at
   new versions (no user data). All emulator files come from this site; netplay is hidden.
@@ -81,7 +81,7 @@ versions, licence texts and the games that were checked but not included: [demos
 ## Platform logos (`site/img/platforms/`)
 
 The logos on the demo tiles only show which platform a demo belongs to. The trademarks belong to their
-owners (Microsoft, Commodore, Nintendo); Run Them All is not affiliated with them.
+owners (Microsoft, Commodore, Nintendo); RunThemAll is not affiliated with them.
 
 | File | Shows | Licence | Source |
 |---|---|---|---|

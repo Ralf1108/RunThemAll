@@ -2,7 +2,7 @@
 
 [← Back to the README](../README.md)
 
-Run Them All looks at each file and picks the matching emulator by itself. If it is not sure
+RunThemAll looks at each file and picks the matching emulator by itself. If it is not sure
 (e.g. `.bin`, `.iso`, `.tap`), it suggests the most likely system and you can change it before starting.
 
 ## PC programs
@@ -46,7 +46,7 @@ All run with [EmulatorJS](https://emulatorjs.org) and one libretro core per syst
 
 ### BIOS files
 
-- Run Them All does **not** ship any copyrighted BIOS files.
+- RunThemAll does **not** ship any copyrighted BIOS files.
 - If a BIOS file with the right name is in your ZIP or folder, it is used automatically.
 - Otherwise add it before starting with **"Add BIOS file"**.
 
