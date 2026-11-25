@@ -159,6 +159,7 @@ export class DosRunner extends Runner {
       backendLocked: true,
       autoStart: true,
       kiosk: true,
+      renderAspect: '4/3', // DOS ran on 4:3 monitors (320x200 has non-square pixels)
       lang: 'en',
       theme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
       volume: opts.sound ? 1 : 0,

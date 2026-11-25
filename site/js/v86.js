@@ -3,7 +3,7 @@
 
 import { Runner, prefetch, splitPath } from './runner.js';
 import { extOf } from './systems.js';
-import { fitToBox } from './fit.js';
+import { fitToBox, pcAspect } from './fit.js';
 
 /** Standard floppy sizes in bytes (160 KB to 2.88 MB). */
 const FLOPPY_SIZES = new Set([163840, 184320, 327680, 368640, 737280, 1228800, 1474560, 1720320, 2949120]);
@@ -81,9 +81,9 @@ export class V86Runner extends Runner {
     const text = Object.assign(document.createElement('div'), { className: 'v86-text' });
     const screen = Object.assign(document.createElement('canvas'), { className: 'v86-canvas' });
     v86Container.replaceChildren(text, screen);
-    // Text mode and graphics mode both use the whole emulator area.
-    fitToBox(text, v86Container);
-    fitToBox(screen, v86Container);
+    // Text mode and graphics mode use the whole emulator area, shown as on a PC monitor.
+    fitToBox(text, v86Container, () => 4 / 3);
+    fitToBox(screen, v86Container, pcAspect);
     this.emulator = new V86({
       wasm_path: base + 'v86.wasm',
       memory_size: memory * 1024 * 1024,
