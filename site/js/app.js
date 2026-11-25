@@ -8,6 +8,7 @@ import { V86Runner } from './v86.js';
 import { KIND_LABELS } from './exe.js';
 import { SYSTEMS, SYSTEM_BY_ID } from './systems.js';
 import { platformStyle, SUPPORTED_GROUPS, supportedItems } from './platforms.js';
+import { buildReport, isCrashError, isCrashLine, MAX_ATTACHMENT, reportText, sha256, zipFiles } from './report.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -22,6 +23,10 @@ let programs = [];
 let emulator = null;
 /** BIOS files chosen by the user for the selected game. */
 let chosenBios = [];
+/** The demo that was opened, or null for the user's own files. */
+let currentDemo = null;
+/** What is running, for problem reports: { program, opts, crash }. */
+let runInfo = null;
 
 const EMULATOR_NAMES = { dos: 'DOSBox', windows: 'Boxedwine', emulatorjs: 'EmulatorJS', v86: 'v86' };
 
@@ -48,6 +53,7 @@ async function openWorkspace(loader, autostart) {
     const found = await findPrograms(ws);
     if (found.length === 0) throw new Error('No program or game found that can be started.');
     workspace = ws;
+    currentDemo = autostart?.demo ?? null;
     programs = found;
     showChooser();
     if (autostart) {
@@ -265,7 +271,38 @@ function log(line, isError) {
   consoleOut.append(div);
   while (consoleOut.childElementCount > MAX_LOG_LINES) consoleOut.firstElementChild.remove();
   consoleOut.scrollTop = consoleOut.scrollHeight;
+  if (isCrashLine(line)) markCrash(line);
 }
+
+/**
+ * The program or the emulator crashed: open the console so the error is visible
+ * and turn the Report button red. Only the first crash counts.
+ * @param {string} reason
+ */
+function markCrash(reason) {
+  if (!runInfo || runInfo.crash) return;
+  runInfo.crash = reason.split('\n').slice(0, 6).join('\n');
+  setConsoleOpen(true);
+  const button = $('btn-report');
+  button.classList.add('wx-toggle', 'state-off');
+  button.querySelector('span').textContent = 'Report crash';
+  button.title = 'The program crashed – report it on GitHub with the details collected so far';
+  message('The program seems to have crashed. The console below shows the error; "Report crash" prepares a GitHub issue with the details.');
+}
+
+// Errors the page did not catch (e.g. inside the emulator) go into the console; real crashes are marked.
+function onPageError(error) {
+  if (!runInfo) return;
+  const text = String(error?.stack || error?.message || error);
+  if (isCrashError(error)) {
+    log(text, true);
+    markCrash(text);
+  } else if (!(error instanceof DOMException)) {
+    log(text, true);
+  }
+}
+window.addEventListener('error', (e) => onPageError(e.error ?? e.message));
+window.addEventListener('unhandledrejection', (e) => onPageError(e.reason));
 
 function status(text, fraction) {
   $('status-text').textContent = text;
@@ -353,6 +390,7 @@ async function start(overrides = {}) {
     ? V86Runner
     : { dos: DosRunner, windows: WindowsRunner, emulatorjs: EmulatorJsRunner }[program.emulator];
   emulator = new Runner(ui);
+  runInfo = { program, opts, crash: null };
   $('btn-changes').hidden = !emulator.supportsFileSync;
   $('btn-pause').hidden = !emulator.supportsPause;
   setPaused(false);
@@ -364,6 +402,7 @@ async function start(overrides = {}) {
     status(`Error: ${err.message || err}`);
     $('loader-detail').textContent = `Error: ${err.message || err}`;
     log(String(err?.stack || err), true);
+    markCrash(`Could not start: ${err.message || err}`);
   }
 }
 
@@ -377,8 +416,9 @@ $('btn-start').addEventListener('click', () => start());
  * @param {string[]} [files]
  * @param {boolean} [error]
  * @param {{label:string, primary?:boolean, run?:()=>void}[]} [actions]
+ * @param {Node|null} [body] extra content below the text (makes the dialog wider)
  */
-function showDialog(title, text, files = [], error = false, actions = [{ label: 'OK', primary: true }]) {
+function showDialog(title, text, files = [], error = false, actions = [{ label: 'OK', primary: true }], body = null) {
   const dialog = $('msg-dialog');
   $('msg-title').textContent = title;
   $('msg-text').textContent = text;
@@ -387,6 +427,8 @@ function showDialog(title, text, files = [], error = false, actions = [{ label: 
     ...(files.length > max ? [Object.assign(document.createElement('li'), { className: 'more', textContent: `… and ${files.length - max} more` })] : []));
   $('msg-files').hidden = files.length === 0;
   dialog.classList.toggle('error', error);
+  dialog.classList.toggle('wide', Boolean(body));
+  $('msg-body').replaceChildren(...(body ? [body] : []));
   const buttons = actions.map((a) => {
     const b = el('button', { type: 'button', className: a.primary ? 'wx-btn wx-primary wx-small' : 'wx-btn wx-small', textContent: a.label });
     b.addEventListener('click', () => { dialog.close(); a.run?.(); });
@@ -480,9 +522,9 @@ $('btn-pause').addEventListener('click', () => {
 });
 
 // Console: messages of the emulator below the picture; orange while closed, green while open.
-$('btn-console').addEventListener('click', () => {
+function setConsoleOpen(open) {
   const button = $('btn-console');
-  const open = $('console').hidden;
+  if ($('console').hidden !== open) return;
   $('console').hidden = !open;
   button.setAttribute('aria-expanded', String(open));
   button.classList.toggle('state-on', open);
@@ -492,6 +534,84 @@ $('btn-console').addEventListener('click', () => {
     consoleOut.scrollTop = consoleOut.scrollHeight;
     requestAnimationFrame(() => $('console').scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
   }
+}
+$('btn-console').addEventListener('click', () => setConsoleOpen($('console').hidden));
+
+// Report: a prefilled GitHub issue with what is known about the running program.
+/** Option of the "Platform" dropdown of the issue form for the running program. */
+function reportPlatform(program, opts) {
+  if (program.kind !== 'game') {
+    if (program.emulator === 'windows') return program.kind === 'win16' ? 'Windows 3.x' : 'Windows 95 – XP';
+    return 'DOS';
+  }
+  if (opts.system === 'pc') return 'Operating system (CD, floppy or hard disk image)';
+  const group = SUPPORTED_GROUPS.find((g) => g.ids?.includes(opts.system))?.title;
+  return { 'Home computers': 'Home computer', Consoles: 'Console or handheld', Handhelds: 'Console or handheld', Arcade: 'Arcade' }[group] ?? 'Not sure';
+}
+
+/** Where the files came from, in one sentence. */
+function reportSource() {
+  if (currentDemo) return `Started the demo "${currentDemo.title}" on ${location.origin}${location.pathname}`;
+  const n = workspace.files.length;
+  const kind = workspace.dirHandle ? 'a folder' : /\.zip$/i.test(workspace.name) ? 'a ZIP file' : n === 1 ? 'a file' : 'files';
+  return `Opened ${kind} (${n} file${n === 1 ? '' : 's'}, ${formatSize(totalSize(workspace))}) on ${location.origin}${location.pathname}`;
+}
+
+$('btn-report').addEventListener('click', async () => {
+  if (!runInfo || !workspace) return;
+  const { program, opts, crash } = runInfo;
+  let hash;
+  if (!program.remote) {
+    try { hash = await sha256(await program.load()); } catch { /* e.g. image loaded in parts */ }
+  }
+  const { biosFiles, ...options } = opts;
+  if (biosFiles?.length) options.bios = biosFiles.map((f) => f.name ?? f.path);
+  const report = buildReport({
+    program: program.path,
+    platform: reportPlatform(program, opts),
+    what: currentDemo ? `${currentDemo.title} (demo)` : `My own file ${program.path}`,
+    emulator: $('run-emulator').textContent || EMULATOR_NAMES[program.emulator],
+    source: reportSource(),
+    hash,
+    size: program.size,
+    options,
+    crash: crash ?? undefined,
+    log: [...consoleOut.children].map((d) => d.textContent),
+    browser: navigator.userAgent,
+  });
+
+  const size = totalSize(workspace);
+  const attach = el('input', { type: 'checkbox', id: 'report-attach', disabled: Boolean(currentDemo) || program.remote !== undefined });
+  const body = el('div', {},
+    el('pre', { className: 'report-preview', textContent: reportText(report.fields) }),
+    el('label', { className: 'report-attach' }, attach,
+      el('span', { textContent: `Also download the program as a ZIP (${workspace.files.length} file${workspace.files.length === 1 ? '' : 's'}, ${formatSize(size)} before packing) to attach it to the issue. Only for programs you are allowed to share.` })),
+    el('p', { className: 'report-note', textContent: 'GitHub opens in a new tab with everything filled in. Check it there – remove anything personal – and send it. You need a GitHub account.'
+      + (attach.disabled ? '' : ' A ZIP is attached by dragging it into the text field on GitHub (up to 25 MB).') }));
+  if (attach.disabled) attach.parentElement.hidden = true; // demos are known, nothing to attach
+
+  showDialog(crash ? 'Report the crash on GitHub' : 'Report a problem on GitHub',
+    'This is what the issue will contain:', [], false, [
+      { label: 'Cancel' },
+      { label: 'Open GitHub issue', primary: true, run: async () => {
+        window.open(report.url, '_blank', 'noopener');
+        if (!attach.checked) return;
+        try {
+          const blob = await zipFiles(workspace.files);
+          if (blob.size > MAX_ATTACHMENT) {
+            showDialog('ZIP too large for GitHub', `The packed program has ${formatSize(blob.size)}; GitHub accepts up to 25 MB. Please describe where it can be downloaded instead.`, [], true);
+            return;
+          }
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = `${(workspace.name || 'program').replace(/[^\w.-]+/g, '_')}-report.zip`;
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+        } catch (err) {
+          showDialog('Packing failed', String(err.message || err), [], true);
+        }
+      } },
+    ], body);
 });
 
 // Fullscreen: the whole emulator area (canvas or player) covers the screen.
@@ -543,14 +663,14 @@ async function launchDemo(demo, button) {
       const remote = { url: new URL(`demos/${demo.file}.zst`, document.baseURI).href, ...demo.image };
       const ws = { name, files: [{ path: name, size: demo.image.size, remote,
         read: async () => new Uint8Array(0), load: async () => { throw new Error('The image is loaded in parts.'); } }] };
-      await openWorkspace(async () => ws, { program: demo.start, system: demo.system, options: demoOptions(demo) });
+      await openWorkspace(async () => ws, { demo, program: demo.start, system: demo.system, options: demoOptions(demo) });
       return;
     }
     const data = await fetchWithProgress(`demos/${demo.file}`, (loaded, total) => {
       button.textContent = total ? `Loading … ${Math.round((loaded / total) * 100)} %` : 'Loading …';
     });
     const file = new File([data], demo.file.split('/').pop());
-    await openWorkspace(() => fromFileList([file]), { program: demo.start, system: demo.system, options: demoOptions(demo) });
+    await openWorkspace(() => fromFileList([file]), { demo, program: demo.start, system: demo.system, options: demoOptions(demo) });
   } catch (err) {
     showError(`Could not load the demo: ${err.message || err}`);
   } finally {

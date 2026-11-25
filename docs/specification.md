@@ -57,6 +57,15 @@ side the supported platforms and the emulators (3.3). The interface is in Englis
      *Sound on* / *Play* while it is on or running, red with *Sound off* / *Pause* after a click.
    - *Fullscreen*: the emulator area goes fullscreen.
    - *Console* (orange while closed, green while open): shows the messages of the emulator below the picture.
+   - *Report*: prepares a GitHub issue (form `bug_report.yml`, fields filled through the address) with the
+     program, platform, emulator and version, start options, SHA-256 of the started file and the last console
+     lines (as many as fit into the address). A dialog shows the text first; GitHub opens in a new tab where
+     the user checks and sends it. For own files the program can also be downloaded as a compressed ZIP
+     (CompressionStream) to drag into the issue (GitHub allows 25 MB). Nothing is sent by the page itself.
+   - Crash detection (`js/report.js`): console lines with clear signs (Wine "Unhandled page fault/exception",
+     Emscripten "Aborted(", WebAssembly RuntimeError, DOSBox "E_Exit", "Kernel panic" …), uncaught
+     WebAssembly errors and a failed start open the console and turn *Report* red (*Report crash*).
+     DOM exceptions of the browser (e.g. pointer lock refused) do not count.
    - The status (*Preparing …*, *Running*, *Paused*) stands in the toolbar left of the buttons.
    - Keys that games use (arrows, space, page up/down, home/end) do not scroll the page while a program runs.
    - *Quit*: reloads the page.

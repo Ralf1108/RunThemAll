@@ -147,7 +147,7 @@ export class DosRunner extends Runner {
       return { path: toDos.get(f.path), contents: f.data };
     });
     const dosboxConf = buildDosboxConf(toDos.get(program), opts);
-    log(`js-dos: DOSBox, Zyklen ${opts.cycles}\n${dosboxConf}`, false);
+    log(`js-dos: DOSBox, cycles ${opts.cycles}\n${dosboxConf}`, false);
 
     this.ui.step(2);
     status('Starting DOSBox …');

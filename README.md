@@ -55,7 +55,7 @@ Where they come from: [demos/README.md](demos/README.md)
 ## Tips
 
 - **No sound?** Click once into the picture. Browsers only play sound after a click.
-- **Buttons while playing**: *Save*, *Sound on/off*, *Play/Pause*, *Console*, *Fullscreen*, *Quit*.
+- **Buttons while playing**: *Save*, *Sound on/off*, *Play/Pause*, *Console*, *Fullscreen*, *Report*, *Quit*.
   Green means sound on or running, red means sound off or paused.
 - **Mouse in operating systems**: click into the picture to use the mouse, `Esc` releases it.
 - **Save games**: *Save* shows the files the program changed. Download it as a ZIP or, in Chrome or
@@ -70,6 +70,7 @@ Where they come from: [demos/README.md](demos/README.md)
 - Programs inside the emulator **cannot go online**.
 - Works best in **Chrome or Edge**.
 - Something does not work, or you have an idea? [Open an issue](https://github.com/Ralf1108/RunThemAll/issues/new/choose).
+  While a program runs, *Report* fills in the issue for you (it turns red when a crash was recognised).
 
 ## Privacy
 

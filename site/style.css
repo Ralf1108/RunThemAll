@@ -486,6 +486,15 @@ select {
   font-family: ui-monospace, Consolas, monospace; font-size: .85rem;
 }
 .msg-files .more { list-style: none; margin-left: -1rem; color: var(--muted); font-family: inherit; }
+.msg-dialog.wide { width: min(760px, 100vw - 2rem); }
+.report-preview {
+  margin: .75rem 0 0; max-height: 300px; overflow: auto; padding: .6rem .75rem;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--bg);
+  font-family: ui-monospace, Consolas, monospace; font-size: .78rem; white-space: pre-wrap; word-break: break-word;
+}
+.report-attach { display: flex; gap: .5rem; align-items: flex-start; margin-top: .75rem; font-size: .9rem; }
+.report-attach input { margin-top: .25rem; }
+.report-note { margin-top: .5rem !important; font-size: .82rem; color: var(--muted); }
 .msg-actions { margin-top: 1.25rem; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .5rem; }
 
 /* Demo info: start/options buttons and per-demo options */
