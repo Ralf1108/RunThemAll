@@ -1,6 +1,7 @@
 // Runs complete operating systems from disk images (CD, floppy, hard disk)
 // with the v86 x86 PC emulator. v86 is loaded unmodified from ./v86/.
 
+import { toPng } from './report.js';
 import { Runner, prefetch, splitPath } from './runner.js';
 import { extOf } from './systems.js';
 import { fitToBox, pcAspect } from './fit.js';
@@ -97,14 +98,19 @@ export class V86Runner extends Runner {
       autostart: true,
     });
     this.emulator.add_listener('emulator-started', () => {
-      status('Running – click into the picture to use the mouse');
       this.ui.ready();
+      this.ui.hint?.('Click into the picture to use the mouse; Esc releases it.');
     });
     v86Container.addEventListener('click', () => this.emulator?.lock_mouse());
   }
 
   async readAllFiles() {
     return [];
+  }
+
+  async screenshot() {
+    const image = this.emulator?.screen_make_screenshot();
+    return image ? toPng(image) : super.screenshot();
   }
 
   get supportsPause() { return true; }

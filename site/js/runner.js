@@ -2,6 +2,7 @@
 // changed files, saving them as ZIP or writing them back to the opened folder.
 
 import { crc32, createZip } from './zip.js';
+import { toPng } from './report.js';
 
 /**
  * @typedef {object} RunnerUi
@@ -15,6 +16,7 @@ import { crc32, createZip } from './zip.js';
  * @property {(loaded:number, total:number)=>void} progress download progress
  * @property {()=>void} ready                          emulator is running, hide the loading screen
  * @property {(text:string)=>void} emulatorInfo        which emulator/version is running
+ * @property {(text:string)=>void} [hint]               a hint below the picture
  */
 
 export class Runner {
@@ -94,6 +96,16 @@ export class Runner {
 
   /** Enters fullscreen mode. */
   fullscreen() {}
+
+  /**
+   * A PNG of what the emulator shows right now, or null. By default the visible canvas
+   * is copied; runners with their own screenshot function override this.
+   * @returns {Promise<Blob|null>}
+   */
+  async screenshot() {
+    const canvas = [...this.ui.screen.querySelectorAll('canvas')].find((c) => c.offsetWidth > 0 && c.width > 0);
+    return canvas ? toPng(canvas) : null;
+  }
 
   /** Whether the emulation can be paused. */
   get supportsPause() { return false; }

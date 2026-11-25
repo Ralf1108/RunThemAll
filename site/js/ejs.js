@@ -1,6 +1,7 @@
 // Runs console and home computer games with EmulatorJS (libretro cores).
 // EmulatorJS is loaded unmodified from ./emulatorjs/data/.
 
+import { toPng } from './report.js';
 import { Runner, loadScript, prefetch, splitPath } from './runner.js';
 import { SYSTEM_BY_ID, extOf } from './systems.js';
 import { createZip } from './zip.js';
@@ -35,6 +36,21 @@ async function coreFile(dataUrl, core) {
   } catch { /* no report: EmulatorJS falls back to legacy as well */ }
   const supported = !!document.createElement('canvas').getContext('webgl2');
   return `${core}${webgl2 && supported ? '' : '-legacy'}-wasm.data`;
+}
+
+/**
+ * WebGL normally throws the picture away once it is on screen, so reading the canvas
+ * (for a screenshot) gives black. Keep it for the WebGL contexts EmulatorJS creates.
+ */
+function preserveWebGlPicture() {
+  const proto = HTMLCanvasElement.prototype;
+  if (proto.getContext.runThemAll) return;
+  const original = proto.getContext;
+  proto.getContext = function getContext(type, attributes) {
+    if (/webgl/i.test(type)) attributes = { ...attributes, preserveDrawingBuffer: true };
+    return original.call(this, type, attributes);
+  };
+  proto.getContext.runThemAll = true;
 }
 
 export class EmulatorJsRunner extends Runner {
@@ -126,6 +142,7 @@ export class EmulatorJsRunner extends Runner {
       },
     });
 
+    preserveWebGlPicture();
     await loadScript(data + 'loader.js');
   }
 
@@ -135,6 +152,17 @@ export class EmulatorJsRunner extends Runner {
 
   fullscreen() {
     this.ui.ejsContainer.requestFullscreen?.();
+  }
+
+  async screenshot() {
+    // EmulatorJS crops the canvas to the game picture (readable thanks to preserveWebGlPicture).
+    const ejs = window.EJS_emulator;
+    if (typeof ejs?.screenshot !== 'function') return super.screenshot();
+    const blob = await Promise.race([
+      new Promise((resolve) => ejs.screenshot((b) => resolve(b), 'canvas', 'png', 1)),
+      new Promise((resolve) => setTimeout(() => resolve(null), 3000)),
+    ]);
+    return blob ?? super.screenshot();
   }
 
   get supportsPause() { return true; }

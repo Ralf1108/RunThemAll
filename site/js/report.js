@@ -122,21 +122,53 @@ export function buildReport(info) {
   }
 }
 
-/** Plain text of the report fields, as the user sees it before sending. */
-export function reportText(f) {
-  return [
-    `Title: ${f.title}`,
-    '',
-    `What did you try to run?\n${f.what}`,
-    '',
-    `Platform\n${f.platform}`,
-    '',
-    `What happened?\n${f.problem}`,
-    '',
-    `How can we see it ourselves?\n${f.steps}`,
-    '',
-    `Browser and system\n${f.browser}`,
-  ].join('\n');
+/** Options of the "Platform" dropdown of the issue form (.github/ISSUE_TEMPLATE/bug_report.yml). */
+export const PLATFORMS = ['DOS', 'Windows 3.x', 'Windows 95 – XP', 'Operating system (CD, floppy or hard disk image)',
+  'Console or handheld', 'Home computer', 'Arcade', 'The page itself', 'Not sure'];
+
+/**
+ * Address of the issue form for fields the user may have edited. If it is too long,
+ * console lines are left out from the start of the log, then the text is cut.
+ */
+export function fittingIssueUrl(f) {
+  let url = issueUrl(f);
+  if (url.length <= MAX_URL) return url;
+  const lines = f.problem.split('\n');
+  const head = lines.findIndex((l) => l.startsWith('Last console lines'));
+  const first = head >= 0 ? lines.indexOf('```', head) + 1 : -1;
+  while (first > 0 && url.length > MAX_URL && lines[first] !== undefined && lines[first] !== '```') {
+    lines.splice(first, 1);
+    url = issueUrl({ ...f, problem: lines.join('\n') });
+  }
+  let problem = lines.join('\n');
+  while (url.length > MAX_URL && problem.length > 0) {
+    problem = problem.slice(0, Math.floor(problem.length * 0.9));
+    url = issueUrl({ ...f, problem: `${problem}\n… (shortened)` });
+  }
+  return url;
+}
+
+/**
+ * A PNG of a canvas, an image or ImageData. A WebGL canvas is copied inside an
+ * animation frame, while its picture is still there.
+ * @param {HTMLCanvasElement|HTMLImageElement|ImageData} source
+ * @returns {Promise<Blob|null>}
+ */
+export async function toPng(source) {
+  const out = document.createElement('canvas');
+  const ctx = out.getContext('2d');
+  if (source instanceof ImageData) {
+    out.width = source.width;
+    out.height = source.height;
+    ctx.putImageData(source, 0, 0);
+  } else {
+    if (source instanceof HTMLImageElement && !source.complete) await new Promise((r) => { source.onload = r; source.onerror = r; });
+    out.width = source.naturalWidth || source.width;
+    out.height = source.naturalHeight || source.height;
+    if (!out.width || !out.height) return null;
+    await new Promise((r) => requestAnimationFrame(() => { ctx.drawImage(source, 0, 0); r(); }));
+  }
+  return new Promise((r) => out.toBlob(r, 'image/png'));
 }
 
 /** Compresses bytes with deflate (as in ZIP files). */

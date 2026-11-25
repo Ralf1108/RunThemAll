@@ -8,7 +8,7 @@ import { V86Runner } from './v86.js';
 import { KIND_LABELS } from './exe.js';
 import { SYSTEMS, SYSTEM_BY_ID } from './systems.js';
 import { platformStyle, SUPPORTED_GROUPS, supportedItems } from './platforms.js';
-import { buildReport, isCrashError, isCrashLine, MAX_ATTACHMENT, reportText, sha256, zipFiles } from './report.js';
+import { buildReport, fittingIssueUrl, isCrashError, isCrashLine, MAX_ATTACHMENT, PLATFORMS, sha256, zipFiles } from './report.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -288,6 +288,9 @@ function markCrash(reason) {
   button.querySelector('span').textContent = 'Report crash';
   button.title = 'The program crashed – report it on GitHub with the details collected so far';
   message('The program seems to have crashed. The console below shows the error; "Report crash" prepares a GitHub issue with the details.');
+  // Keep the picture of the moment of the crash for the report.
+  const info = runInfo;
+  emulator?.screenshot().then((blob) => { info.crashShot = blob; }, () => {});
 }
 
 // Errors the page did not catch (e.g. inside the emulator) go into the console; real crashes are marked.
@@ -304,11 +307,12 @@ function onPageError(error) {
 window.addEventListener('error', (e) => onPageError(e.error ?? e.message));
 window.addEventListener('unhandledrejection', (e) => onPageError(e.reason));
 
-function status(text, fraction) {
-  $('status-text').textContent = text;
-  const bar = $('status-progress');
-  bar.hidden = fraction === undefined;
-  if (fraction !== undefined) bar.value = fraction;
+/**
+ * Status of the emulator while it loads: shown in the loading screen (its steps show
+ * the progress). Once it runs, the Play/Pause button shows the state.
+ */
+function status(text) {
+  if (!$('loader').hidden && text) $('loader-detail').textContent = text;
 }
 
 function message(text) {
@@ -379,6 +383,7 @@ async function start(overrides = {}) {
     screen: $('screen'), canvas: $('canvas'), dosContainer: $('dos-container'), ejsContainer: $('ejs-container'), v86Container: $('v86-container'), status, log,
     steps: setSteps, step: setStep, progress: setProgress, ready: hideLoader,
     emulatorInfo: (text) => { $('run-emulator').textContent = text; },
+    hint: message,
   };
   $('loader').hidden = false;
   if (program.kind === 'win16' && opts.wine === 'wine11') {
@@ -580,21 +585,63 @@ $('btn-report').addEventListener('click', async () => {
     browser: navigator.userAgent,
   });
 
-  const size = totalSize(workspace);
-  const attach = el('input', { type: 'checkbox', id: 'report-attach', disabled: Boolean(currentDemo) || program.remote !== undefined });
-  const body = el('div', {},
-    el('pre', { className: 'report-preview', textContent: reportText(report.fields) }),
-    el('label', { className: 'report-attach' }, attach,
-      el('span', { textContent: `Also download the program as a ZIP (${workspace.files.length} file${workspace.files.length === 1 ? '' : 's'}, ${formatSize(size)} before packing) to attach it to the issue. Only for programs you are allowed to share.` })),
-    el('p', { className: 'report-note', textContent: 'GitHub opens in a new tab with everything filled in. Check it there – remove anything personal – and send it. You need a GitHub account.'
-      + (attach.disabled ? '' : ' A ZIP is attached by dragging it into the text field on GitHub (up to 25 MB).') }));
-  if (attach.disabled) attach.parentElement.hidden = true; // demos are known, nothing to attach
+  // Screenshot: the one taken at the crash, otherwise the picture right now.
+  let shot = runInfo.crashShot ?? null;
+  if (!shot) {
+    try { shot = await emulator?.screenshot(); } catch { shot = null; }
+  }
+
+  // The fields of the issue form, editable before GitHub opens.
+  const f = report.fields;
+  const field = (label, input) => el('label', { className: 'report-field' }, el('span', { textContent: label }), input);
+  const inputs = {
+    title: el('input', { type: 'text', value: f.title }),
+    what: el('input', { type: 'text', value: f.what }),
+    platform: el('select', {}, ...PLATFORMS.map((p) => el('option', { value: p, textContent: p, selected: p === f.platform }))),
+    problem: el('textarea', { rows: 10, value: f.problem }),
+    steps: el('textarea', { rows: 5, value: f.steps }),
+    browser: el('input', { type: 'text', value: f.browser }),
+  };
+  const checkbox = (text, checked, disabled) => {
+    const box = el('input', { type: 'checkbox', checked, disabled });
+    const label = el('label', { className: 'report-attach' }, box, el('span', { textContent: text }));
+    label.hidden = disabled;
+    return box;
+  };
+  const shotUrl = shot ? URL.createObjectURL(shot) : null;
+  const attachShot = checkbox('Also download this screenshot to attach it to the issue.', Boolean(shot), !shot);
+  const attach = checkbox(`Also download the program as a ZIP (${workspace.files.length} file${workspace.files.length === 1 ? '' : 's'}, ${formatSize(totalSize(workspace))} before packing) to attach it to the issue. Only for programs you are allowed to share.`,
+    false, Boolean(currentDemo) || program.remote !== undefined); // demos are known, nothing to attach
+  const body = el('div', { className: 'report-form' },
+    field('Title', inputs.title),
+    field('What did you try to run?', inputs.what),
+    field('Platform', inputs.platform),
+    field('What happened? Please add what you did and what went wrong.', inputs.problem),
+    field('How can we see it ourselves?', inputs.steps),
+    field('Browser and system', inputs.browser),
+    ...(shotUrl ? [el('img', { className: 'report-shot', src: shotUrl, alt: 'Screenshot of the emulator' })] : []),
+    attachShot.parentElement,
+    attach.parentElement,
+    el('p', { className: 'report-note', textContent: 'GitHub opens in a new tab with this filled in. Check it there and send it; you need a GitHub account.'
+      + (shot || !attach.disabled ? ' Downloaded files are attached by dragging them into the "What happened?" field on GitHub (up to 25 MB).' : '') }));
+
+  const download = (blob, name) => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+  };
+  const baseName = (workspace.name || 'program').replace(/[^\w.-]+/g, '_');
 
   showDialog(crash ? 'Report the crash on GitHub' : 'Report a problem on GitHub',
-    'This is what the issue will contain:', [], false, [
-      { label: 'Cancel' },
+    'You can change everything below before it goes to GitHub.', [], false, [
+      { label: 'Cancel', run: () => shotUrl && URL.revokeObjectURL(shotUrl) },
       { label: 'Open GitHub issue', primary: true, run: async () => {
-        window.open(report.url, '_blank', 'noopener');
+        const edited = Object.fromEntries(Object.entries(inputs).map(([k, input]) => [k, input.value]));
+        window.open(fittingIssueUrl(edited), '_blank', 'noopener');
+        if (shotUrl) URL.revokeObjectURL(shotUrl);
+        if (attachShot.checked && shot) download(shot, `${baseName}-screenshot.png`);
         if (!attach.checked) return;
         try {
           const blob = await zipFiles(workspace.files);
@@ -602,11 +649,7 @@ $('btn-report').addEventListener('click', async () => {
             showDialog('ZIP too large for GitHub', `The packed program has ${formatSize(blob.size)}; GitHub accepts up to 25 MB. Please describe where it can be downloaded instead.`, [], true);
             return;
           }
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
-          a.download = `${(workspace.name || 'program').replace(/[^\w.-]+/g, '_')}-report.zip`;
-          a.click();
-          setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+          download(blob, `${baseName}-report.zip`);
         } catch (err) {
           showDialog('Packing failed', String(err.message || err), [], true);
         }

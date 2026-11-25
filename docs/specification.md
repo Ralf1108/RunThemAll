@@ -59,14 +59,21 @@ side the supported platforms and the emulators (3.3). The interface is in Englis
    - *Console* (orange while closed, green while open): shows the messages of the emulator below the picture.
    - *Report*: prepares a GitHub issue (form `bug_report.yml`, fields filled through the address) with the
      program, platform, emulator and version, start options, SHA-256 of the started file and the last console
-     lines (as many as fit into the address). A dialog shows the text first; GitHub opens in a new tab where
-     the user checks and sends it. For own files the program can also be downloaded as a compressed ZIP
-     (CompressionStream) to drag into the issue (GitHub allows 25 MB). Nothing is sent by the page itself.
+     lines (as many as fit into the address). The dialog shows all fields of the form editable (title, what,
+     platform, what happened, steps, browser); GitHub then opens in a new tab where the user sends it.
+     A screenshot of the emulator (taken at the crash, otherwise when *Report* is clicked) is shown and can be
+     downloaded as PNG; for own files the program can also be downloaded as a compressed ZIP
+     (CompressionStream). Both are attached by dragging them into the issue (GitHub allows 25 MB).
+     Nothing is sent by the page itself.
+   - Screenshots: js-dos `ci.screenshot()`, v86 `screen_make_screenshot()`, EmulatorJS its own canvas screenshot,
+     Boxedwine the canvas. EmulatorJS's WebGL contexts are created with `preserveDrawingBuffer` (otherwise the
+     canvas reads back black).
    - Crash detection (`js/report.js`): console lines with clear signs (Wine "Unhandled page fault/exception",
      Emscripten "Aborted(", WebAssembly RuntimeError, DOSBox "E_Exit", "Kernel panic" …), uncaught
      WebAssembly errors and a failed start open the console and turn *Report* red (*Report crash*).
      DOM exceptions of the browser (e.g. pointer lock refused) do not count.
-   - The status (*Preparing …*, *Running*, *Paused*) stands in the toolbar left of the buttons.
+   - There is no status line: while loading, the loading screen shows the steps and progress; afterwards
+     the *Play/Pause* button shows the state. Hints (no sound yet, mouse in v86, crash) appear below the picture.
    - Keys that games use (arrows, space, page up/down, home/end) do not scroll the page while a program runs.
    - *Quit*: reloads the page.
    - A badge shows which emulator runs (e.g. "Boxedwine 26R1.0 · Wine 6 · Multithreaded").

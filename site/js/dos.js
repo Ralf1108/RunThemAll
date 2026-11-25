@@ -1,6 +1,7 @@
 // Runs DOS programs with js-dos (DOSBox compiled to WebAssembly).
 // js-dos is loaded unmodified from ./jsdos/. The user's files become drive C:.
 
+import { toPng } from './report.js';
 import { Runner, loadScript, loadStylesheet, prefetch, splitPath } from './runner.js';
 
 /**
@@ -209,6 +210,11 @@ export class DosRunner extends Runner {
   }
 
   get supportsPause() { return true; }
+
+  async screenshot() {
+    const image = await this.ci?.screenshot();
+    return image ? toPng(image) : super.screenshot();
+  }
 
   setPaused(paused) {
     if (paused) this.ci?.pause();
