@@ -1,6 +1,6 @@
 import { audioSuspended, isMuted, setMuted } from './audio.js';
 import { fromDataTransfer, fromDirectoryHandle, fromFileList, fromStoredFiles, findPrograms, totalSize } from './workspace.js';
-import { ASK_ABOVE_BYTES, saveRestart, takeRestart } from './restart.js';
+import { saveRestart, takeRestart } from './restart.js';
 import { fetchWithProgress } from './runner.js';
 import { WindowsRunner, canUseThreads, clearPersistentStorage } from './emulator.js';
 import { DosRunner } from './dos.js';
@@ -613,19 +613,7 @@ $('btn-options').addEventListener('click', () => {
           const value = input.value.trim();
           return [key, ['bpp', 'memory'].includes(key) ? Number(value) : value];
         }));
-        const size = currentDemo ? 0 : totalSize(workspace);
-        if (size <= ASK_ABOVE_BYTES) {
-          restartWith(chosen);
-          return;
-        }
-        showDialog('Keep the files for the restart?',
-          `To start ${program.path} again without opening it again, its files (${formatSize(size)}) are kept in this `
-            + 'browser\'s storage for a moment. They are deleted as soon as the page has restarted (if that does not '
-            + 'happen, at your next visit of this page). Nothing leaves your computer.',
-          [], false, [
-            { label: 'Cancel' },
-            { label: `Keep ${formatSize(size)} and restart`, primary: true, run: () => restartWith(chosen) },
-          ]);
+        restartWith(chosen);
       } },
     ], body);
 });

@@ -7,10 +7,7 @@ const STORE = 'pending';
 const KEY = 'next';
 
 /** A kept restart is only used within this time; older ones are just deleted. */
-export const RESTART_TTL_MS = 30 * 60 * 1000;
-
-/** Above this size the user is asked before the files are kept for the restart. */
-export const ASK_ABOVE_BYTES = 50 * 1048576;
+export const RESTART_TTL_MS = 10 * 60 * 1000;
 
 function open() {
   return new Promise((resolve, reject) => {
