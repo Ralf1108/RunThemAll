@@ -150,8 +150,9 @@ select {
 .run { margin-top: 1rem; }
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
 .toolbar .spacer { flex: 1; }
-.status-row { display: flex; align-items: center; gap: .75rem; margin: .75rem 0; color: var(--muted); font-size: .9rem; }
-.status-row progress { flex: 0 0 200px; }
+.toolbar { margin-bottom: .75rem; }
+.status-row { display: inline-flex; align-items: center; gap: .6rem; margin-right: .25rem; color: var(--muted); font-size: .9rem; }
+.status-row progress { width: 160px; }
 
 .screen {
   background: #000;
@@ -164,9 +165,8 @@ select {
 #canvas { display: block; flex: none; image-rendering: pixelated; outline: none; }
 
 .console { margin-top: 1rem; }
-.console summary { cursor: pointer; color: var(--muted); }
 .console pre {
-  max-height: 240px; overflow: auto; margin: .5rem 0 0;
+  max-height: 240px; overflow: auto; margin: 0;
   padding: .75rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
   font-size: .8rem; white-space: pre-wrap; word-break: break-all;
 }
@@ -211,9 +211,11 @@ select {
 .wx-icon svg { flex: none; }
 .wx-toggle { --state: #2f9e57; }
 .wx-toggle.state-off { --state: #d64545; }
+.wx-toggle.state-warn { --state: #d97a1e; } /* orange: e.g. console closed */
 @media (prefers-color-scheme: dark) {
   .wx-toggle { --state: #4cc47a; }
   .wx-toggle.state-off { --state: #ff7066; }
+  .wx-toggle.state-warn { --state: #f2a253; }
 }
 .wx-toggle, .wx-toggle:hover:not(:disabled) {
   color: var(--state);

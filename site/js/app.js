@@ -479,6 +479,21 @@ $('btn-pause').addEventListener('click', () => {
   status(paused ? 'Paused' : 'Running');
 });
 
+// Console: messages of the emulator below the picture; orange while closed, green while open.
+$('btn-console').addEventListener('click', () => {
+  const button = $('btn-console');
+  const open = $('console').hidden;
+  $('console').hidden = !open;
+  button.setAttribute('aria-expanded', String(open));
+  button.classList.toggle('state-on', open);
+  button.classList.toggle('state-warn', !open);
+  button.title = open ? 'Hide the messages of the emulator' : 'Show the messages of the emulator';
+  if (open) {
+    consoleOut.scrollTop = consoleOut.scrollHeight;
+    requestAnimationFrame(() => $('console').scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
+  }
+});
+
 // Fullscreen: the whole emulator area (canvas or player) covers the screen.
 $('btn-fullscreen').addEventListener('click', () => {
   const screen = $('screen');

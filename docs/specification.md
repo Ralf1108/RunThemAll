@@ -56,6 +56,8 @@ side the supported platforms and the emulators (3.3). The interface is in Englis
    - All toolbar buttons have an icon. *Sound* and *Play/Pause* show the current state: green with
      *Sound on* / *Play* while it is on or running, red with *Sound off* / *Pause* after a click.
    - *Fullscreen*: the emulator area goes fullscreen.
+   - *Console* (orange while closed, green while open): shows the messages of the emulator below the picture.
+   - The status (*Preparing …*, *Running*, *Paused*) stands in the toolbar left of the buttons.
    - Keys that games use (arrows, space, page up/down, home/end) do not scroll the page while a program runs.
    - *Quit*: reloads the page.
    - A badge shows which emulator runs (e.g. "Boxedwine 26R1.0 · Wine 6 · Multithreaded").
