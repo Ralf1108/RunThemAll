@@ -40,9 +40,9 @@ async function run(mode, action) {
  * @property {string} [system]          system of a game
  * @property {object} options           start options
  * @property {string} [name]            name of the workspace
- * @property {{path:string, blob:Blob}[]} [files]  the user's files
+ * @property {{path:string, data:Uint8Array}[]} [files]  the user's files (bytes, not Blobs)
  * @property {FileSystemDirectoryHandle} [dirHandle] an opened folder (used again if the permission is still there)
- * @property {File[]} [bios]            BIOS files chosen for the game
+ * @property {{name:string, data:Uint8Array}[]} [bios]  BIOS files chosen for the game
  */
 
 /** @param {RestartPlan} plan */

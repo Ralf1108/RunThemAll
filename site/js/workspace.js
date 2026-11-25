@@ -69,11 +69,11 @@ export async function fromFileList(fileList) {
 /**
  * From files kept for a restart (see restart.js), with their original paths.
  * @param {string} name
- * @param {{path:string, blob:Blob}[]} items
+ * @param {{path:string, data:Uint8Array}[]} items
  * @returns {Workspace}
  */
 export function fromStoredFiles(name, items) {
-  return { name, files: items.map(({ path, blob }) => fromFile(path, blob)) };
+  return { name, files: items.map(({ path, data }) => fromFile(path, new Blob([data]))) };
 }
 
 /**

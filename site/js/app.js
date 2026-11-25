@@ -83,7 +83,10 @@ async function openWorkspace(loader, autostart) {
   } catch (err) {
     if (err?.name === 'AbortError') return; // user cancelled a picker
     console.error(err);
-    showError(err.message || String(err));
+    showError(autostart?.restart
+      ? `The restart did not work: ${err.message || err} Please open the program again.`
+      : err.message || String(err));
+    if (autostart?.restart) clearRestart();
   }
 }
 
@@ -581,9 +584,12 @@ async function restartWith(options) {
       await saveRestart({ demoId: currentDemo.id, program: program.path, options: {} });
     } else {
       const files = [];
-      for (const f of workspace.files) files.push({ path: f.path, blob: new Blob([await f.load()]) });
+      // Plain bytes, not Blobs: some browsers (e.g. Brave) cannot read Blobs from IndexedDB after a reload.
+      for (const f of workspace.files) files.push({ path: f.path, data: await f.load() });
+      const bios = [];
+      for (const b of biosFiles ?? []) bios.push({ name: b.name, data: new Uint8Array(await b.arrayBuffer()) });
       await saveRestart({ program: program.path, system: opts.system, options: rest, name: workspace.name,
-        files, dirHandle: workspace.dirHandle, bios: biosFiles ?? [] });
+        files, dirHandle: workspace.dirHandle, bios });
     }
   } catch (err) {
     showDialog('Restart failed', `The files could not be kept for the restart: ${err.message || err}`, [], true);
@@ -1256,7 +1262,8 @@ takeRestart().then(async (plan) => {
     if (demo) launchDemo(demo);
     return;
   }
-  const autostart = { program: plan.program, system: plan.system, options: plan.options, bios: plan.bios };
+  const bios = (plan.bios ?? []).map((b) => new File([b.data], b.name));
+  const autostart = { program: plan.program, system: plan.system, options: plan.options, bios, restart: true };
   let handle = plan.dirHandle;
   if (handle && (await handle.queryPermission?.({ mode: 'readwrite' })) !== 'granted') handle = null;
   openWorkspace(async () => (handle ? fromDirectoryHandle(handle) : fromStoredFiles(plan.name, plan.files)), autostart);
