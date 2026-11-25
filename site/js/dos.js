@@ -125,7 +125,8 @@ export class DosRunner extends Runner {
     const { status, log, dosContainer } = this.ui;
     dosContainer.hidden = false;
 
-    this.ui.emulatorInfo('js-dos 8.5.4 · DOSBox');
+    const version = await fetch('jsdos/version.json').then((r) => r.json()).then((v) => v.jsdos).catch(() => '');
+    this.ui.emulatorInfo(`js-dos ${version} · DOSBox`.replace('  ', ' '));
     this.ui.steps(['Emulator herunterladen (js-dos, DOSBox)', 'Programmdateien einlesen', 'DOSBox starten']);
     this.ui.step(0);
     const base = new URL('jsdos/', document.baseURI).href;

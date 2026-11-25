@@ -188,18 +188,28 @@ CD-Spuren (`bin`/`img`/`iso`) in Ordnern mit `.cue` werden nicht einzeln geliste
 ## 6. Build und Auslieferung
 
 - `scripts/fetch-runtimes.mjs` lädt alle Emulatoren nach `site/` (nicht im Git):
-  `site/boxedwine/`, `site/jsdos/`, `site/emulatorjs/`, `site/coi-serviceworker.js`.
+  `site/boxedwine/`, `site/jsdos/`, `site/emulatorjs/`, `site/v86/`, `site/demos/`, `site/coi-serviceworker.js`.
   Downloads werden in `vendor/` zwischengespeichert. ZIP und tar werden ohne externe Werkzeuge
   in Node entpackt.
 - Zu jeder Komponente werden der Lizenztext und die Quellcode-Archive der verwendeten Version
   abgelegt (`*/LICENSE-*.txt`, `*/source/`). Der Footer der Seite verlinkt sie.
 - `.github/workflows/pages.yml`: bei jedem Push auf `main` Skript ausführen und `site/` auf
   GitHub Pages veröffentlichen. `vendor/` wird zwischengespeichert.
-- EmulatorJS wird immer in der neuesten stabilen Version geladen. Boxedwine (26R1.0) und js-dos
-  (8.5.4) sind fest eingetragen, weil die Integration von ihrem Aufbau abhängt (Dateinamen im
-  Release, Win16-Overlay, js-dos-API).
-- Größe der veröffentlichten Seite: ca. 320 MB (Boxedwine ~105 MB, EmulatorJS ~205 MB, js-dos ~6 MB,
-  Quellcode-Archive). Das Limit von GitHub Pages liegt bei 1 GB.
+- EmulatorJS wird immer in der neuesten stabilen Version geladen. Boxedwine, js-dos und v86 sind
+  fest eingetragen (Konstanten oben im Skript), weil die Integration von ihrem Aufbau abhängt
+  (Dateinamen im Release, Win16-Overlay, js-dos-API, v86-BIOS).
+- `scripts/update-runtimes.mjs` (bzw. `scripts/update.ps1`, `npm run update`) prüft die neuesten
+  Versionen: Boxedwine über das neueste GitHub-Release mit Web-Build, js-dos und v86 über npm.
+  Abhängige Angaben werden mit ermittelt: die emulators-Version von js-dos (aus dessen
+  `package.json`) und der DOSBox-Commit (Submodul `native/dosbox` im emulators-Release), der
+  v86-Commit (aus der `package.json` im npm-Paket) und die SeaBIOS-Version dieses Commits
+  (`bios/fetch-and-build-seabios.sh`). Mit `--apply` werden die Konstanten ersetzt, der
+  Download-Link der SkiFree-Demo angepasst und alles mit `--force` neu geladen. Die
+  Versionsanzeige auf der Seite liest die Versionen aus den `version.json`-Dateien.
+- Große Disk-Images (Feld `chunk` in `demos.json`, z. B. ReactOS) werden in zstd-komprimierte Teile
+  zerlegt, die v86 bei Bedarf lädt; so bleibt jede Datei unter dem Limit von 100 MB.
+- Größe der veröffentlichten Seite: ca. 440 MB (EmulatorJS ~205 MB, Boxedwine ~107 MB, Demos ~110 MB,
+  js-dos ~6 MB, v86 ~4 MB, Quellcode-Archive). Das Limit von GitHub Pages liegt bei 1 GB.
 
 ### Cross-Origin-Isolation
 

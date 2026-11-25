@@ -44,7 +44,8 @@ export class WindowsRunner extends Runner {
     const build = threaded ? 'mt' : 'st';
     const buildBase = new URL(`boxedwine/${build}/`, document.baseURI).href;
     const wineLabel = opts.wine === 'wine11' ? 'Wine 11' : 'Wine 6';
-    const info = `Boxedwine 26R1 · ${wineLabel} · ${threaded ? 'Multithreaded' : 'Singlethreaded'}`;
+    const tag = await fetch('boxedwine/version.json').then((r) => r.json()).then((v) => v.tag).catch(() => '');
+    const info = `Boxedwine ${tag} · ${wineLabel} · ${threaded ? 'Multithreaded' : 'Singlethreaded'}`.replace('  ', ' ');
     this.ui.emulatorInfo(info);
     log(info, false);
     this.ui.steps(['Emulator und Wine-Dateisystem herunterladen', 'Programmdateien einlesen', 'Wine starten']);

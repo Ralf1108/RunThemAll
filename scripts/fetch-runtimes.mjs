@@ -18,7 +18,8 @@ import { CORES, SYSTEMS } from '../site/js/systems.js';
 
 // --- Boxedwine -------------------------------------------------------------
 const BOXEDWINE_TAG = '26R1.0';
-const BOXEDWINE_RELEASE = `https://github.com/danoon2/Boxedwine/releases/download/${BOXEDWINE_TAG}/Boxedwine26R1Web.zip`;
+const BOXEDWINE_ASSET = 'Boxedwine26R1Web.zip';
+const BOXEDWINE_RELEASE = `https://github.com/danoon2/Boxedwine/releases/download/${BOXEDWINE_TAG}/${BOXEDWINE_ASSET}`;
 const BOXEDWINE_FILES = {
   'SingleThreaded/boxedwine.js': 'st/boxedwine.js',
   'SingleThreaded/boxedwine.wasm': 'st/boxedwine.wasm',
@@ -126,7 +127,7 @@ function readTar(data) {
 async function fetchBoxedwine() {
   console.log(`Boxedwine ${BOXEDWINE_TAG}`);
   const out = join(SITE, 'boxedwine');
-  const release = join(VENDOR, 'Boxedwine26R1Web.zip');
+  const release = join(VENDOR, BOXEDWINE_ASSET);
   await download(BOXEDWINE_RELEASE, release);
 
   const archive = new Uint8Array(await readFile(release));
@@ -391,7 +392,7 @@ async function fetchDemos() {
     }
     const cached = join(VENDOR, 'demos', demo.id, decodeURIComponent(demo.url.split('/').pop()));
     // Reuse the Boxedwine release that is already cached.
-    const source = demo.url.endsWith('/Boxedwine26R1Web.zip') ? join(VENDOR, 'Boxedwine26R1Web.zip') : cached;
+    const source = demo.url === BOXEDWINE_RELEASE ? join(VENDOR, BOXEDWINE_ASSET) : cached;
     await download(demo.url, source);
     let data = new Uint8Array(await readFile(source));
     if (demo.strip || demo.add) data = await bundleDemo(demo, data);

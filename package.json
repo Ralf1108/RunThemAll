@@ -10,6 +10,9 @@
   },
   "scripts": {
     "fetch": "node scripts/fetch-runtimes.mjs",
+    "fetch:force": "node scripts/fetch-runtimes.mjs --force",
+    "update": "node scripts/update-runtimes.mjs",
+    "update:apply": "node scripts/update-runtimes.mjs --apply",
     "serve": "node scripts/serve.mjs",
     "serve:no-coi": "node scripts/serve.mjs --no-coi",
     "start": "node scripts/fetch-runtimes.mjs && node scripts/serve.mjs"

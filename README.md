@@ -79,6 +79,38 @@ npm run serve   # http://localhost:8080
 ```
 
 `npm run serve:no-coi` startet den Server ohne COOP/COEP-Header, so wie GitHub Pages.
+`npm run fetch:force` lädt alles neu herunter, auch was schon da ist.
+
+## Emulatoren aktualisieren
+
+Boxedwine, js-dos und v86 sind auf feste Versionen gesetzt (Konstanten oben in
+`scripts/fetch-runtimes.mjs`), weil neue Versionen Demos kaputtmachen können. EmulatorJS wird dagegen
+bei jedem Download automatisch in der neuesten stabilen Version geholt.
+
+Neue Versionen prüfen und übernehmen, in PowerShell:
+
+```powershell
+.\scripts\update.ps1          # zeigt nur an, was es Neues gibt
+.\scripts\update.ps1 -Apply   # trägt die neuen Versionen ein und lädt alles neu herunter
+```
+
+oder plattformunabhängig mit `npm run update` bzw. `npm run update:apply`.
+
+Was geprüft wird:
+
+| Komponente | Quelle der neuesten Version | Was mit aktualisiert wird |
+|---|---|---|
+| Boxedwine | neuestes GitHub-Release von danoon2/Boxedwine mit Web-Build (`…Web.zip`) | Tag, Dateiname des Releases, Download-Link der SkiFree-Demo |
+| js-dos | npm-Paket `js-dos` (Tag `latest`) | Version von `emulators`, mit der js-dos gebaut ist, und der DOSBox-Commit dieses emulators-Releases (für den Quellcode-Download) |
+| v86 | npm-Paket `v86` (Tag `latest`) | Git-Commit des Pakets (für BIOS und Quellcode) und die SeaBIOS-Version dieses Commits |
+
+Danach `npm run serve`, die Demos jedes betroffenen Emulators starten und erst dann committen.
+Schlägt der Download fehl, hat die neue Version einen anderen Aufbau (z. B. andere Dateinamen im
+Release), und `scripts/fetch-runtimes.mjs` muss angepasst werden. Mit `git diff` sieht man die
+eingetragenen Versionen und kann sie zurücknehmen.
+
+Ohne Anmeldung erlaubt die GitHub-API 60 Abfragen pro Stunde. Reicht das nicht, vorher ein Token
+setzen: `$env:GITHUB_TOKEN = '...'`.
 
 ## Veröffentlichen auf GitHub Pages
 
@@ -86,8 +118,9 @@ npm run serve   # http://localhost:8080
 2. Unter *Settings → Pages → Build and deployment* als Quelle **GitHub Actions** wählen.
 3. Der Workflow `.github/workflows/pages.yml` lädt bei jedem Push auf `main` die Emulatoren aus
    ihren offiziellen Releases und veröffentlicht `site/`. EmulatorJS wird dabei immer in der
-   **neuesten stabilen Version** geholt (npm-Tag `latest`); Boxedwine und js-dos sind fest auf eine
-   Version gesetzt, weil die Anbindung von deren Release-Aufbau abhängt.
+   **neuesten stabilen Version** geholt (npm-Tag `latest`); Boxedwine, js-dos und v86 sind fest auf eine
+   Version gesetzt, weil die Anbindung von deren Release-Aufbau abhängt (Update siehe
+   [Emulatoren aktualisieren](#emulatoren-aktualisieren)).
 
 Fremde Binärdateien liegen nicht im Repository, sie werden erst beim Deploy geladen.
 
@@ -118,11 +151,16 @@ site/                  statische Webseite (wird veröffentlicht)
   js/dos.js            DOS-Programme mit js-dos, 8.3-Kurznamen
   js/systems.js        Konsolen/Heimcomputer: Systeme, Cores, BIOS, Erkennung
   js/ejs.js            Spiele mit EmulatorJS
+  js/v86.js            komplette PCs (Betriebssysteme) mit v86
+  js/audio.js          gibt den Ton frei, den der Browser zurückhält
   js/zip.js            ZIP lesen/schreiben (ohne Abhängigkeiten)
-  boxedwine/, jsdos/, emulatorjs/, demos/   werden von scripts/fetch-runtimes.mjs erzeugt (nicht im Git)
+  boxedwine/, jsdos/, emulatorjs/, v86/, demos/   werden von scripts/fetch-runtimes.mjs erzeugt (nicht im Git)
 demos/demos.json       Liste der Demo-Programme (Quelle, Autor, Lizenz)
+demos/local/           Demo-Dateien, die im Repository liegen (siehe demos/local/README.md)
 scripts/
   fetch-runtimes.mjs   lädt Emulatoren, Lizenzen und Quellcode
+  update-runtimes.mjs  prüft Boxedwine, js-dos und v86 auf neue Versionen und trägt sie ein
+  update.ps1           dasselbe für PowerShell
   serve.mjs            lokaler Testserver mit COOP/COEP-Headern
 ```
 
