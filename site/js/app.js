@@ -607,6 +607,15 @@ function updateCarousel() {
   $('demo-prev').disabled = atStart;
   $('demo-next').disabled = atEnd;
   $('demo-prev').parentElement.hidden = max <= 2;
+  // Own scroll bar: thumb size = visible part, position = scroll position.
+  const bar = $('demo-bar');
+  bar.hidden = max <= 2;
+  if (!bar.hidden) {
+    const thumb = bar.firstElementChild;
+    const width = Math.max(40, bar.clientWidth * (carousel.clientWidth / carousel.scrollWidth));
+    thumb.style.width = `${width}px`;
+    thumb.style.left = `${(bar.clientWidth - width) * (carousel.scrollLeft / max)}px`;
+  }
   carousel.parentElement.classList.toggle('more-left', !atStart);
   carousel.parentElement.classList.toggle('more-right', !atEnd);
   placeDemoDetail();
@@ -618,6 +627,79 @@ const scrollCarousel = (dir) => {
   carousel.scrollBy({ left: dir * tiles * step, behavior: 'smooth' });
 };
 $('demo-prev').addEventListener('click', () => scrollCarousel(-1));
+
+/** Ends a drag: snapping is switched on again and the carousel glides to the nearest tile. */
+function snapCarousel() {
+  const left = carousel.scrollLeft;
+  carousel.classList.remove('dragging');
+  carousel.scrollLeft = left;
+  const gap = parseFloat(getComputedStyle(carousel).columnGap) || 0;
+  const step = (carousel.querySelector('.demo-tile')?.offsetWidth ?? 250) + gap;
+  carousel.scrollTo({ left: Math.round(left / step) * step, behavior: 'smooth' });
+}
+
+// Own scroll bar: drag the thumb, or click the track to jump there.
+{
+  const bar = $('demo-bar');
+  const thumb = bar.firstElementChild;
+  let drag = null; // { x, left }
+  const ratio = () => (carousel.scrollWidth - carousel.clientWidth) / Math.max(1, bar.clientWidth - thumb.offsetWidth);
+  bar.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    if (e.target !== thumb) {
+      // Jump so that the thumb is centred under the pointer.
+      const x = e.clientX - bar.getBoundingClientRect().left - thumb.offsetWidth / 2;
+      carousel.scrollLeft = x * ratio();
+    }
+    drag = { x: e.clientX, left: carousel.scrollLeft };
+    bar.setPointerCapture(e.pointerId);
+    bar.classList.add('dragging');
+    carousel.classList.add('dragging');
+  });
+  bar.addEventListener('pointermove', (e) => {
+    if (drag) carousel.scrollLeft = drag.left + (e.clientX - drag.x) * ratio();
+  });
+  const end = () => {
+    if (!drag) return;
+    drag = null;
+    bar.classList.remove('dragging');
+    snapCarousel();
+  };
+  bar.addEventListener('pointerup', end);
+  bar.addEventListener('pointercancel', end);
+}
+
+// Drag the carousel sideways with the mouse (touch and trackpads scroll natively).
+{
+  let drag = null; // { x, left, moved }
+  carousel.addEventListener('pointerdown', (e) => {
+    if (e.pointerType !== 'mouse' || e.button !== 0) return;
+    drag = { x: e.clientX, left: carousel.scrollLeft, moved: false };
+  });
+  window.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x;
+    if (!drag.moved && Math.abs(dx) < 5) return; // a small wobble is still a click
+    if (!drag.moved) {
+      drag.moved = true;
+      carousel.classList.add('dragging');
+    }
+    carousel.scrollLeft = drag.left - dx;
+  });
+  window.addEventListener('pointerup', () => {
+    if (!drag) return;
+    if (drag.moved) {
+      snapCarousel();
+      // The click right after releasing belongs to the drag, not to a demo.
+      const swallow = (ev) => { ev.stopPropagation(); ev.preventDefault(); };
+      window.addEventListener('click', swallow, { capture: true });
+      setTimeout(() => window.removeEventListener('click', swallow, { capture: true }), 0);
+    }
+    drag = null;
+  });
+  carousel.addEventListener('dragstart', (e) => e.preventDefault()); // no ghost images of the logos
+}
 $('demo-next').addEventListener('click', () => scrollCarousel(1));
 carousel.addEventListener('scroll', updateCarousel, { passive: true });
 new ResizeObserver(updateCarousel).observe(carousel);

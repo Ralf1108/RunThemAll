@@ -65,6 +65,8 @@ How Run Them All works inside. As of November 2026.
 - `demos/demos.json` lists free programs (source, author, licence, start file, system, options).
 - The build script downloads them into `site/demos/`.
 - The start page shows them in a carousel: one tile per platform with logo, the demos inside.
+  It scrolls with the arrow buttons, an always visible scroll bar, by dragging with the mouse,
+  or natively with touch and trackpad; it snaps to whole tiles.
   Clicking a demo shows its info with *Start* and *Options* (per-demo options, saved in `localStorage`).
 - *Start* opens the file like a user file, preselects program and system and starts at once.
 - Sources and licences: [demos/README.md](../demos/README.md).
