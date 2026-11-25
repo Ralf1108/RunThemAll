@@ -305,8 +305,10 @@
   </dialog>
 
   <script type="module" src="js/app.js"></script>
-  <!-- GoatCounter: privacy-friendly page view counter (no cookies) -->
+  <!-- GoatCounter: privacy-friendly page view counter (no cookies). The script is a copy of
+       https://gc.zgo.at/count.js on this site: Firefox blocks it from gc.zgo.at here, because the
+       page is cross-origin isolated for the emulators (COEP require-corp). -->
   <script data-goatcounter="https://ralf1108.goatcounter.com/count"
-          async src="https://gc.zgo.at/count.js"></script>
+          async src="js/goatcounter-count.js"></script>
 </body>
 </html>
