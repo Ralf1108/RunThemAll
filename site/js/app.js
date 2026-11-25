@@ -165,6 +165,8 @@ function showChooser() {
 
   $('pick').hidden = true;
   $('choose').hidden = false;
+  hideDemoDetail();
+  $('demos').hidden = true; // the demos would only distract from choosing the program
   updateSystemPanel();
   $('btn-start').focus();
 }
@@ -231,6 +233,7 @@ $('btn-reset').addEventListener('click', () => {
   workspace = null;
   $('choose').hidden = true;
   $('pick').hidden = false;
+  $('demos').hidden = carousel.childElementCount === 0;
 });
 
 const threadsAvailable = canUseThreads();
@@ -1239,7 +1242,7 @@ const demoList = fetch('demos/demos.json')
   .then((list) => {
     if (!list?.length) return [];
     renderDemoTree(list);
-    $('demos').hidden = !$('run').hidden;
+    $('demos').hidden = !$('run').hidden || !$('choose').hidden;
     return list;
   })
   .catch(() => []);
