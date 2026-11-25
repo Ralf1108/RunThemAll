@@ -24,11 +24,14 @@ How RunThemAll works inside. As of November 2026.
 | No third-party binaries in the repository | Emulators are downloaded at build time (`scripts/fetch-runtimes.mjs`). |
 | Upstream unchanged | Emulator files are not modified, only missing parts are added (e.g. the Wine 16-bit overlay). |
 | Respect licences | For every component, its licence text and the source code (or a link to it) of the used version are published too. |
-| No data to third parties | Emulators load their files from this site and send no user data anywhere. |
+| No data to third parties | Emulators load their files from this site and send no user data anywhere. The only outside requests: an anonymous page-view count (GoatCounter, no cookies) and the EmulatorJS version check (5.3). |
 | No copyrighted BIOS files | Free replacement BIOS files are used where they exist. |
 | No dependencies | No framework, no build step for the site. Node.js is only needed for the scripts. |
 
 ## 3. User flow
+
+The start page has three columns: supported platforms on the left (3.3), in the middle *Open a program*
+and the demo carousel (3.2), the emulators on the right (3.3). The interface is in English.
 
 1. **Open**: file picker (any file or ZIP), folder picker or drag & drop.
    - A single ZIP is unpacked in the browser.
@@ -73,7 +76,8 @@ How RunThemAll works inside. As of November 2026.
 - The start page shows them in a carousel: one tile per platform with logo, the demos inside.
   It scrolls with the arrow buttons, an always visible scroll bar, by dragging with the mouse,
   or natively with touch and trackpad; it snaps to whole tiles.
-  Clicking a demo shows its info with *Start* and *Options* (per-demo options, saved in `localStorage`).
+  Clicking a demo shows its info with *Start* and *Options* (per-demo options, saved in `localStorage`)
+  and scrolls the page so that the whole info with the Start button is visible.
 - *Start* opens the file like a user file, preselects program and system and starts at once.
 - Sources and licences: [demos/README.md](../demos/README.md).
 
@@ -89,7 +93,6 @@ How RunThemAll works inside. As of November 2026.
   `version.json` files), what they run, licence and link.
 - Between 900 and 1200 px the emulators move below the main column; on narrow screens both sidebars move
   below the demos. While a program runs both are hidden.
-- Selecting a demo scrolls the page just enough to show the whole demo info with its Start button.
 
 ### 3.4 Picture and sound
 
@@ -200,8 +203,9 @@ CD tracks next to a `.cue` are not listed; the `.cue` is started with all its tr
 - Boxedwine, js-dos and v86 are pinned; `scripts/update-runtimes.mjs` checks for new versions
   (see [development.md](development.md#update-the-emulators)). The version labels on the page read the
   `version.json` files written by the fetch script.
-- Size of the published site: ~440 MB (EmulatorJS ~205 MB, Boxedwine ~107 MB, demos ~110 MB, js-dos ~6 MB,
-  v86 ~4 MB, source archives). GitHub Pages allows 1 GB.
+- Size of the published site: ~440 MB (EmulatorJS ~206 MB, demos ~120 MB, Boxedwine ~107 MB, js-dos ~6 MB,
+  v86 ~5 MB, source archives). GitHub Pages allows 1 GB.
+- The README screenshots are in `docs/images/` (WebP, taken from the running site at 1440 px width).
 - Multithreading needs cross-origin isolation; on GitHub Pages `coi-serviceworker` provides it
   (see [development.md](development.md#why-a-service-worker)). `scripts/serve.mjs` is a local server
   with the headers (`--no-coi` without).
@@ -221,9 +225,14 @@ CD tracks next to a `.cue` are not listed; the `.cue` is started with all its tr
 | All demos | start from the demo carousel |
 | Loading screen on a slow connection (5 MB/s) | steps and "x of 38.5 MB" visible |
 | Picture scaling, normal and fullscreen | fills the area with the right aspect ratio for all four emulators |
+| Horizontal Shooter and Pink Wall (`.sfc`, SNES) | run with Snes9x; Pink Wall with music, Horizontal Shooter has no sound by design |
+| *Sound on/off* (audio level measured at the speakers) | js-dos and EmulatorJS go silent and come back |
+| *Pause/Resume* (picture and audio compared) | all four emulators stop and continue; Boxedwine does not run on while paused |
+| Arrow keys, space, page down while a program runs | page does not scroll, the emulator still gets the keys |
+| Carousel: drag with the mouse, scroll bar, arrow buttons | scrolls and snaps; a drag never opens a demo |
 
-Not tested yet: drag & drop, writing back into a folder, DOS/4GW programs, most consoles and home
-computers, BIOS files, CD images with `.cue`.
+Not tested yet: drag & drop of files, writing back into a folder, DOS/4GW programs, most consoles and
+home computers, BIOS files, CD images with `.cue`, muting Boxedwine and v86 (their demos make no sound).
 
 ## 8. Open points
 

@@ -93,7 +93,7 @@ site/                  the website (this is what gets published)
   boxedwine/, jsdos/, emulatorjs/, v86/, demos/   created by the fetch script (not in git)
 demos/demos.json       list of demos
 demos/local/           demo files stored in the repository
-docs/                  documentation
+docs/                  documentation, docs/images/ has the README screenshots
 scripts/
   fetch-runtimes.mjs   downloads emulators, licences and source code
   update-runtimes.mjs  checks Boxedwine, js-dos and v86 for new versions
