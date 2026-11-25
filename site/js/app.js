@@ -334,7 +334,7 @@ async function start(overrides = {}) {
   $('run-title').textContent = `${program.path} (${what})`;
 
   const ui = {
-    canvas: $('canvas'), dosContainer: $('dos-container'), ejsContainer: $('ejs-container'), v86Container: $('v86-container'), status, log,
+    screen: $('screen'), canvas: $('canvas'), dosContainer: $('dos-container'), ejsContainer: $('ejs-container'), v86Container: $('v86-container'), status, log,
     steps: setSteps, step: setStep, progress: setProgress, ready: hideLoader,
     emulatorInfo: (text) => { $('run-emulator').textContent = text; },
   };

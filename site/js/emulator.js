@@ -2,6 +2,7 @@
 // mounted as drive D:. Boxedwine itself is loaded unmodified from ./boxedwine/.
 
 import { Runner, loadScript, prefetch, splitPath } from './runner.js';
+import { fitToBox } from './fit.js';
 
 const D_DRIVE = '/d_drive';
 const D_DRIVE_IN_WINE = '/home/username/.wine/dosdevices/d:';
@@ -36,6 +37,7 @@ export class WindowsRunner extends Runner {
     this.workspace = workspace;
     const { status, log, canvas } = this.ui;
     canvas.hidden = false;
+    fitToBox(canvas, this.ui.screen);
 
     const threaded = opts.threads === 'mt' || (opts.threads === 'auto' && canUseThreads());
     if (threaded && !canUseThreads()) {
