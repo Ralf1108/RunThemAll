@@ -432,6 +432,16 @@ $('btn-restart').addEventListener('click', () => {
   location.reload();
 });
 
+// While a program runs, keys that games use must not scroll the page
+// (arrow keys, space, page up/down, home/end). The emulators still get them.
+const SCROLL_KEYS = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'Spacebar', 'PageUp', 'PageDown', 'Home', 'End']);
+window.addEventListener('keydown', (e) => {
+  if (!emulator?.running || $('run').hidden || !SCROLL_KEYS.has(e.key)) return;
+  const t = e.target;
+  if (t instanceof HTMLElement && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+  e.preventDefault();
+}, { capture: true });
+
 window.addEventListener('beforeunload', (e) => {
   if (emulator?.running) e.preventDefault();
 });

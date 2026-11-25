@@ -35,7 +35,7 @@ Free games, programs and operating systems to try with one click, for example:
 - **Operating systems**: Tiny Core Linux, KolibriOS, ReactOS, a plain DOS prompt
 - **Windows**: SkiFree, OpenTTD, Castle of the Winds 1 and 2
 - **DOS**: Keen Dreams, Dark Forces (demo), Indiana Jones and the Fate of Atlantis (demo), Boppin'
-- **Retro**: T-Rex 64 (C64), Horizontal Shooter (Super Nintendo), Nova the Squirrel (NES), µCity (Game Boy Color)
+- **Retro**: T-Rex 64 (C64), Pink Wall and Horizontal Shooter (Super Nintendo), Nova the Squirrel (NES), µCity (Game Boy Color)
 
 Where they come from and their licences: [demos/README.md](demos/README.md)
 

@@ -73,6 +73,7 @@ versions, licence texts and the games that were checked but not included: [demos
 | Boppin' 1.1 (shareware episode) | Accursed Toys / Apogee | shareware, sharing without charge allowed (VENDOR.DOC) | classicdosgames.com, preinstalled in demos/local |
 | ReactOS 0.4.15 (live CD) | ReactOS project | GPL-2.0 | github.com/reactos/reactos |
 | T-Rex 64 1.0.2 | Maciej Małecki | MIT | github.com/maciejmalecki/trex64 |
+| Pink Wall 1.0.1 | Luciano C. Siqueira, BrunoRNS | GPL-3.0 (source in the linked repository) | github.com/LucianoCSiqueira/pinkwall |
 | Horizontal Shooter 1.1 | Marcus Rowe (undisbeliever) | MIT (code), CC0 (graphics) | github.com/undisbeliever/horizontal-shooter |
 | Nova the Squirrel 1.0.6a | NovaSquirrel | GPL-3.0 (source in the linked repository) | github.com/NovaSquirrel/NovaTheSquirrel |
 | µCity 1.3 | Antonio Niño Díaz | GPL-3.0 (source in the linked repository) | github.com/AntonioND/ucity |

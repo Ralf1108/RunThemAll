@@ -189,11 +189,25 @@
     "system": "c64"
   },
   {
-    "id": "horizontalshooter",
-    "title": "Horizontal Shooter",
+    "id": "pinkwall",
+    "title": "Pink Wall",
     "platform": "Super Nintendo",
     "emulator": "EmulatorJS (Snes9x)",
-    "description": "Side-scrolling space shooter for the SNES: steer your ship with the D-pad and shoot with B (on the keyboard: arrow keys and X).",
+    "description": "Catch the bricks falling from the sky. Miss one and you move on to the next level, the last one cannot be won. With music. Press Start (Enter key) to begin. Inspired by Pink Floyd's \"The Wall\".",
+    "author": "Luciano C. Siqueira, BrunoRNS",
+    "homepage": "https://github.com/LucianoCSiqueira/pinkwall",
+    "license": "GPL-3.0",
+    "url": "https://github.com/LucianoCSiqueira/pinkwall/releases/download/v1.0.1/PinkWall.sfc",
+    "file": "snes/pinkwall.sfc",
+    "start": "pinkwall.sfc",
+    "system": "snes"
+  },
+  {
+    "id": "horizontalshooter",
+    "title": "Horizontal Shooter (no sound)",
+    "platform": "Super Nintendo",
+    "emulator": "EmulatorJS (Snes9x)",
+    "description": "Side-scrolling space shooter demo for the SNES: steer your ship with the D-pad and shoot with B (on the keyboard: arrow keys and X). The demo has no sound.",
     "author": "Marcus Rowe (undisbeliever)",
     "homepage": "https://github.com/undisbeliever/horizontal-shooter",
     "license": "MIT (code), CC0 (graphics)",
