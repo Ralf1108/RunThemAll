@@ -502,9 +502,18 @@ $('btn-fullscreen').addEventListener('click', () => {
 });
 
 $('btn-restart').addEventListener('click', () => {
-  if (!confirm('Quit the program? Unsaved changes will be lost.')) return;
-  if (emulator) emulator.running = false; // skip the beforeunload prompt
-  location.reload();
+  const quit = () => {
+    if (emulator) emulator.running = false; // skip the beforeunload prompt
+    location.reload();
+  };
+  const canSave = !$('btn-changes').hidden;
+  showDialog('Quit the program?',
+    canSave ? 'Files the program changed are lost unless you save them first.' : 'The program is stopped and you go back to the start page.',
+    [], false, [
+      { label: 'Cancel' },
+      ...(canSave ? [{ label: 'Save first …', run: () => $('btn-changes').click() }] : []),
+      { label: 'Quit', primary: true, run: quit },
+    ]);
 });
 
 // While a program runs, keys that games use must not scroll the page
@@ -921,15 +930,19 @@ fetch('demos/demos.json')
 
 $('btn-clear').addEventListener('click', async () => {
   if (emulator?.running) {
-    alert('Please quit the running program first.');
+    showDialog('Program still running', 'Please quit the running program first.');
     return;
   }
-  if (!confirm('Reset the virtual environment?\n\n'
-    + 'This only affects data that Windows programs stored here in the browser: '
-    + 'settings, programs installed there and save games.\n\n'
-    + 'Files on your computer are not touched. The environment is set up again on the next start.')) return;
-  await clearPersistentStorage();
-  alert('The virtual environment was reset. It is set up again when you next start a Windows program.');
+  showDialog('Reset the virtual environment?',
+    'This only affects data that Windows programs stored here in the browser: settings, programs installed '
+      + 'there and save games. Files on your computer are not touched. The environment is set up again on the next start.',
+    [], false, [
+      { label: 'Cancel' },
+      { label: 'Reset', primary: true, run: async () => {
+        await clearPersistentStorage();
+        showDialog('Reset done', 'The virtual environment was reset. It is set up again when you next start a Windows program.');
+      } },
+    ]);
 });
 
 /** Writes an emulator version into the right sidebar. */
