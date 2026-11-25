@@ -239,25 +239,50 @@ select {
 .screen:fullscreen { width: 100vw; height: 100vh; border-radius: 0; background: #000; }
 /* The emulators fill the area; js/fit.js scales canvases to the new size. */
 
-/* Layout: platform list on the left, main column on the right */
+/* Layout: platforms on the left, main column, emulators on the right */
 .layout {
-  flex: 1; width: min(1240px, 100% - 2rem);
-  display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 1.25rem; align-items: start;
+  flex: 1; width: min(1480px, 100% - 2rem);
+  display: grid; grid-template-columns: 220px minmax(0, 1fr) 220px; gap: 1.25rem; align-items: start;
 }
+.site-header .wrap, .site-footer .wrap { width: min(1480px, 100% - 2rem); }
 .layout:has(> .platforms[hidden]) { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 1200px) {
+  /* emulators move below the main column */
+  .layout { grid-template-columns: 220px minmax(0, 1fr); grid-template-rows: auto 1fr; }
+  .layout > .platforms { grid-row: span 2; }
+  .layout > .emulators { grid-column: 2; margin-top: 0; }
+  .layout > main { padding-bottom: 0; }
+  .emu-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: .6rem; }
+}
 @media (max-width: 900px) {
-  .layout { grid-template-columns: minmax(0, 1fr); }
-  .layout > .platforms { order: 2; }
+  .layout { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
+  .layout > .platforms { order: 2; grid-row: auto; }
+  .layout > .emulators { order: 3; grid-column: auto; }
   .platforms #platform-list { columns: 2 180px; }
 }
 
-/* Supported platforms */
-.platforms {
+/* Side panels (platforms, emulators) */
+.side-panel {
   margin-top: 1rem;
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
   padding: 1rem .9rem;
 }
-.platforms h2 { margin: 0 0 .5rem; font-size: 1rem; }
+.side-panel h2 { margin: 0 0 .5rem; font-size: 1rem; }
+.side-intro { margin: 0 0 .75rem; font-size: .8rem; color: var(--muted); }
+
+/* Emulators */
+.emu-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .6rem; }
+.emu-card {
+  padding: .6rem .7rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg);
+  transition: border-color .15s, background-color .15s, box-shadow .15s;
+}
+.emu-card.highlight { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 2px var(--accent-soft); }
+.emu-name { font-weight: 700; font-size: .95rem; }
+.emu-version { font-size: .72rem; color: var(--muted); margin-left: .25rem; }
+.emu-card p { margin: .25rem 0 0; font-size: .8rem; line-height: 1.35; }
+.emu-card .emu-meta { color: var(--muted); font-size: .72rem; }
+.platform-group li { cursor: default; border-radius: 6px; }
+.platform-group li:hover { background: var(--accent-soft); }
 .platform-group { break-inside: avoid; margin-bottom: .6rem; }
 .platform-group h3 {
   margin: .5rem 0 .25rem; font-size: .72rem; font-weight: 700; letter-spacing: .06em;
@@ -279,7 +304,6 @@ select {
 }
 .platforms-foot { margin: .4rem 0 0; font-size: .75rem; color: var(--muted); }
 .platforms-foot a { display: block; margin-top: .2rem; }
-.site-header .wrap, .site-footer .wrap { width: min(1240px, 100% - 2rem); }
 
 /* Demos: carousel with one tile per platform */
 .demos-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: .9rem; }
@@ -357,7 +381,7 @@ select {
 /* Demo info: panel below the carousel, arrow points at the tile */
 .demo-detail {
   --tile: var(--accent);
-  position: relative; margin-top: .9rem;
+  position: relative; margin-top: .9rem; scroll-margin: 1rem; /* space when scrolled into view */
   background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);
   border-left: 3px solid var(--tile);
   padding: .9rem 1rem; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .35rem 1.25rem; align-items: start;

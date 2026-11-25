@@ -61,10 +61,10 @@ export function platformStyle(platform) {
  */
 export const SUPPORTED_GROUPS = [
   { title: 'PC', items: [
-    { label: 'DOS', logo: 'dos.svg' },
-    { label: 'Windows 3.x', logo: 'windows3.svg' },
-    { label: 'Windows 95 – XP', logo: 'windows.svg' },
-    { label: 'Operating systems', note: 'boot a CD, floppy or hard disk image', logo: 'cd.svg' },
+    { label: 'DOS', logo: 'dos.svg', emulator: 'jsdos', detail: 'DOSBox' },
+    { label: 'Windows 3.x', logo: 'windows3.svg', emulator: 'boxedwine', detail: 'Wine 6' },
+    { label: 'Windows 95 – XP', logo: 'windows.svg', emulator: 'boxedwine', detail: 'Wine 6 or 11' },
+    { label: 'Operating systems', note: 'boot a CD, floppy or hard disk image', logo: 'cd.svg', emulator: 'v86', detail: 'SeaBIOS' },
   ] },
   { title: 'Home computers', icon: 'c64', ids: ['c64', 'c128', 'vic20', 'plus4', 'pet', 'amiga', 'zxspectrum', 'zx81', 'cpc'],
     logos: { c64: 'commodore.svg', c128: 'commodore.svg', vic20: 'commodore.svg', plus4: 'commodore.svg', pet: 'commodore.svg' } },
@@ -76,24 +76,43 @@ export const SUPPORTED_GROUPS = [
   { title: 'Arcade', icon: 'arcade', ids: ['arcade', 'mame'] },
 ];
 
+/** The emulators behind Run Them All (right sidebar), by id. */
+export const EMULATORS = {
+  boxedwine: { name: 'Boxedwine' },
+  jsdos: { name: 'js-dos' },
+  emulatorjs: { name: 'EmulatorJS' },
+  v86: { name: 'v86' },
+};
+
 /**
  * The sidebar entries of a group.
  * @param {object} group one of SUPPORTED_GROUPS
  * @param {Map<string, object>} systems SYSTEM_BY_ID from systems.js
- * @returns {{ label: string, note?: string, logo: string|null, icon: string, bios: boolean }[]}
+ * @returns {{ label: string, note?: string, logo: string|null, icon: string, bios: boolean,
+ *   emulator: string, tooltip: string }[]}
  */
 export function supportedItems(group, systems) {
+  const tooltip = (item) => [
+    `Runs with ${EMULATORS[item.emulator].name}${item.detail ? ` (${item.detail})` : ''}`,
+    item.note, item.bios ? 'Needs an original BIOS file' : '',
+  ].filter(Boolean).join('\n');
   if (group.items) {
-    return group.items.map((i) => ({ ...i, logo: `img/platforms/${i.logo}`, icon: ICONS.other, bios: false }));
+    return group.items.map((i) => {
+      const item = { ...i, logo: `img/platforms/${i.logo}`, icon: ICONS.other, bios: false };
+      return { ...item, tooltip: tooltip(item) };
+    });
   }
   return group.ids.map((id) => {
     const system = systems.get(id);
     const logo = group.logos?.[id];
-    return {
+    const item = {
       label: system.label,
       logo: logo ? `img/platforms/${logo}` : null,
       icon: ICONS[group.icon] ?? ICONS.other,
       bios: Boolean(system.bios?.required),
+      emulator: 'emulatorjs',
+      detail: `core ${system.core}`,
     };
+    return { ...item, tooltip: tooltip(item) };
   });
 }

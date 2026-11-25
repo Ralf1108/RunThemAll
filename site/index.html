@@ -24,7 +24,7 @@
 
   <div class="wrap layout">
   <!-- Supported platforms: filled from js/platforms.js -->
-  <aside id="platforms" class="platforms" aria-labelledby="platforms-title">
+  <aside id="platforms" class="side-panel platforms" aria-labelledby="platforms-title">
     <h2 id="platforms-title">Supported platforms</h2>
     <div id="platform-list"></div>
     <p class="platforms-foot"><span class="bios-tag">BIOS</span> needs an original BIOS file.
@@ -208,6 +208,38 @@
       </details>
     </section>
   </main>
+
+  <!-- The emulators behind Run Them All; versions are filled in from */version.json -->
+  <aside id="emulators" class="side-panel emulators" aria-labelledby="emulators-title">
+    <h2 id="emulators-title">Emulators</h2>
+    <p class="side-intro">Run Them All picks the right one of these open source emulators for you.</p>
+    <ul class="emu-list">
+      <li class="emu-card" data-emulator="boxedwine">
+        <a class="emu-name" href="https://github.com/danoon2/Boxedwine" rel="noopener">Boxedwine</a>
+        <span class="emu-version" data-version="boxedwine"></span>
+        <p>Windows 3.x and Windows 95 – XP programs, with <a href="https://www.winehq.org" rel="noopener">Wine</a></p>
+        <p class="emu-meta">GPL-2.0</p>
+      </li>
+      <li class="emu-card" data-emulator="jsdos">
+        <a class="emu-name" href="https://js-dos.com" rel="noopener">js-dos</a>
+        <span class="emu-version" data-version="jsdos"></span>
+        <p>DOS programs and games, with <a href="https://www.dosbox.com" rel="noopener">DOSBox</a></p>
+        <p class="emu-meta">GPL-2.0</p>
+      </li>
+      <li class="emu-card" data-emulator="emulatorjs">
+        <a class="emu-name" href="https://emulatorjs.org" rel="noopener">EmulatorJS</a>
+        <span class="emu-version" data-version="emulatorjs"></span>
+        <p>Consoles, handhelds, home computers and arcade, with <a href="https://www.libretro.com" rel="noopener">libretro</a> cores</p>
+        <p class="emu-meta">GPL-3.0 · <a href="emulatorjs/cores.html">all cores</a></p>
+      </li>
+      <li class="emu-card" data-emulator="v86">
+        <a class="emu-name" href="https://github.com/copy/v86" rel="noopener">v86</a>
+        <span class="emu-version" data-version="v86"></span>
+        <p>Complete PCs that boot operating systems, with <a href="https://www.seabios.org" rel="noopener">SeaBIOS</a></p>
+        <p class="emu-meta">BSD-2-Clause</p>
+      </li>
+    </ul>
+  </aside>
   </div>
 
   <footer class="site-footer">

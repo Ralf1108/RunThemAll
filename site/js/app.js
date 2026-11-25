@@ -332,6 +332,7 @@ async function start(overrides = {}) {
   hideDemoDetail();
   $('demos').hidden = true;
   $('platforms').hidden = true; // the emulator gets the full width
+  $('emulators').hidden = true;
   $('run').hidden = false;
   window.scrollTo({ top: 0 }); // the demos may have been scrolled into view
   const what = program.kind === 'game' ? SYSTEM_BY_ID.get(opts.system).label : EMULATOR_NAMES[program.emulator];
@@ -604,6 +605,7 @@ function showDemoDetail(demo, anchor, optionsOpen = false) {
     form.hidden = !form.hidden;
     optionsButton.setAttribute('aria-expanded', String(!form.hidden));
     placeDemoDetail();
+    revealDemoDetail();
   });
   const close = el('button', { type: 'button', className: 'demo-close', title: 'Close', textContent: '×' });
   close.setAttribute('aria-label', 'Close');
@@ -632,6 +634,19 @@ function hideDemoDetail() {
   $('demo-detail').hidden = true;
   demoAnchor?.removeAttribute('aria-current');
   demoAnchor = null;
+}
+
+/** Scrolls the carousel sideways (not the page) so that a tile is fully visible. */
+function showTile(tile) {
+  const c = carousel.getBoundingClientRect();
+  const t = tile.getBoundingClientRect();
+  if (t.left < c.left) carousel.scrollBy({ left: t.left - c.left - 4, behavior: 'smooth' });
+  else if (t.right > c.right) carousel.scrollBy({ left: t.right - c.right + 4, behavior: 'smooth' });
+}
+
+/** Scrolls the page just enough to show the whole demo info with its Start button. */
+function revealDemoDetail() {
+  requestAnimationFrame(() => $('demo-detail').scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
 }
 
 /** Points the arrow of the info panel at the tile of the selected demo. */
@@ -773,7 +788,8 @@ function renderDemoTree(list) {
         if (demoAnchor === button) hideDemoDetail();
         else {
           showDemoDetail(demo, button);
-          button.closest('.demo-tile').scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+          showTile(button.closest('.demo-tile'));
+          revealDemoDetail();
         }
       });
       button.addEventListener('dblclick', () => showDemoDetail(demo, button).click());
@@ -803,7 +819,11 @@ function renderPlatforms() {
       const icon = el('span', { className: item.logo ? 'platform-icon logo' : 'platform-icon' });
       if (item.logo) icon.append(el('img', { src: item.logo, alt: '', width: 22, height: 22, decoding: 'async' }));
       else icon.innerHTML = item.icon; // own static SVG markup from platforms.js
-      const li = el('li', { title: item.note ?? '' }, icon, el('span', { className: 'platform-name', textContent: item.label }));
+      const li = el('li', { title: item.tooltip }, icon, el('span', { className: 'platform-name', textContent: item.label }));
+      // Hovering a platform highlights its emulator in the right sidebar.
+      const card = () => document.querySelector(`.emu-card[data-emulator="${item.emulator}"]`);
+      li.addEventListener('mouseenter', () => card()?.classList.add('highlight'));
+      li.addEventListener('mouseleave', () => card()?.classList.remove('highlight'));
       if (item.bios) li.append(el('span', { className: 'bios-tag', textContent: 'BIOS', title: 'Needs an original BIOS file' }));
       return li;
     })))));
@@ -843,11 +863,17 @@ $('btn-clear').addEventListener('click', async () => {
   alert('The virtual environment was reset. It is set up again when you next start a Windows program.');
 });
 
+/** Writes an emulator version into the right sidebar. */
+function showVersion(id, version) {
+  for (const node of document.querySelectorAll(`[data-version="${id}"]`)) node.textContent = version;
+}
+
 fetch('jsdos/version.json')
   .then((r) => (r.ok ? r.json() : null))
   .then((v) => {
     if (!v) return;
     $('jsdos-version').textContent = v.jsdos;
+    showVersion('jsdos', v.jsdos);
     $('jsdos-sources').replaceChildren(...v.sources.flatMap((src, i) => {
       const a = document.createElement('a');
       a.href = `jsdos/${src}`;
@@ -862,6 +888,7 @@ fetch('emulatorjs/version.json')
   .then((v) => {
     if (!v) return;
     $('ejs-version').textContent = v.version;
+    showVersion('emulatorjs', v.version);
     $('ejs-source').href = `emulatorjs/source/EmulatorJS-${v.version}-source.tar.gz`;
   })
   .catch(() => {});
@@ -871,6 +898,7 @@ fetch('boxedwine/version.json')
   .then((v) => {
     if (!v) return;
     $('bw-version').textContent = v.tag;
+    showVersion('boxedwine', v.tag);
     $('bw-source').href = `boxedwine/source/Boxedwine-${v.tag}-source.tar.gz`;
   })
   .catch(() => {});
@@ -880,6 +908,7 @@ fetch('v86/version.json')
   .then((v) => {
     if (!v) return;
     $('v86-version').textContent = v.v86;
+    showVersion('v86', v.v86);
     $('v86-sources').replaceChildren(...v.sources.flatMap((src, i) => {
       const a = document.createElement('a');
       a.href = `v86/${src}`;

@@ -77,13 +77,19 @@ How Run Them All works inside. As of November 2026.
 - *Start* opens the file like a user file, preselects program and system and starts at once.
 - Sources and licences: [demos/README.md](../demos/README.md).
 
-### 3.3 Supported platforms
+### 3.3 Supported platforms and emulators
 
 - A sidebar on the left of the start page lists every supported platform, grouped
   (PC, home computers, consoles, handhelds, arcade), with logo or icon.
 - It is built from `SUPPORTED_GROUPS` in `js/platforms.js` and the system table in `js/systems.js`,
   so it matches what the detection supports. Systems that need an original BIOS are marked "BIOS".
-- On narrow screens it moves below the demos (two columns); while a program runs it is hidden.
+- Hovering a platform shows a tooltip with its emulator (e.g. "Runs with EmulatorJS (core snes9x)") and
+  highlights that emulator in the right sidebar.
+- The right sidebar lists the emulators (Boxedwine, js-dos, EmulatorJS, v86) with version (from the
+  `version.json` files), what they run, licence and link.
+- Between 900 and 1200 px the emulators move below the main column; on narrow screens both sidebars move
+  below the demos. While a program runs both are hidden.
+- Selecting a demo scrolls the page just enough to show the whole demo info with its Start button.
 
 ### 3.4 Picture and sound
 
