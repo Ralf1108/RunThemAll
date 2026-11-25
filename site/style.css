@@ -114,7 +114,8 @@ main { flex: 1; padding-bottom: 2rem; }
 .muted { color: var(--muted); margin: 0 0 1rem; }
 .error { color: var(--error); margin: 1rem 0 0; }
 
-.choose-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+.choose-head { display: flex; align-items: center; gap: 1rem; }
+.choose-head h2 { margin: 0; }
 
 .program-list {
   list-style: none; margin: 0; padding: 0;
