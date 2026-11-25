@@ -206,11 +206,21 @@ select {
 .ejs-container { position: relative; width: 100%; height: 100%; }
 .ejs-container > div { width: 100%; height: 100%; }
 
-/* Sound and pause buttons in the toolbar */
-.wx-toggle { display: inline-flex; align-items: center; gap: .4rem; }
-.wx-toggle svg { flex: none; }
-.wx-toggle.off { color: var(--muted); }
-#btn-pause[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+/* Toolbar buttons with icon; Sound and Play/Pause show their state: green = on/running, red = off/paused */
+.wx-icon { display: inline-flex; align-items: center; gap: .4rem; }
+.wx-icon svg { flex: none; }
+.wx-toggle { --state: #2f9e57; }
+.wx-toggle.state-off { --state: #d64545; }
+@media (prefers-color-scheme: dark) {
+  .wx-toggle { --state: #4cc47a; }
+  .wx-toggle.state-off { --state: #ff7066; }
+}
+.wx-toggle, .wx-toggle:hover:not(:disabled) {
+  color: var(--state);
+  border-color: color-mix(in srgb, var(--state) 55%, transparent);
+  background: color-mix(in srgb, var(--state) 13%, var(--surface));
+}
+.wx-toggle:hover:not(:disabled) { background: color-mix(in srgb, var(--state) 22%, var(--surface)); }
 
 /* Running emulator */
 .emu-badge {

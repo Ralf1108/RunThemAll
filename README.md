@@ -55,7 +55,8 @@ Where they come from: [demos/README.md](demos/README.md)
 ## Tips
 
 - **No sound?** Click once into the picture. Browsers only play sound after a click.
-- **Buttons while playing**: *Sound on/off*, *Pause*, *Fullscreen*, *Quit*.
+- **Buttons while playing**: *Changed files*, *Sound on/off*, *Play/Pause*, *Fullscreen*, *Quit*.
+  Green means sound on or running, red means sound off or paused.
 - **Mouse in operating systems**: click into the picture to use the mouse, `Esc` releases it.
 - **Save games**: *Changed files* shows what the program saved. Download it as a ZIP or, in Chrome or
   Edge with an opened folder, write it back directly (*Apply to folder*).

@@ -452,8 +452,9 @@ function setSound(on) {
   setMuted(!on);
   const button = $('btn-sound');
   button.setAttribute('aria-pressed', String(on));
-  button.classList.toggle('off', !on);
-  button.title = on ? 'Switch the sound off' : 'Switch the sound on';
+  button.classList.toggle('state-on', on);
+  button.classList.toggle('state-off', !on);
+  button.title = on ? 'Sound is on – click to switch it off' : 'Sound is off – click to switch it on';
   button.querySelector('svg').innerHTML = on ? SPEAKER_ON : SPEAKER_OFF;
   button.querySelector('span').textContent = on ? 'Sound on' : 'Sound off';
 }
@@ -465,9 +466,11 @@ function setPaused(value) {
   paused = value;
   const button = $('btn-pause');
   button.setAttribute('aria-pressed', String(paused));
-  button.title = paused ? 'Resume the emulation' : 'Pause the emulation';
-  button.querySelector('svg').innerHTML = paused ? '<path d="M7 5v14l12-7z"/>' : '<path d="M9 5v14M15 5v14"/>';
-  button.querySelector('span').textContent = paused ? 'Resume' : 'Pause';
+  button.classList.toggle('state-on', !paused);
+  button.classList.toggle('state-off', paused);
+  button.title = paused ? 'Paused – click to continue' : 'Running – click to pause';
+  button.querySelector('svg').innerHTML = paused ? '<path d="M9 5v14M15 5v14"/>' : '<path d="M7 5v14l12-7z"/>';
+  button.querySelector('span').textContent = paused ? 'Pause' : 'Play';
 }
 $('btn-pause').addEventListener('click', () => {
   if (!emulator) return;

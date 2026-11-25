@@ -51,8 +51,10 @@ side the supported platforms and the emulators (3.3). The interface is in Englis
    - *Sound on/off*: mutes every emulator the same way: `js/audio.js` routes everything sent to the
      speakers through one master gain per audio context. The emulators always start with sound;
      the option "Sound" only decides whether the button starts as on or off.
-   - *Pause/Resume*: EmulatorJS `pause()`/`play()`, js-dos `ci.pause()`/`ci.resume()`, v86 `stop()`/`run()`,
+   - *Play/Pause*: EmulatorJS `pause()`/`play()`, js-dos `ci.pause()`/`ci.resume()`, v86 `stop()`/`run()`,
      Boxedwine `Module.pauseMainLoop()`/`resumeMainLoop()` (checked: the program does not run on while paused).
+   - All toolbar buttons have an icon. *Sound* and *Play/Pause* show the current state: green with
+     *Sound on* / *Play* while it is on or running, red with *Sound off* / *Pause* after a click.
    - *Fullscreen*: the emulator area goes fullscreen.
    - Keys that games use (arrows, space, page up/down, home/end) do not scroll the page while a program runs.
    - *Quit*: reloads the page.
@@ -227,7 +229,7 @@ CD tracks next to a `.cue` are not listed; the `.cue` is started with all its tr
 | Picture scaling, normal and fullscreen | fills the area with the right aspect ratio for all four emulators |
 | Horizontal Shooter and Pink Wall (`.sfc`, SNES) | run with Snes9x; Pink Wall with music, Horizontal Shooter has no sound by design |
 | *Sound on/off* (audio level measured at the speakers) | js-dos and EmulatorJS go silent and come back |
-| *Pause/Resume* (picture and audio compared) | all four emulators stop and continue; Boxedwine does not run on while paused |
+| *Play/Pause* (picture and audio compared) | all four emulators stop and continue; Boxedwine does not run on while paused |
 | Arrow keys, space, page down while a program runs | page does not scroll, the emulator still gets the keys |
 | Carousel: drag with the mouse, scroll bar, arrow buttons | scrolls and snaps; a drag never opens a platform |
 | Platform tile → demo list → demo info → *Start* (1440 and 400 px wide) | list and info open below, clicking the tile again closes both |

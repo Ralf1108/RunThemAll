@@ -183,15 +183,21 @@
         <strong id="run-title"></strong>
         <span id="run-emulator" class="emu-badge" title="Running emulator"></span>
         <span class="spacer"></span>
-        <button type="button" id="btn-changes" class="wx-btn wx-small" title="Show the files the program changed or created, then download them or write them back">Changed files …</button>
-        <button type="button" id="btn-sound" class="wx-btn wx-small wx-toggle" aria-pressed="true" title="Switch the sound off">
+        <button type="button" id="btn-changes" class="wx-btn wx-small wx-icon" title="Show the files the program changed or created, then download them or write them back">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M12 12v6M9 15l3 3 3-3"/></svg>
+          <span>Changed files …</span></button>
+        <button type="button" id="btn-sound" class="wx-btn wx-small wx-icon wx-toggle state-on" aria-pressed="true" title="Sound is on – click to switch it off">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="on" d="M11 5 6 9H3v6h3l5 4z"/><path class="on" d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>
           <span>Sound on</span></button>
-        <button type="button" id="btn-pause" class="wx-btn wx-small wx-toggle" aria-pressed="false" title="Pause the emulation" disabled hidden>
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5v14M15 5v14"/></svg>
-          <span>Pause</span></button>
-        <button type="button" id="btn-fullscreen" class="wx-btn wx-small">Fullscreen</button>
-        <button type="button" id="btn-restart" class="wx-btn wx-small wx-ghost">Quit</button>
+        <button type="button" id="btn-pause" class="wx-btn wx-small wx-icon wx-toggle state-on" aria-pressed="false" title="Running – click to pause" disabled hidden>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 5v14l12-7z"/></svg>
+          <span>Play</span></button>
+        <button type="button" id="btn-fullscreen" class="wx-btn wx-small wx-icon" title="Show the picture on the whole screen (Esc ends it)">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+          <span>Fullscreen</span></button>
+        <button type="button" id="btn-restart" class="wx-btn wx-small wx-ghost wx-icon" title="Stop the program and go back to the start page">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 17l-5-5 5-5M5 12h11"/></svg>
+          <span>Quit</span></button>
       </div>
       <div class="status-row">
         <span id="status-text">Preparing …</span>
