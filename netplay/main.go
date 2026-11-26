@@ -45,6 +45,7 @@ func main() {
 	flag.Float64Var(&cfg.BytePerSec, "byte-rate", cfg.BytePerSec, "bytes per second per player (more are dropped)")
 	flag.Float64Var(&cfg.CreatePerMin, "create-rate", cfg.CreatePerMin, "new rooms per minute per IP address")
 	flag.Float64Var(&cfg.JoinPerMin, "join-rate", cfg.JoinPerMin, "join attempts per minute per IP address")
+	lan := flag.String("lan", envOr("NETPLAY_LAN", cfg.LAN.String()), "network of every room, the relay hands out addresses by DHCP (PCs with a network card); off: no DHCP")
 	showVersion := flag.Bool("version", false, "print the version")
 	flag.Parse()
 	if *showVersion {
@@ -52,6 +53,10 @@ func main() {
 		return
 	}
 	cfg.Origins = splitList(*origins)
+	var err error
+	if cfg.LAN, err = ParseLAN(*lan); err != nil {
+		log.Fatal(err)
+	}
 
 	hub := NewHub(cfg)
 	srv := &http.Server{
@@ -72,7 +77,6 @@ func main() {
 	}()
 
 	log.Printf("netplay %s listening on %s (origins: %s)", Version, cfg.Addr, strings.Join(cfg.Origins, ","))
-	var err error
 	if cfg.TLSCert != "" {
 		err = srv.ListenAndServeTLS(cfg.TLSCert, cfg.TLSKey)
 	} else {

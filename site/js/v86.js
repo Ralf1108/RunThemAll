@@ -32,6 +32,12 @@ const SLOT_LABELS = { cdrom: 'CD-ROM', fda: 'floppy', hda: 'hard disk' };
  */
 
 export class V86Runner extends Runner {
+  constructor(ui) {
+    super(ui);
+    /** Netplay room (lobby.js): {ethUrl, room} gives the PC a network card on the relay. */
+    this.netplay = null;
+  }
+
   /** Disk images are kept in memory only; nothing is written back. */
   get supportsFileSync() { return false; }
 
@@ -97,7 +103,10 @@ export class V86Runner extends Runner {
       disable_speaker: false, // muting is done by the sound button (audio.js)
       acpi: false,
       autostart: true,
+      // In a netplay room: an NE2000 network card, its cable is the relay (one LAN per room).
+      ...(this.netplay ? { net_device: { type: 'ne2k', relay_url: this.netplay.ethUrl } } : {}),
     });
+    if (this.netplay) log(`Network card NE2000 in room ${this.netplay.room}: the relay hands out addresses by DHCP.`, false);
     this.emulator.add_listener('emulator-started', () => {
       this.ui.ready();
       this.ui.hint?.('Click into the picture to use the mouse; Esc releases it.');

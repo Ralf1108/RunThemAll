@@ -3,7 +3,7 @@ import { fromDataTransfer, fromDirectoryHandle, fromFileList, fromStoredFiles, f
 import { clearRestart, saveRestart, takeRestart } from './restart.js';
 import { KEY_BY_ID, VIRTUAL_KEYS } from './keys.js';
 import { createGamepad, loadMapping, PAD_BUTTONS, saveMapping } from './gamepad.js';
-import { initLobby, netplayForDos, netplayStatus } from './lobby.js';
+import { initLobby, netplayForConsole, netplayForDos, netplayForPc, netplayStatus } from './lobby.js';
 import { fetchWithProgress } from './runner.js';
 import { WindowsRunner, canUseThreads, clearPersistentStorage } from './emulator.js';
 import { DosRunner } from './dos.js';
@@ -419,8 +419,11 @@ async function start(overrides = {}) {
     : { dos: DosRunner, windows: WindowsRunner, emulatorjs: EmulatorJsRunner }[program.emulator];
   emulator = new Runner(ui);
   runInfo = { program, opts, crash: null };
-  // Netplay: in a room, DOS programs get IPX networking over the relay.
+  // Netplay: in a room, DOS programs get IPX networking over the relay, PCs a network card on
+  // the room's LAN and console games shared inputs.
   if (emulator instanceof DosRunner) emulator.netplay = netplayForDos();
+  else if (emulator instanceof V86Runner) emulator.netplay = netplayForPc();
+  else if (emulator instanceof EmulatorJsRunner) emulator.netplay = netplayForConsole();
   $('run-netplay').hidden = !emulator.netplay;
   $('run-netplay').textContent = netplayStatus();
   if (emulator.netplay) log(`Netplay: ${netplayStatus()}`, false);

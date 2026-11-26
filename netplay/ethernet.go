@@ -36,12 +36,13 @@ type Switch struct {
 	mu    sync.Mutex
 	ports map[*EthPort]struct{}
 	macs  map[[6]byte]*EthPort
+	lan   *LAN // DHCP server of the room, nil when switched off
 }
 
 const maxMacs = 256
 
-func NewSwitch() *Switch {
-	return &Switch{ports: map[*EthPort]struct{}{}, macs: map[[6]byte]*EthPort{}}
+func NewSwitch(lan *LAN) *Switch {
+	return &Switch{ports: map[*EthPort]struct{}{}, macs: map[[6]byte]*EthPort{}, lan: lan}
 }
 
 func (s *Switch) add(p *EthPort) {
@@ -70,6 +71,15 @@ func (s *Switch) Forward(from *EthPort, frame []byte) {
 	var dst, src [6]byte
 	copy(dst[:], frame[0:6])
 	copy(src[:], frame[6:12])
+	if s.lan != nil && (dst[0]&1 == 1 || dst == serverMAC) {
+		reply, consumed := s.lan.Handle(frame)
+		if reply != nil {
+			from.push(reply)
+		}
+		if consumed || dst == serverMAC {
+			return
+		}
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if src[0]&1 == 0 { // unicast source: learn it

@@ -16,6 +16,11 @@ export function controlUrl(relay) {
   return `${base}/v1`;
 }
 
+/** The Ethernet port of a player for PC emulators (v86): one WebSocket, one frame per message. */
+export function ethernetUrl(relay, token) {
+  return `${controlUrl(relay)}/eth?token=${encodeURIComponent(token)}`;
+}
+
 /** Room codes are typed in any case, with or without the dash. */
 export function normalizeCode(code) {
   const c = code.toUpperCase().replace(/[^ABCDEFGHJKMNPQRSTUVWXYZ23456789]/g, '');

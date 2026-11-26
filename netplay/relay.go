@@ -12,6 +12,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/netip"
 	"strings"
 	"sync"
 	"time"
@@ -39,6 +40,9 @@ type Config struct {
 	// Per IP address: rooms created and join attempts per minute.
 	CreatePerMin float64
 	JoinPerMin   float64
+
+	// Network of every room for the DHCP server (PCs with a network card); invalid: no DHCP.
+	LAN netip.Prefix
 }
 
 func DefaultConfig() Config {
@@ -52,6 +56,7 @@ func DefaultConfig() Config {
 		BytePerSec:   1 << 20,
 		CreatePerMin: 10,
 		JoinPerMin:   30,
+		LAN:          netip.MustParsePrefix("192.168.77.0/24"),
 	}
 }
 
@@ -469,7 +474,7 @@ func (h *Hub) createRoom(password string) (*Room, error) {
 	if len(h.rooms) >= h.cfg.MaxRooms {
 		return nil, errTooMany
 	}
-	r := &Room{created: time.Now(), members: map[uint32]*Client{}, sw: NewSwitch()}
+	r := &Room{created: time.Now(), members: map[uint32]*Client{}, sw: NewSwitch(NewLAN(h.cfg.LAN))}
 	if password != "" {
 		r.salt = make([]byte, 16)
 		_, _ = rand.Read(r.salt)
