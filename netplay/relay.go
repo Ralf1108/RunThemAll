@@ -101,6 +101,7 @@ type Client struct {
 	peer  uint32
 	name  string
 	token string // lets the same browser open an Ethernet port (v86) in its room
+	num   int    // 1..: number in the room, the smallest free one (addresses of virtual networks)
 	room  *Room
 	out   chan outMsg
 	ports []*EthPort
@@ -130,6 +131,7 @@ type member struct {
 	Peer uint32 `json:"peer"`
 	Name string `json:"name"`
 	Host bool   `json:"host"`
+	Num  int    `json:"num"`
 }
 
 type ctrlOut struct {
@@ -138,6 +140,7 @@ type ctrlOut struct {
 	Peer    uint32          `json:"peer,omitempty"`
 	Token   string          `json:"token,omitempty"`
 	Host    uint32          `json:"host,omitempty"`
+	Num     int             `json:"num,omitempty"`
 	Members []member        `json:"members,omitempty"`
 	From    uint32          `json:"from,omitempty"`
 	Data    json.RawMessage `json:"data,omitempty"`
@@ -255,7 +258,7 @@ func (h *Hub) serveControl(w http.ResponseWriter, r *http.Request) {
 	room.mu.Lock()
 	host := room.order[0]
 	room.mu.Unlock()
-	c.sendJSON(ctrlOut{Type: "joined", Room: room.code, Peer: c.peer, Token: c.token, Host: host, Version: Version})
+	c.sendJSON(ctrlOut{Type: "joined", Room: room.code, Peer: c.peer, Token: c.token, Host: host, Num: c.num, Version: Version})
 	room.broadcastMembers()
 	log.Printf("room %s: peer %d joined (%s)", room.code, c.peer, hello.Type)
 
@@ -523,6 +526,12 @@ func (h *Hub) addMember(r *Room, c *Client) error {
 	_, _ = rand.Read(tok)
 	c.token = hex.EncodeToString(tok)
 	c.room = r
+	used := map[int]bool{}
+	for _, m := range r.members {
+		used[m.num] = true
+	}
+	for c.num = 1; used[c.num]; c.num++ {
+	}
 	r.members[c.peer] = c
 	r.order = append(r.order, c.peer)
 	h.peers[c.peer] = c
@@ -573,7 +582,7 @@ func (r *Room) broadcastMembers() {
 	}
 	list := make([]member, 0, len(r.order))
 	for i, p := range r.order {
-		list = append(list, member{Peer: p, Name: r.members[p].name, Host: i == 0})
+		list = append(list, member{Peer: p, Name: r.members[p].name, Host: i == 0, Num: r.members[p].num})
 	}
 	b, _ := json.Marshal(ctrlOut{Type: "members", Room: r.code, Host: r.order[0], Members: list})
 	for _, m := range r.members {

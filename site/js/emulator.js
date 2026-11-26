@@ -1,6 +1,7 @@
 // Runs Windows programs with Boxedwine (Emscripten build). The user's files are
 // mounted as drive D:. Boxedwine itself is loaded unmodified from ./boxedwine/.
 
+import { WineNet } from './wine-net.js';
 import { Runner, loadScript, prefetch, splitPath } from './runner.js';
 import { fitToBox } from './fit.js';
 
@@ -23,9 +24,16 @@ export const canUseThreads = () => globalThis.crossOriginIsolated === true && ty
  * @property {number} bpp 8, 16 or 32
  * @property {boolean} sound
  * @property {boolean} persistent keep the C: drive (Wine prefix) in IndexedDB
+ * @property {string} [args] parameters for the program
  */
 
 export class WindowsRunner extends Runner {
+  constructor(ui) {
+    super(ui);
+    /** Netplay room (lobby.js): {client} puts the sockets on a virtual LAN (wine-net.js). */
+    this.netplay = null;
+  }
+
   /**
    * @param {import('./workspace.js').Workspace} workspace
    * @param {string} program relative path of the .exe/.bat inside the workspace
@@ -78,7 +86,17 @@ export class WindowsRunner extends Runner {
     args.push('/bin/wine');
     if (/\.bat$/i.test(progName)) args.push('cmd', '/c');
     args.push(progName);
+    if (opts.args?.trim()) args.push(...opts.args.trim().split(/\s+/)); // the program's own parameters
     log(`Parameter: ${args.join(' ')}`, false);
+
+    // Netplay: the patched boxedwine.js takes its sockets from window.runThemAllNet; worker
+    // threads learn the own address from their script URL.
+    let vnet = '';
+    if (this.netplay) {
+      window.runThemAllNet = new WineNet(this.netplay.client);
+      vnet = `?vnet=${window.runThemAllNet.ownAddress}`;
+      log(`Network: virtual LAN of room ${this.netplay.client.room}, this PC is ${window.runThemAllNet.ownAddress} (TCP and UDP to the other players, no internet).`, false);
+    }
 
     // 3. Configure the Emscripten module before loading boxedwine.js.
     const self = this;
@@ -86,7 +104,7 @@ export class WindowsRunner extends Runner {
       arguments: args,
       canvas,
       locateFile: (path) => buildBase + path,
-      mainScriptUrlOrBlob: buildBase + 'boxedwine.js',
+      mainScriptUrlOrBlob: buildBase + 'boxedwine.js' + vnet,
       print: (...a) => log(a.join(' '), false),
       printErr: (...a) => log(a.join(' '), true),
       setStatus: (text) => {

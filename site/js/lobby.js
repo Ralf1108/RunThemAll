@@ -35,6 +35,11 @@ export function netplayForPc() {
   return { ethUrl: ethernetUrl(client.relay, client.token), room: client.room };
 }
 
+/** Windows programs (Boxedwine) get a virtual LAN on the level of sockets (wine-net.js). */
+export function netplayForWindows() {
+  return client.connected ? { client } : null;
+}
+
 /** Console games (EmulatorJS) share their inputs over the room's control connection. */
 export function netplayForConsole() {
   return client.connected ? { client } : null;

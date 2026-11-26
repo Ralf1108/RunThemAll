@@ -116,6 +116,9 @@ side the supported platforms and the emulators (3.3). The interface is in Englis
      `preMainLoop`), and every 300 frames a checksum of the state is compared (different: the host
      sends its state again). The host is player 1, the others 2–4 in join order. Save states,
      cheats and restart are hidden in the EmulatorJS menu while in a room.
+     Windows programs (Boxedwine, experimental) get a virtual LAN on the level of sockets
+     (`js/wine-net.js`, hooked into the patched `boxedwine.js`): address 192.168.78.n, TCP and UDP
+     to the other players, no internet. Windows programs can get start parameters like DOS programs.
      The toolbar shows "Room … · host/guest · n players". Relay: `netplay/` (Go).
    - Touch on the emulator area (`.screen`, `touch-action: none`) goes to the emulator as mouse or touch input;
      it does not scroll or zoom the page.

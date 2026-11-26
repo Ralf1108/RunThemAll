@@ -14,7 +14,9 @@ Ergänzung zu [browser-netplay-konzept.md](browser-netplay-konzept.md). Stand: 2
 - **EmulatorJS:** Das eingebaute Netplay ist in 4.2 experimentell und unfertig. Stattdessen
   eigener Lockstep (`site/js/ejs-netplay.js`): gleicher Spielstand für alle, Eingaben über den
   Relay. Getestet mit NES und SNES.
-- **Boxedwine:** am schwierigsten, braucht eine Änderung an Boxedwine selbst.
+- **Boxedwine:** virtuelles LAN auf Socket-Ebene über einen Patch an `boxedwine.js`
+  (experimentell). UDP und ausgehendes TCP gehen; ein Server in Wine kann noch nicht antworten
+  (Fehler in Boxedwine, siehe unten).
 
 ## Die Emulatoren im Einzelnen
 
@@ -82,8 +84,28 @@ Ergänzung zu [browser-netplay-konzept.md](browser-netplay-konzept.md). Stand: 2
   Socket-Emulation (SOCKFS): Jede Verbindung wird zu einem WebSocket zu `ws://ziel:port`.
 - Damit gehen höchstens ausgehende TCP-Verbindungen über einen Proxy. Ein LAN (Broadcast zum
   Finden von Spielen, Lauschen auf Ports, UDP zwischen Spielern) geht so nicht.
-- Für LAN müsste Boxedwine seine Sockets an eine eigene virtuelle Netzwerkschicht geben
-  (Änderung im C++-Code, eigener Build). Eher ein späteres Projekt.
+- **Umgesetzt ohne neuen Build:** Die Sockets entstehen in `SOCKFS.createSocket` von
+  `boxedwine.js`. Das Fetch-Skript patcht diese Stelle (und `DNS.lookup_name`), sodass die Seite
+  eigene Socket-Operationen liefern kann: `site/js/wine-net.js`.
+  - Jeder Spieler hat die Adresse 192.168.78.n (n = Nummer im Raum vom Relay, /24 wie das Netz,
+    das Wine sieht). Der eigene Hostname löst darauf auf, die Namen der Mitspieler auf deren
+    Adressen.
+  - UDP: Datagramme an einen Spieler oder an alle (Broadcast). TCP: connect/listen/accept mit
+    kleinem Handshake über den Relay. Der Relay ist zuverlässig und hält die Reihenfolge ein,
+    daher keine Sequenznummern.
+  - Kein Internet: andere Adressen werden abgelehnt.
+  - Im Multithread-Build laufen Socket-Aufrufe ohnehin auf dem Haupt-Thread (Emscripten leitet
+    sie weiter). Worker-Threads erfahren die eigene Adresse aus der Skript-URL (`?vnet=`).
+- **Test mit OpenTTD** (Host `-D` als Server, Gast verbindet über die Konsole): Der Server
+  meldet „Client connected from 192.168.78.2“ und empfängt das Join-Paket.
+- **Grenze: Fehler in Boxedwine.** `KNativeSocketObject::accept` setzt beim neuen Socket
+  `connected` nicht. `isOpen()` ist dann false, und `poll` meldet für den angenommenen Socket
+  immer POLLHUP. Wine sendet darüber nichts, der Server antwortet also nie. Die Lösung ist eine
+  Zeile (`s->connected = true;`) im C++-Code, also ein eigener Boxedwine-Build oder ein Fix
+  upstream.
+- Weitere Lücken in Boxedwine: `ioctl` SIOCGIFCONF/SIOCGIFBRDADDR fehlen, deshalb findet Wine
+  keine Broadcast-Adressen (Spielsuche im LAN per Broadcast geht so nicht), und blockierende
+  Sockets warten im Multithread-Build nicht (betrifft Linux-Programme wie `nc`, nicht Wine).
 
 ### Modem/Nullmodem
 

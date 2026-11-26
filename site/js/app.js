@@ -3,7 +3,7 @@ import { fromDataTransfer, fromDirectoryHandle, fromFileList, fromStoredFiles, f
 import { clearRestart, saveRestart, takeRestart } from './restart.js';
 import { KEY_BY_ID, VIRTUAL_KEYS } from './keys.js';
 import { createGamepad, loadMapping, PAD_BUTTONS, saveMapping } from './gamepad.js';
-import { initLobby, netplayForConsole, netplayForDos, netplayForPc, netplayStatus } from './lobby.js';
+import { initLobby, netplayForConsole, netplayForDos, netplayForPc, netplayForWindows, netplayStatus } from './lobby.js';
 import { fetchWithProgress } from './runner.js';
 import { WindowsRunner, canUseThreads, clearPersistentStorage } from './emulator.js';
 import { DosRunner } from './dos.js';
@@ -424,6 +424,7 @@ async function start(overrides = {}) {
   if (emulator instanceof DosRunner) emulator.netplay = netplayForDos();
   else if (emulator instanceof V86Runner) emulator.netplay = netplayForPc();
   else if (emulator instanceof EmulatorJsRunner) emulator.netplay = netplayForConsole();
+  else if (emulator instanceof WindowsRunner) emulator.netplay = netplayForWindows();
   $('run-netplay').hidden = !emulator.netplay;
   $('run-netplay').textContent = netplayStatus();
   if (emulator.netplay) log(`Netplay: ${netplayStatus()}`, false);
@@ -975,7 +976,7 @@ function demoEmulator(demo) {
  */
 const DEMO_OPTION_FIELDS = {
   windows: [['wine', 'Wine version', 'opt-wine'], ['threads', 'Threads', 'opt-threads'],
-    ['resolution', 'Resolution', 'opt-resolution'], ['bpp', 'Colour depth', 'opt-bpp']],
+    ['resolution', 'Resolution', 'opt-resolution'], ['bpp', 'Colour depth', 'opt-bpp'], ['args', 'Start parameters', null]],
   dos: [['cycles', 'CPU speed', 'opt-cycles'], ['args', 'Start parameters', null]],
   v86: [['memory', 'Memory', 'opt-memory']],
   emulatorjs: [],

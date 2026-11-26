@@ -152,35 +152,53 @@ async function fetchBoxedwine() {
     JSON.stringify({ tag: BOXEDWINE_TAG, source }, null, 2) + '\n');
 }
 
-// The one change to Boxedwine (GPL 2.0, section 2a: changed files carry a notice). SDL takes the
+// Changes to Boxedwine (GPL 2.0, section 2a: changed files carry a notice). 1. SDL takes the
 // device screen (emscripten_get_screen_size) as the display and switches to fullscreen when the Windows screen is larger,
 // which on phones is nearly always the case: the first touch then asks the browser for fullscreen
 // of the canvas, and the picture stays black if the browser refuses. Reporting a screen size of at
 // least 4096 x 4096 keeps Boxedwine in the page; js/fit.js scales the picture as for every emulator.
+// 2. Netplay: two hooks that let the page put sockets on a virtual LAN (see js/wine-net.js).
 const BOXEDWINE_CHANGE_DATE = '2026-11-26';
-const BOXEDWINE_SCREEN_PATCH = [
+const BOXEDWINE_PATCHES = [
   ['HEAP32[((width)>>2)] = screen.width;', 'HEAP32[((width)>>2)] = Math.max(screen.width, 4096);'],
   ['HEAP32[((height)>>2)] = screen.height;', 'HEAP32[((height)>>2)] = Math.max(screen.height, 4096);'],
+  // Netplay (js/wine-net.js): in a room the sockets use a virtual LAN over the relay instead of
+  // Emscripten's WebSocket sockets.
+  ['sock_ops: SOCKFS.websocket_sock_ops',
+    'sock_ops: globalThis.runThemAllNet?.sockOps(SOCKFS, FS) || SOCKFS.websocket_sock_ops'],
+  // The own hostname resolves to the address in the room. Worker threads have no runThemAllNet;
+  // they get the address from their script URL (?vnet=..., set by js/emulator.js).
+  ['  lookup_name(name) {',
+    '  lookup_name(name) {\n'
+    + '        var vnet = globalThis.runThemAllNet ? globalThis.runThemAllNet.lookupName(name)\n'
+    + "          : name == 'emscripten' && typeof location == 'object' && (/[?&]vnet=([0-9.]+)/.exec(location.search) || [])[1];\n"
+    + '        if (vnet) return vnet;'],
 ];
 const BOXEDWINE_CHANGE_NOTE = `
 
 Changes by RunThemAll (${BOXEDWINE_CHANGE_DATE})
 ------------------------------------
-st/boxedwine.js and mt/boxedwine.js are changed in one place: the screen size reported to SDL is at
-least 4096 x 4096, so that Boxedwine does not switch to fullscreen on small screens (phones). The
-change is made by scripts/fetch-runtimes.mjs in https://github.com/Ralf1108/RunThemAll; the
+st/boxedwine.js and mt/boxedwine.js are changed in three places:
+- The screen size reported to SDL is at least 4096 x 4096, so that Boxedwine does not switch to
+  fullscreen on small screens (phones).
+- SOCKFS.createSocket takes the socket operations from window.runThemAllNet when the page set it
+  (netplay: a virtual LAN between the players over a relay server), otherwise the original ones.
+- DNS.lookup_name asks window.runThemAllNet first (in worker threads: the vnet parameter of the
+  script URL), so the own hostname resolves to the address in the virtual LAN.
+The changes are made by scripts/fetch-runtimes.mjs in https://github.com/Ralf1108/RunThemAll; the
 unchanged Boxedwine source is in source/.
 `;
 
 function patchBoxedwineJs(data, name) {
   let text = new TextDecoder().decode(data);
-  for (const [from, to] of BOXEDWINE_SCREEN_PATCH) {
+  for (const [from, to] of BOXEDWINE_PATCHES) {
     const count = text.split(from).length - 1;
     if (count !== 1) throw new Error(`Boxedwine patch: expected "${from}" once in ${name}, found ${count} times`);
     text = text.replace(from, to);
   }
   const notice = `// Modified by RunThemAll on ${BOXEDWINE_CHANGE_DATE}: the screen size reported to SDL is at least\n`
-    + '// 4096 x 4096 (no fullscreen on small screens). See README-boxedwine.txt. License: GPL 2.0.\n';
+    + '// 4096 x 4096 (no fullscreen on small screens), and sockets and the own hostname can use a\n'
+    + '// virtual LAN of the page (window.runThemAllNet, netplay). See README-boxedwine.txt. License: GPL 2.0.\n';
   return new TextEncoder().encode(notice + text);
 }
 

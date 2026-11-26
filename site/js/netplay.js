@@ -40,6 +40,7 @@ export class NetplayClient extends EventTarget {
     this.peer = 0;
     this.host = 0;
     this.token = '';
+    this.num = 0; // number in the room (1, 2, …): addresses in virtual networks
     /** @type {Member[]} */
     this.members = [];
     this.sent = 0;
@@ -101,7 +102,7 @@ export class NetplayClient extends EventTarget {
           fail(msg.message || msg.code);
         } else if (msg.type === 'joined') {
           clearTimeout(timer);
-          Object.assign(this, { room: msg.room, peer: msg.peer, host: msg.host, token: msg.token });
+          Object.assign(this, { room: msg.room, peer: msg.peer, host: msg.host, token: msg.token, num: msg.num ?? 0 });
           settled = true;
           resolve(msg);
         } else if (msg.type === 'members') {
@@ -132,7 +133,7 @@ export class NetplayClient extends EventTarget {
   }
 
   reset() {
-    Object.assign(this, { ws: null, room: '', peer: 0, host: 0, token: '', members: [] });
+    Object.assign(this, { ws: null, room: '', peer: 0, host: 0, token: '', num: 0, members: [] });
   }
 
   close() {

@@ -68,6 +68,9 @@ On the web page, open **Play together over the network**, enter the relay addres
 | `-join-rate` | | 30 | join attempts per minute per IP address |
 | `-lan` | `NETPLAY_LAN` | `192.168.77.0/24` | network of every room for the DHCP server (/16 to /28); `off`: no DHCP |
 
+Every member also gets a small number in the room (`num` in `joined` and `members`: the
+smallest free one from 1); the Windows netplay derives the address 192.168.78.num from it.
+
 `GET /healthz` answers `{"ok":true,"rooms":…,"clients":…}` for monitoring.
 
 ## Protocol
@@ -110,7 +113,7 @@ there is no router and no DNS, the LAN only reaches the other players.
 | js-dos 8.5 (DOSBox) | `sharedNet` option: our `Net` object (`site/js/netplay.js`) replaces js-dos' WebRTC network; the host runs the IPX server (`startIpxServer`), the others connect to its peer ID (`connectIpxAddress`) | works (IPX handshake tested) |
 | v86 | NE2000 card with `net_device: { relay_url: "wss://…/v1/eth?token=…" }`, addresses from the room's DHCP server | works (two Tiny Core PCs get addresses and ping each other, ~1.3 ms) |
 | EmulatorJS | lockstep in `site/js/ejs-netplay.js` over the control socket: the host's save state goes to everybody (binary chunks, gzip), every player sends its inputs for 4 frames ahead, one packet per frame; a frame runs when all inputs are there. EmulatorJS' own netplay (Socket.IO, experimental in 4.2) is not used | works (NES and SNES: the state checksums stay the same with inputs on both sides) |
-| Boxedwine | Winsock goes to Emscripten's socket emulation; a LAN needs a change in Boxedwine | not yet |
+| Boxedwine | the fetch script patches `boxedwine.js` so that Emscripten's sockets (SOCKFS) come from `site/js/wine-net.js`: a virtual LAN on the level of sockets, every player is 192.168.78.n (n = number in the room), TCP and UDP go as small packets over the control socket | experimental: UDP and outgoing TCP work (OpenTTD connects to a server in the other browser); a server inside Wine cannot answer yet, because Boxedwine never marks accepted sockets as connected (poll reports a hang-up). That needs a one-line fix in Boxedwine's C++ code |
 
 ## Performance
 

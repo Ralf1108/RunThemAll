@@ -190,6 +190,9 @@ func TestEthernetSwitch(t *testing.T) {
 	b := dial(t, base+"/v1")
 	b.sendJSON(map[string]string{"type": "join", "room": ja.Room})
 	jb, _ := b.expect("joined")
+	if ja.Num != 1 || jb.Num != 2 {
+		t.Fatalf("numbers in the room: %d, %d", ja.Num, jb.Num)
+	}
 
 	ea := dial(t, base+"/v1/eth?token="+ja.Token)
 	eb := dial(t, base+"/v1/eth?token="+jb.Token)
