@@ -44,6 +44,11 @@ After an update:
 2. Commit only if they still work. `git diff` shows the new versions and lets you undo them.
 3. If the download fails, the new version is built differently (e.g. other file names) and
    `scripts/fetch-runtimes.mjs` has to be adapted.
+4. Boxedwine is patched in one place (`BOXEDWINE_SCREEN_PATCH`): `emscripten_get_screen_size` reports
+   at least 4096 x 4096, otherwise SDL switches to fullscreen on phones (Windows screen larger than the
+   device screen) and the picture turns black when the browser refuses. The build stops if the patched
+   line is not found in a new version. The changed files carry a notice (GPL 2.0) and the change is
+   described at the end of `site/boxedwine/README-boxedwine.txt`.
 
 The GitHub API allows 60 requests per hour without login (one check needs 3). If that is not enough,
 set a token first: `$env:GITHUB_TOKEN = '...'` (no permissions needed).

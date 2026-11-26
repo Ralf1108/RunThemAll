@@ -135,7 +135,10 @@ async function fetchBoxedwine() {
   for (const [from, to] of Object.entries(BOXEDWINE_FILES)) {
     const entry = entries.get(from);
     if (!entry) throw new Error(`Missing in the Boxedwine release: ${from}`);
-    await writeOut(join(out, to), await readZipEntry(archive, entry));
+    let data = await readZipEntry(archive, entry);
+    if (to.endsWith('boxedwine.js')) data = patchBoxedwineJs(data, to);
+    if (to === 'README-boxedwine.txt') data = new TextEncoder().encode(new TextDecoder().decode(data) + BOXEDWINE_CHANGE_NOTE);
+    await writeOut(join(out, to), data);
     console.log(`  ${to}`);
   }
 
@@ -147,6 +150,38 @@ async function fetchBoxedwine() {
   await download(source, join(out, 'source', `Boxedwine-${BOXEDWINE_TAG}-source.tar.gz`));
   await writeOut(join(out, 'version.json'),
     JSON.stringify({ tag: BOXEDWINE_TAG, source }, null, 2) + '\n');
+}
+
+// The one change to Boxedwine (GPL 2.0, section 2a: changed files carry a notice). SDL takes the
+// device screen (emscripten_get_screen_size) as the display and switches to fullscreen when the Windows screen is larger,
+// which on phones is nearly always the case: the first touch then asks the browser for fullscreen
+// of the canvas, and the picture stays black if the browser refuses. Reporting a screen size of at
+// least 4096 x 4096 keeps Boxedwine in the page; js/fit.js scales the picture as for every emulator.
+const BOXEDWINE_CHANGE_DATE = '2026-11-26';
+const BOXEDWINE_SCREEN_PATCH = [
+  ['HEAP32[((width)>>2)] = screen.width;', 'HEAP32[((width)>>2)] = Math.max(screen.width, 4096);'],
+  ['HEAP32[((height)>>2)] = screen.height;', 'HEAP32[((height)>>2)] = Math.max(screen.height, 4096);'],
+];
+const BOXEDWINE_CHANGE_NOTE = `
+
+Changes by RunThemAll (${BOXEDWINE_CHANGE_DATE})
+------------------------------------
+st/boxedwine.js and mt/boxedwine.js are changed in one place: the screen size reported to SDL is at
+least 4096 x 4096, so that Boxedwine does not switch to fullscreen on small screens (phones). The
+change is made by scripts/fetch-runtimes.mjs in https://github.com/Ralf1108/RunThemAll; the
+unchanged Boxedwine source is in source/.
+`;
+
+function patchBoxedwineJs(data, name) {
+  let text = new TextDecoder().decode(data);
+  for (const [from, to] of BOXEDWINE_SCREEN_PATCH) {
+    const count = text.split(from).length - 1;
+    if (count !== 1) throw new Error(`Boxedwine patch: expected "${from}" once in ${name}, found ${count} times`);
+    text = text.replace(from, to);
+  }
+  const notice = `// Modified by RunThemAll on ${BOXEDWINE_CHANGE_DATE}: the screen size reported to SDL is at least\n`
+    + '// 4096 x 4096 (no fullscreen on small screens). See README-boxedwine.txt. License: GPL 2.0.\n';
+  return new TextEncoder().encode(notice + text);
 }
 
 async function buildWin16Overlay(webRootEntry, releaseArchive, target) {
