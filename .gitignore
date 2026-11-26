@@ -36,3 +36,7 @@ desktop.ini
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# Netplay relay builds
+netplay/netplay
+netplay/*.exe

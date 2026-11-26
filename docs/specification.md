@@ -102,6 +102,13 @@ side the supported platforms and the emulators (3.3). The interface is in Englis
    - There is no status line: while loading, the loading screen shows the steps and progress; afterwards
      the *Play/Pause* button shows the state. Hints (no sound yet, mouse in v86, crash) appear below the picture.
    - Keys that games use (arrows, space, page up/down, home/end) do not scroll the page while a program runs.
+   - *Play together over the network* (beta, start page, collapsible): relay address (remembered;
+     `ws://localhost:8090` on localhost), name, *Create room* (optional password) or *Join* with the
+     room code (10 characters, typed in any case) and password. In the room: code, *Share link*
+     (`?room=…&relay=…`, Web Share API or clipboard), member list with the host, *Leave*. While in a
+     room, DOS programs start with IPX over the relay: the host with `startIpxServer`, guests with
+     `connectIpxAddress` = host peer ID, js-dos' network replaced by `sharedNet` (`js/netplay.js`).
+     The toolbar shows "Room … · host/guest · n players". Relay: `netplay/` (Go).
    - Touch on the emulator area (`.screen`, `touch-action: none`) goes to the emulator as mouse or touch input;
      it does not scroll or zoom the page.
    - *Quit*: reloads the page.

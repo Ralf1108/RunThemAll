@@ -577,3 +577,25 @@ select {
 /* Gamepad mapping dialog */
 .pad-map { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .5rem .75rem; }
 .pad-map label { display: flex; flex-direction: column; gap: .2rem; font-size: .85rem; }
+
+/* Netplay lobby (js/lobby.js) */
+.netplay > summary { cursor: pointer; list-style: none; }
+.netplay > summary::-webkit-details-marker { display: none; }
+.netplay > summary h2 { display: inline-flex; align-items: center; gap: .5rem; margin: 0; }
+.netplay > summary h2::before { content: "▸"; color: var(--muted); font-size: .9rem; }
+.netplay[open] > summary h2::before { content: "▾"; }
+.netplay[open] > summary { margin-bottom: .5rem; }
+.badge { font-size: .7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em;
+  padding: .1rem .45rem; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+.np-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .75rem 1rem; margin-top: .75rem; }
+.np-grid label, .np-box label { display: flex; flex-direction: column; gap: .25rem; font-size: .85rem; color: var(--muted); }
+.np-grid input { font: inherit; font-size: .9rem; padding: .35rem .5rem; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+.np-box { display: flex; flex-direction: column; gap: .5rem; align-items: flex-start;
+  padding: .75rem; border: 1px solid var(--border); border-radius: 8px; }
+.np-box label { align-self: stretch; }
+.np-box h3 { margin: 0; font-size: .95rem; }
+.np-room p { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: .75rem 0 0; }
+.np-code { font-family: ui-monospace, Consolas, monospace; font-size: 1.25rem; letter-spacing: .08em; }
+.np-members { margin: .5rem 0 0; padding-left: 1.25rem; }
+.np-badge { background: color-mix(in srgb, #2da44e 15%, var(--surface)); color: #2da44e; }

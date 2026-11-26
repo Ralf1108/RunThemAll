@@ -3,6 +3,7 @@ import { fromDataTransfer, fromDirectoryHandle, fromFileList, fromStoredFiles, f
 import { clearRestart, saveRestart, takeRestart } from './restart.js';
 import { KEY_BY_ID, VIRTUAL_KEYS } from './keys.js';
 import { createGamepad, loadMapping, PAD_BUTTONS, saveMapping } from './gamepad.js';
+import { initLobby, netplayForDos, netplayStatus } from './lobby.js';
 import { fetchWithProgress } from './runner.js';
 import { WindowsRunner, canUseThreads, clearPersistentStorage } from './emulator.js';
 import { DosRunner } from './dos.js';
@@ -393,6 +394,7 @@ async function start(overrides = {}) {
   $('choose').hidden = true;
   hideDemoDetail();
   $('demos').hidden = true;
+  $('netplay').hidden = true;
   $('platforms').hidden = true; // the emulator gets the full width
   $('emulators').hidden = true;
   $('run').hidden = false;
@@ -417,6 +419,11 @@ async function start(overrides = {}) {
     : { dos: DosRunner, windows: WindowsRunner, emulatorjs: EmulatorJsRunner }[program.emulator];
   emulator = new Runner(ui);
   runInfo = { program, opts, crash: null };
+  // Netplay: in a room, DOS programs get IPX networking over the relay.
+  if (emulator instanceof DosRunner) emulator.netplay = netplayForDos();
+  $('run-netplay').hidden = !emulator.netplay;
+  $('run-netplay').textContent = netplayStatus();
+  if (emulator.netplay) log(`Netplay: ${netplayStatus()}`, false);
   // Touch gamepad: DOS games for now; shown at once on touch screens.
   const padFits = runningKind(program, opts) === 'dos';
   $('btn-pad').hidden = !padFits;
@@ -1306,6 +1313,9 @@ const demoList = fetch('demos/demos.json')
     return list;
   })
   .catch(() => []);
+
+// Netplay lobby (js/lobby.js).
+initLobby($);
 
 // After "Options → Restart": start the same program again with the new settings.
 takeRestart().then(async (plan) => {

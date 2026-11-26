@@ -102,6 +102,8 @@ site/                  the website (this is what gets published)
   js/restart.js        keeps the files for one reload when restarting with other options
   js/keys.js           virtual keyboard: key table and sending keys into the emulators
   js/gamepad.js        touch gamepad over the picture (DOS) and its key mapping per program
+  js/netplay.js        netplay client for the relay and the network of js-dos (sharedNet)
+  js/lobby.js          netplay lobby: create/join a room, share the link
   js/zip.js            reads and writes ZIP files (no dependencies)
   boxedwine/, jsdos/, emulatorjs/, v86/, demos/   created by the fetch script (not in git)
 demos/demos.json       list of demos
@@ -113,3 +115,16 @@ scripts/
   update.ps1           the same for PowerShell
   serve.mjs            local test server with COOP/COEP headers
 ```
+
+## Netplay relay
+
+`netplay/` is a separate Go program (the relay server for playing together over the network);
+see `netplay/README.md` for running, options and the protocol, and
+`concepts/netplay-recherche.md` for the research behind it. It is not part of the static site
+and not deployed by the Pages workflow.
+
+```sh
+cd netplay && go test ./... && go run .   # relay on ws://localhost:8090
+```
+
+The page uses `ws://localhost:8090` as relay by default when it runs on localhost.

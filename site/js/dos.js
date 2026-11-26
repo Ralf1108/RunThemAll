@@ -82,7 +82,7 @@ export function mapToDosPaths(paths) {
   return { toDos, fromDos };
 }
 
-function buildDosboxConf(dosProgram, opts) {
+function buildDosboxConf(dosProgram, opts, ipx = false) {
   const [dir, name] = splitPath(dosProgram);
   const lines = [
     '[sdl]',
@@ -96,6 +96,7 @@ function buildDosboxConf(dosProgram, opts) {
     '[mixer]',
     'nosound=false', // muting is done by the sound button (audio.js)
     '',
+    ...(ipx ? ['[ipx]', 'ipx=true', ''] : []), // netplay: IPX over the relay (see netplay.js)
     '[autoexec]',
     '@echo off',
     'mount c .',
@@ -112,6 +113,8 @@ export class DosRunner extends Runner {
     this.props = null;
     this.ci = null;
     this.fromDos = new Map();
+    /** @type {{net:object, isHost:boolean, hostPeer:number}|null} netplay room, see lobby.js */
+    this.netplay = null;
   }
 
   /**
@@ -147,7 +150,8 @@ export class DosRunner extends Runner {
       this.remember(f.path, f.data);
       return { path: toDos.get(f.path), contents: f.data };
     });
-    const dosboxConf = buildDosboxConf(toDos.get(program), opts);
+    const netplay = this.netplay; // set by app.js while the page is in a netplay room
+    const dosboxConf = buildDosboxConf(toDos.get(program), opts, Boolean(netplay));
     log(`js-dos: DOSBox, cycles ${opts.cycles}\n${dosboxConf}`, false);
 
     this.ui.step(2);
@@ -165,6 +169,9 @@ export class DosRunner extends Runner {
       theme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
       volume: 1,
       fsChanges: { local: false }, // do not store anything in the browser
+      // Netplay: js-dos' network is replaced by the relay; the host runs the IPX server,
+      // the others connect to the host's peer ID.
+      ...(netplay ? { sharedNet: netplay.net, ...(netplay.isHost ? { startIpxServer: true } : { connectIpxAddress: String(netplay.hostPeer) }) } : {}),
       onEvent: (event, arg) => {
         log(`js-dos: ${event}`, false);
         if (event === 'ci-ready') {

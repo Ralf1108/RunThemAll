@@ -63,6 +63,36 @@
       <p id="pick-error" class="error" hidden></p>
     </section>
 
+    <!-- Netplay: a virtual LAN between browsers over a relay server (see netplay/) -->
+    <details id="netplay" class="wx-card netplay">
+      <summary><h2>Play together over the network <span class="badge">beta</span></h2></summary>
+      <p class="hint">For DOS games with IPX network play (e.g. Doom, Warcraft II). Everybody joins the same
+        room, then opens and starts the same game. The host starts first.</p>
+      <div id="np-setup" class="np-grid">
+        <label>Relay server <input type="text" id="np-relay" placeholder="wss://relay.example.org" spellcheck="false"></label>
+        <label>Your name <input type="text" id="np-name" maxlength="32" placeholder="Player"></label>
+        <div class="np-box">
+          <h3>New room</h3>
+          <label>Password (optional) <input type="password" id="np-create-password" autocomplete="new-password"></label>
+          <button type="button" id="np-create" class="wx-btn wx-primary wx-small">Create room</button>
+        </div>
+        <div class="np-box">
+          <h3>Join a room</h3>
+          <label>Room code <input type="text" id="np-code" placeholder="ABCDE-FGHJK" spellcheck="false" autocomplete="off"></label>
+          <label>Password <input type="password" id="np-join-password" autocomplete="off"></label>
+          <button type="button" id="np-join" class="wx-btn wx-small">Join</button>
+        </div>
+      </div>
+      <div id="np-room" class="np-room" hidden>
+        <p>Room <strong id="np-room-code" class="np-code"></strong>
+          <button type="button" id="np-share" class="wx-btn wx-small">Share link</button>
+          <button type="button" id="np-leave" class="wx-btn wx-small">Leave</button></p>
+        <ul id="np-members" class="np-members"></ul>
+        <p id="np-role" class="hint"></p>
+      </div>
+      <p id="np-error" class="error" hidden></p>
+    </details>
+
     <!-- Demos: one tile per platform, scrolls sideways -->
     <section id="demos" class="wx-card demos" aria-labelledby="demos-title" hidden>
       <div class="demos-head">
@@ -184,6 +214,7 @@
       <div class="toolbar">
         <strong id="run-title"></strong>
         <span id="run-emulator" class="emu-badge" title="Running emulator"></span>
+        <span id="run-netplay" class="emu-badge np-badge" title="Netplay room" hidden></span>
         <span class="spacer"></span>
         <button type="button" id="btn-changes" class="wx-btn wx-small wx-icon" title="Save the files the program changed or created (e.g. save games)">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h11l4 4v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 1-2z"/><path d="M8 3v5h7V3"/><rect x="7" y="13" width="10" height="8" rx="1"/></svg>
