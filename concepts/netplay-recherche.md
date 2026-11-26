@@ -108,6 +108,32 @@ Ergänzung zu [browser-netplay-konzept.md](browser-netplay-konzept.md). Stand: 2
 - Test: zwei getrennte Browser, Raum erstellen und beitreten, beide starten DOSBox → das
   IPX-Anmeldepaket geht über den Relay zum Host und die Antwort zurück.
 
+## TCP/IP statt IPX?
+
+- **js-dos (DOS): nur IPX.** Der ausgelieferte DOSBox-Kern hat keine Netzwerkkarte. Die
+  DOSBox-X-Variante von js-dos hat zwar eine NE2000-Karte, aber nur mit pcap/slirp-Anschluss,
+  nicht über die `Net`-Schnittstelle. Die meisten DOS-LAN-Spiele können ohnehin IPX
+  (Doom, Duke Nukem 3D, Warcraft I/II, Command & Conquer, Descent, Quake …).
+- **TCP/IP über v86:** v86 emuliert einen ganzen PC mit Netzwerkkarte (NE2000). Das Betriebs-
+  system darin (DOS mit Paket-Treiber, Windows 9x, Linux) bringt seinen eigenen TCP/IP-Stack mit,
+  der Relay transportiert nur Ethernet-Frames (Switch ist fertig). Damit gehen TCP/IP, UDP und
+  auch IPX wie in einem echten LAN. Es fehlen: Anbindung auf der Seite und IP-Adressen (statisch
+  pro Spieler oder ein kleiner DHCP-Server pro Raum im Relay). Nachteil: Jeder muss dasselbe
+  System-Image mit dem Spiel booten (groß; Windows 98 nur mit eigener CD).
+- **Boxedwine:** TCP/IP zwischen Spielern bräuchte eine Änderung an Boxedwine (siehe oben).
+
+## Durchsatz des Relays
+
+Gemessen auf einem PC (Ryzen 7 7800X3D, Windows, Testclients auf demselben Rechner), Details
+in `netplay/README.md`:
+
+- Ein Sender an einen Empfänger: ca. 114.000 Pakete/s (bei 1400 Byte 159 MB/s).
+- Umlaufzeit durch den Relay: unter 0,6 ms.
+- Spielähnlich (Räume mit 4 Spielern, je 35 Pakete/s à 100 Byte): 1000 Spieler mit Median 1 ms
+  Verzögerung und ca. 1,3 CPU-Kernen; 3000 Spieler noch 99,9 % zugestellt (Median 7 ms).
+- Faustregel: ein CPU-Kern ≈ 700 Spieler. Auf einem gemieteten Server ist eher die Bandbreite
+  die Grenze (1000 solche Spieler ≈ 150 Mbit/s).
+
 ## Offen
 
 1. **Wer betreibt den Standard-Relay?** GitHub Pages kann keinen Server betreiben. Ein kleiner

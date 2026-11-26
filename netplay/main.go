@@ -41,6 +41,10 @@ func main() {
 	flag.IntVar(&cfg.MaxMembers, "max-members", cfg.MaxMembers, "members per room")
 	flag.IntVar(&cfg.MaxMessage, "max-message", cfg.MaxMessage, "largest message in bytes")
 	flag.DurationVar(&cfg.RoomTTL, "room-ttl", cfg.RoomTTL, "a room is closed after this time")
+	flag.Float64Var(&cfg.MsgPerSec, "msg-rate", cfg.MsgPerSec, "messages per second per player (more are dropped)")
+	flag.Float64Var(&cfg.BytePerSec, "byte-rate", cfg.BytePerSec, "bytes per second per player (more are dropped)")
+	flag.Float64Var(&cfg.CreatePerMin, "create-rate", cfg.CreatePerMin, "new rooms per minute per IP address")
+	flag.Float64Var(&cfg.JoinPerMin, "join-rate", cfg.JoinPerMin, "join attempts per minute per IP address")
 	showVersion := flag.Bool("version", false, "print the version")
 	flag.Parse()
 	if *showVersion {

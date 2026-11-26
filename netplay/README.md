@@ -61,9 +61,10 @@ On the web page, open **Play together over the network**, enter the relay addres
 | `-max-members` | | 8 | players per room |
 | `-max-message` | | 16384 | largest message in bytes |
 | `-room-ttl` | | 12h | a room is closed after this time |
-
-Fixed limits (see `DefaultConfig` in `relay.go`): per player 2000 messages and 1 MB per second
-(more is dropped like lost packets); per IP 10 new rooms and 30 join attempts per minute.
+| `-msg-rate` | | 2000 | messages per second per player (bursts up to twice; more is dropped like lost packets) |
+| `-byte-rate` | | 1048576 | bytes per second per player |
+| `-create-rate` | | 10 | new rooms per minute per IP address |
+| `-join-rate` | | 30 | join attempts per minute per IP address |
 
 `GET /healthz` answers `{"ok":true,"rooms":…,"clients":…}` for monitoring.
 
@@ -103,6 +104,35 @@ their port and broadcast/multicast frames to all others.
 | v86 | `net_device: { relay_url: "wss://…/v1/eth?token=…" }` | relay side ready (switch tested), page side not yet |
 | EmulatorJS | its netplay uses Socket.IO events (`open-room`, `join-room`, `data-message`); a small `io()` replacement on top of the control socket would be enough | not yet |
 | Boxedwine | Winsock goes to Emscripten's socket emulation; a LAN needs a change in Boxedwine | not yet |
+
+## Performance
+
+Measured with `loadtest/` on one PC (AMD Ryzen 7 7800X3D, Windows 11, loopback). The test
+clients ran on the same machine and used part of the CPU; Linux is usually faster.
+
+| Test | Result |
+|---|---|
+| one sender → one receiver, 64 / 512 / 1400 B packets | ~114,000 packets/s each = 7 / 59 / 159 MB/s payload |
+| 8 pairs at once, 512 B | ~225,000 packets/s = 115 MB/s (saturated) |
+| round trip through the relay | below 0.6 ms (p99 0.54 ms) |
+| game-like: rooms of 4, every player 35 packets/s × 100 B to the 3 others | |
+| – 1000 players | 100 % delivered, delay median 1.0 ms, p99 6.5 ms, relay ~1.3 CPU cores |
+| – 2000 players | 100 %, median 2.0 ms, p99 16 ms, ~2.8 cores |
+| – 3000 players | 99.9 %, median 6.9 ms, p99 44 ms, ~4.3 cores |
+| – 4000 players | overloaded (with the test clients on the same machine): 91 %, median 265 ms |
+
+So one relay core carries roughly 70,000 delivered packets per second, about 700 players of a
+game like this. On a rented server the network is usually the limit first: such a player needs
+about 10 KB/s down and 3.5 KB/s up (plus TCP/WebSocket overhead, about half again for 100 B
+packets), 1000 players about 150 Mbit/s.
+
+Over the limits a player's packets are dropped (the relay never blocks); a receiver that reads
+too slowly loses packets from its queue of 256.
+
+```sh
+netplay -addr :8091 -msg-rate 1e9 -byte-rate 1e12 -create-rate 1e6 -join-rate 1e6 -max-rooms 100000
+go run ./loadtest -mode game -rooms 250 -members 4 -rate 35 -size 100
+```
 
 ## Development
 
