@@ -104,6 +104,7 @@ site/                  the website (this is what gets published)
   js/gamepad.js        touch gamepad over the picture (DOS) and its key mapping per program
   js/netplay.js        netplay client for the relay and the network of js-dos (sharedNet)
   js/lobby.js          netplay lobby: create/join a room, share the link
+  js/ejs-netplay.js    netplay for console games: shared inputs in lockstep (EmulatorJS)
   js/zip.js            reads and writes ZIP files (no dependencies)
   boxedwine/, jsdos/, emulatorjs/, v86/, demos/   created by the fetch script (not in git)
 demos/demos.json       list of demos

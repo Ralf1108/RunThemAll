@@ -108,6 +108,14 @@ side the supported platforms and the emulators (3.3). The interface is in Englis
      (`?room=…&relay=…`, Web Share API or clipboard), member list with the host, *Leave*. While in a
      room, DOS programs start with IPX over the relay: the host with `startIpxServer`, guests with
      `connectIpxAddress` = host peer ID, js-dos' network replaced by `sharedNet` (`js/netplay.js`).
+     Operating systems (v86) get an NE2000 network card whose cable is the relay's Ethernet port
+     (`/v1/eth?token=…`); the relay hands out addresses by DHCP (192.168.77.x, no internet).
+     Console games (EmulatorJS) share the inputs in lockstep (`js/ejs-netplay.js`): the host's save
+     state is copied to everybody whose game runs, each local input takes effect 4 frames later on
+     every player, a frame only runs when the inputs of all players for it have arrived (Emscripten
+     `preMainLoop`), and every 300 frames a checksum of the state is compared (different: the host
+     sends its state again). The host is player 1, the others 2–4 in join order. Save states,
+     cheats and restart are hidden in the EmulatorJS menu while in a room.
      The toolbar shows "Room … · host/guest · n players". Relay: `netplay/` (Go).
    - Touch on the emulator area (`.screen`, `touch-action: none`) goes to the emulator as mouse or touch input;
      it does not scroll or zoom the page.

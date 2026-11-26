@@ -8,8 +8,9 @@ A room is one network segment, found by its room code and optionally protected b
 The relay is a pure switch: no game logic, no file storage, and **no gateway to the internet**.
 Packets only go between the players of a room.
 
-Status: **first draft (beta)**. DOS games with IPX network play (js-dos) work through it; the
-handshake is tested end to end, a full game session not yet.
+Status: **beta**. Connected: DOS games with IPX network play (js-dos), whole PCs with a network
+card (v86, any protocol: TCP/IP, UDP, IPX …) and console games (EmulatorJS, shared inputs). Tested
+with two browsers each; a long real game session not yet.
 
 ## Run it
 
@@ -65,6 +66,7 @@ On the web page, open **Play together over the network**, enter the relay addres
 | `-byte-rate` | | 1048576 | bytes per second per player |
 | `-create-rate` | | 10 | new rooms per minute per IP address |
 | `-join-rate` | | 30 | join attempts per minute per IP address |
+| `-lan` | `NETPLAY_LAN` | `192.168.77.0/24` | network of every room for the DHCP server (/16 to /28); `off`: no DHCP |
 
 `GET /healthz` answers `{"ok":true,"rooms":…,"clients":…}` for monitoring.
 
@@ -96,13 +98,18 @@ token comes from the `joined` message, so the port belongs to a player of the ro
 works as a switch: it learns the MAC addresses behind the ports, sends unicast frames only to
 their port and broadcast/multicast frames to all others.
 
+Every room also has a small **DHCP server** (a virtual host with the address .1 of `-lan`, MAC
+`02:52:54:41:00:01`), so the PCs get addresses without any setup: from .10 on, one per MAC
+address, for the life of the room. It answers DHCP and ARP for its own address, nothing else;
+there is no router and no DNS, the LAN only reaches the other players.
+
 ## Emulators
 
 | Emulator | How it connects | State |
 |---|---|---|
 | js-dos 8.5 (DOSBox) | `sharedNet` option: our `Net` object (`site/js/netplay.js`) replaces js-dos' WebRTC network; the host runs the IPX server (`startIpxServer`), the others connect to its peer ID (`connectIpxAddress`) | works (IPX handshake tested) |
-| v86 | `net_device: { relay_url: "wss://…/v1/eth?token=…" }` | relay side ready (switch tested), page side not yet |
-| EmulatorJS | its netplay uses Socket.IO events (`open-room`, `join-room`, `data-message`); a small `io()` replacement on top of the control socket would be enough | not yet |
+| v86 | NE2000 card with `net_device: { relay_url: "wss://…/v1/eth?token=…" }`, addresses from the room's DHCP server | works (two Tiny Core PCs get addresses and ping each other, ~1.3 ms) |
+| EmulatorJS | lockstep in `site/js/ejs-netplay.js` over the control socket: the host's save state goes to everybody (binary chunks, gzip), every player sends its inputs for 4 frames ahead, one packet per frame; a frame runs when all inputs are there. EmulatorJS' own netplay (Socket.IO, experimental in 4.2) is not used | works (NES and SNES: the state checksums stay the same with inputs on both sides) |
 | Boxedwine | Winsock goes to Emscripten's socket emulation; a LAN needs a change in Boxedwine | not yet |
 
 ## Performance

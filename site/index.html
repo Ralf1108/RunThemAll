@@ -66,8 +66,9 @@
     <!-- Netplay: a virtual LAN between browsers over a relay server (see netplay/) -->
     <details id="netplay" class="wx-card netplay">
       <summary><h2>Play together over the network <span class="badge">beta</span></h2></summary>
-      <p class="hint">For DOS games with IPX network play (e.g. Doom, Warcraft II). Everybody joins the same
-        room, then opens and starts the same game. The host starts first.</p>
+      <p class="hint">Everybody joins the same room, then opens and starts the same file. DOS games play
+        over IPX (e.g. Doom, Warcraft II, the host starts first), console games share the controllers
+        (players 1–4), operating systems (v86) are connected to one LAN.</p>
       <div id="np-setup" class="np-grid">
         <label>Relay server <input type="text" id="np-relay" placeholder="wss://relay.example.org" spellcheck="false"></label>
         <label>Your name <input type="text" id="np-name" maxlength="32" placeholder="Player"></label>

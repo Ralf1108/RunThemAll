@@ -1,6 +1,7 @@
 // Runs console and home computer games with EmulatorJS (libretro cores).
 // EmulatorJS is loaded unmodified from ./emulatorjs/data/.
 
+import { ConsoleNetplay } from './ejs-netplay.js';
 import { toPng } from './report.js';
 import { Runner, loadScript, prefetch, splitPath } from './runner.js';
 import { SYSTEM_BY_ID, extOf } from './systems.js';
@@ -54,6 +55,12 @@ function preserveWebGlPicture() {
 }
 
 export class EmulatorJsRunner extends Runner {
+  constructor(ui) {
+    super(ui);
+    /** Netplay room (lobby.js): {client} shares the inputs with the other players (ejs-netplay.js). */
+    this.netplay = null;
+  }
+
   /** EmulatorJS handles save games and states itself (menu in the player). */
   get supportsFileSync() { return false; }
 
@@ -121,6 +128,15 @@ export class EmulatorJsRunner extends Runner {
     }
 
     log(`EmulatorJS: ${system.label}, core ${system.core}, game ${game.name}`, false);
+    // Netplay: inputs in lockstep; save states, cheats and restart would make the games differ.
+    const lockstep = this.netplay ? new ConsoleNetplay(this.netplay.client, { name, size: entry.size }) : null;
+    lockstep?.addEventListener('status', (e) => {
+      if (e.detail) log(e.detail, false);
+      this.ui.hint?.(e.detail);
+    });
+    const netplayButtons = lockstep
+      ? { saveState: false, loadState: false, quickSave: false, quickLoad: false, restart: false, cheat: false }
+      : {};
     this.ui.step(2);
     ejsContainer.hidden = false;
     ejsContainer.replaceChildren(Object.assign(document.createElement('div'), { id: 'ejs-player' }));
@@ -134,11 +150,12 @@ export class EmulatorJsRunner extends Runner {
       EJS_biosUrl: biosUrl,
       EJS_startOnLoaded: true,
       EJS_volume: 0.5, // muting is done by the sound button (audio.js)
-      EJS_Buttons: { netplay: false },
+      EJS_Buttons: { netplay: false, ...netplayButtons },
       EJS_defaultOptions: system.options ?? {},
       EJS_onGameStart: () => {
         status('Running');
         this.ui.ready();
+        lockstep?.gameStarted(window.EJS_emulator);
       },
     });
 

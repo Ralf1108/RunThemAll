@@ -9,10 +9,11 @@ Ergänzung zu [browser-netplay-konzept.md](browser-netplay-konzept.md). Stand: 2
 - **Transport im ersten Schritt: WebSocket**, nicht WebTransport. Begründung unten.
 - **js-dos (DOS, IPX):** lässt sich sauber anbinden, ohne js-dos zu verändern. Im Entwurf
   eingebaut; der IPX-Handshake zwischen zwei Browsern über den Relay ist getestet.
-- **v86:** spricht von sich aus WebSocket mit rohen Ethernet-Frames → Relay-Seite fertig
-  (Switch mit MAC-Learning), Seite noch nicht angebunden.
-- **EmulatorJS:** hat eigenes Netplay (Eingaben synchronisieren) über Socket.IO; anbindbar
-  über einen kleinen Ersatz für `io()`. Noch nicht gemacht.
+- **v86:** spricht von sich aus WebSocket mit rohen Ethernet-Frames. Eingebaut: Netzwerkkarte
+  am Relay, DHCP-Server pro Raum. Getestet: zwei PCs bekommen Adressen und pingen sich an.
+- **EmulatorJS:** Das eingebaute Netplay ist in 4.2 experimentell und unfertig. Stattdessen
+  eigener Lockstep (`site/js/ejs-netplay.js`): gleicher Spielstand für alle, Eingaben über den
+  Relay. Getestet mit NES und SNES.
 - **Boxedwine:** am schwierigsten, braucht eine Änderung an Boxedwine selbst.
 
 ## Die Emulatoren im Einzelnen
@@ -40,8 +41,12 @@ Ergänzung zu [browser-netplay-konzept.md](browser-netplay-konzept.md). Stand: 2
   „websockproxy“). Daneben gibt es `fetch`, `inbrowser` und `wisp://` – für LAN nicht nötig.
 - Relay: Endpunkt `/v1/eth?token=…`, der Raum arbeitet als Switch (MAC-Adressen lernen,
   Unicast gezielt, Broadcast/Multicast an alle). Fertig und getestet.
-- Offen auf der Seite: `relay_url` mit Token beim Start setzen, eindeutige MAC pro Spieler,
-  IP-Adressen (statisch oder ein kleiner DHCP im Relay pro Raum).
+- Umgesetzt: Im Raum startet der PC mit einer NE2000-Karte, `relay_url` mit dem Token des
+  Spielers. Die MAC-Adresse würfelt v86 selbst (00:22:15:xx:xx:xx, 24 Bit Zufall).
+- Jeder Raum hat einen kleinen DHCP-Server im Relay (Netz `-lan`, Standard 192.168.77.0/24,
+  Server .1, Adressen ab .10). Kein Router, kein DNS: Das LAN erreicht nur die Mitspieler.
+- Test: zwei Browser booten Tiny Core (Kommandozeile), bekommen 192.168.77.10 und .11,
+  `ping` geht hin und zurück (ca. 1,3 ms lokal).
 
 ### EmulatorJS 4.2.3 (Konsolen, Heimcomputer)
 
@@ -50,9 +55,26 @@ Ergänzung zu [browser-netplay-konzept.md](browser-netplay-konzept.md). Stand: 2
 - Prinzip: Eingaben werden pro Frame verteilt (Lockstep), kein Netzwerkverkehr der Konsole.
   Alle brauchen dasselbe ROM.
 - Benutzte Socket.IO-Ereignisse: `open-room`, `join-room`, `users-updated`, `data-message`,
-  `disconnect`. Statt einen Socket.IO-Server nachzubauen, reicht ein kleiner Ersatz für
-  `window.io`, der diese Ereignisse über unseren Steuerkanal (JSON-Nachrichten `msg`) schickt.
-- Qualität hängt vom EmulatorJS-Netplay selbst ab (Verzögerung, Determinismus des Cores).
+  `disconnect`.
+- **Aber:** In 4.2.3 ist dieses Netplay nur mit `EJS_DEBUG_XX` und `EJS_EXPERIMENTAL_NETPLAY`
+  sichtbar, und im Code steht „control syncing – broken“. Darauf lässt sich nicht aufbauen.
+- **Umgesetzt: eigener Lockstep** in `site/js/ejs-netplay.js`, EmulatorJS bleibt unverändert:
+  - Der Host schickt seinen Spielstand (gzip, in Teilen à 12 KB, mit Bestätigungen) an alle,
+    deren Spiel läuft. Alle laden ihn und zählen ab da Frames.
+  - Eine eigene Eingabe wirkt 4 Frames später (ca. 67 ms) und geht an die anderen. Jeder schickt
+    pro Frame ein kleines Paket, auch ohne Eingabe.
+  - Ein Frame läuft erst, wenn die Eingaben aller Spieler dafür da sind. Dafür gibt es in der
+    Emscripten-Hauptschleife den Hook `preMainLoop` (gibt er `false` zurück, wird der Durchlauf
+    übersprungen). Er wird beim Start des Cores über einen Wrapper um `window.EJS_Runtime`
+    eingesetzt.
+  - Alle 300 Frames vergleichen die Spieler eine Prüfsumme des Spielstands. Weicht sie ab,
+    schickt der Host seinen Spielstand neu.
+  - Host = Spieler 1, die anderen 2–4 in Beitrittsreihenfolge. Speicherstände, Cheats und
+    Neustart sind im Raum ausgeblendet. Geht der Host, übernimmt der nächste.
+- Traffic: pro Spieler 60 Pakete/s à ca. 12 Byte an jeden anderen Spieler.
+- Grenzen: Alle brauchen dieselbe Datei (Name und Größe werden geprüft). Bei großer Latenz
+  stockt das Spiel (Verzögerung ist fest 4 Frames). Cores, die nicht deterministisch sind oder
+  keine Spielstände können, laufen auseinander.
 
 ### Boxedwine (Windows-Programme)
 
@@ -140,6 +162,6 @@ in `netplay/README.md`:
    VPS mit Caddy genügt. Bis dahin muss man eine Relay-Adresse eingeben.
 2. Echter Spieletest mit einem IPX-Spiel (z. B. Doom-Shareware mit `ipxsetup`).
 3. Neu verbinden nach „Options → Restart“ (die Seite lädt neu, der Raum ist dann weg).
-4. v86 auf der Seite anbinden, danach EmulatorJS.
+4. Verzögerung beim Konsolen-Lockstep an die gemessene Latenz anpassen (statt fest 4 Frames).
 5. Später: WebTransport, Ende-zu-Ende-Verschlüsselung mit einem Schlüssel, den nur die Spieler
    kennen (der Relay sieht dann nur verschlüsselte Pakete).
