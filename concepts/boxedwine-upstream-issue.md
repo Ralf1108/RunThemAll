@@ -34,11 +34,28 @@ the web build opens none in the constructor, hence the `>= 0` check.
 
 ### Reproduction
 
-A 32 bit Linux test program without libc (runs in any Boxedwine file system) that listens on
-127.0.0.1, connects to itself and accepts: https://github.com/Ralf1108/RunThemAll/tree/main/concepts/boxedwine-accept-repro
-(source and built program). It passes an address buffer to accept; with NULL instead it shows the
-problem above. Tested in the web build of 26R1.0, where the same function also missed
-`connected = true` (already fixed on master in cc9cfd76).
+`accept-null` is a 32 bit Linux test program without libc (3.4 KB, runs in any Boxedwine file
+system). It listens on 127.0.0.1, connects to itself and calls `accept(server, NULL, NULL)`:
+https://github.com/Ralf1108/RunThemAll/tree/main/concepts/boxedwine-accept-repro
+(`accept-null.c` and the built `accept-null`).
+
+1. Copy `accept-null` into the root of a Boxedwine file system.
+2. Start it instead of Wine: `boxedwine -root <root folder> -zip <file system zip> /accept-null`
+3. Without the fix Boxedwine stops with "KMemory::performOnMemory failed to get ram";
+   with the fix it prints `OK: accept returned ...` (exit code 0, as on Linux).
+
+Build (gcc on Linux, or clang/lld on any host):
+
+```sh
+gcc -m32 -march=i686 -mno-sse -static -nostdlib -fno-builtin -fno-stack-protector \
+    -fno-pie -no-pie -O1 -o accept-null accept-null.c
+```
+
+The socket leak has no repro of its own (desktop builds only, one native socket per accepted
+connection stays open until the process ends).
+
+The same folder has `accept-pollhup`, which showed the missing `connected = true` in 26R1.0
+(already fixed on master in cc9cfd76).
 
 ### How we found it
 

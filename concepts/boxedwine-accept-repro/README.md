@@ -19,6 +19,14 @@ not depend on blocking sockets. An address buffer is passed to accept on purpose
 `accept(fd, NULL, NULL)` stops Boxedwine 26R1.0 ("KMemory::performOnMemory failed to get ram"),
 a second problem described in the issue text.
 
+## accept-null
+
+`accept-null.c` / `accept-null` (3.4 KB) does the same, but calls `accept(server, NULL, NULL)`.
+Linux and Boxedwine with the fix print `OK: accept returned ...` (exit code 0); Boxedwine 26R1.0
+and master (0fa70a84) stop with "KMemory::performOnMemory failed to get ram", because
+`KNativeSocketObject::accept` reads the address before checking it. Built and run the same way as
+`accept-pollhup` (replace the name). Not yet run in a browser test.
+
 ## Build
 
 ```sh
