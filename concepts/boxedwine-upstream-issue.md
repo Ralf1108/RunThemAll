@@ -1,65 +1,75 @@
 # Meldung an Boxedwine (zum Einreichen)
 
-Ziel: https://github.com/danoon2/Boxedwine (Pull Request aus dem Fork Ralf1108/Boxedwine).
+Ziel: Pull Request von `Ralf1108/Boxedwine`, Branch `fix-native-accept` (Commit `0d4f13fc`, gepusht)
+nach `danoon2/Boxedwine` `master`:
+https://github.com/danoon2/Boxedwine/compare/master...Ralf1108:Boxedwine:fix-native-accept
 
-Stand `master` (geprüft am 27.11.2026, upstream `0fa70a84`):
+Stand `master` (`0fa70a84`, geprüft am 27.11.2026):
 
-- **Schon behoben auf `master`:** accept setzt `connected` (Commit `cc9cfd76`, 7.6.2026, nicht in 26R1.0).
-  Damit ist der POLLHUP-Fehler aus dem Repro in [boxedwine-accept-repro/](boxedwine-accept-repro/) dort erledigt.
-  Auch die Netzwerkkarten-ioctls (`SIOCGIFBRDADDR`, `SIOCGIFNETMASK`) sind auf `master` umgesetzt.
-- **Noch offen, im PR:** accept mit NULL-Adresse und der verlorene native Socket pro accept.
+- **Schon behoben:** accept setzt `connected` (`cc9cfd76`, nicht in 26R1.0), Netzwerkkarten-ioctls.
+- **Web-Build:** nutzt auf master `KBrowserSocketObject`, dessen accept NULL korrekt behandelt.
+- **Noch offen, im PR:** `KNativeSocketObject::accept` (Desktop-Builds) mit NULL-Adresse und der
+  verlorene native Socket pro accept.
+- **Getestet:** Linux-Desktop-Build von master und master + Fix in Docker (Ubuntu 24.04), Skript
+  [boxedwine-accept-repro/linux-test.sh](boxedwine-accept-repro/linux-test.sh). master bricht ab, mit Fix `OK`.
+  Das Socket-Leck ist nicht getestet (nur Code-Lesen).
 
-Der Commit liegt im Checkout `boxedwine-accept-repro/Boxedwine/` (eigenes Git-Repo, von RunThemAll
-ignoriert), Branch `fix-native-accept`, Commit `0d4f13fc`. Vor dem PR: `git push -u origin fix-native-accept`
-in diesem Ordner, dann auf https://github.com/danoon2/Boxedwine/compare/master...Ralf1108:Boxedwine:fix-native-accept
-den PR anlegen. Der Text unten ist auf Englisch und kann so übernommen werden.
+Der Text unten ist auf Englisch und kann so übernommen werden.
 
 ---
 
 **Title:** Native sockets: accept with a NULL address, close the unused socket
 
-### accept(fd, NULL, NULL) stops Boxedwine
+### Problem 1: accept(fd, NULL, NULL) stops Boxedwine
 
 `KNativeSocketObject::accept` calls `readSockAddrIn(&addr, memory, address)` before checking
-`address`. With a NULL address (allowed by POSIX and common) Boxedwine stops with
-"KMemory::performOnMemory failed to get ram". The address is now only read when it is given,
-the same way it is only written back when given.
+`address`. With a NULL address, which POSIX allows and many programs use, Boxedwine stops with
 
-### A native socket leaks per accepted connection
+```
+KMemory::performOnMemory failed to get ram
+```
+
+The address is now only read when it is given, the same way it is already only written back when
+given.
+
+### Problem 2: one native socket leaks per accepted connection
 
 The `KNativeSocketObject` created for the accepted connection opens a native socket in its
 constructor (`socket(AF_INET, ...)`), and `accept` then overwrites `s->nativeSocket` with the
-accepted one. On desktop builds every accepted connection leaks a socket. It is now closed first;
-the web build opens none in the constructor, hence the `>= 0` check.
+accepted one, so the first socket is never closed. It is now closed first. The `>= 0` check is
+there because the constructor may not have opened one (for example when `socket()` failed).
 
-### Reproduction
+### Reproduction (problem 1)
 
-`accept-null` is a 32 bit Linux test program without libc (3.4 KB, runs in any Boxedwine file
-system). It listens on 127.0.0.1, connects to itself and calls `accept(server, NULL, NULL)`:
-https://github.com/Ralf1108/RunThemAll/tree/main/concepts/boxedwine-accept-repro
-(`accept-null.c` and the built `accept-null`).
+`accept-null` is a small 32 bit Linux program without libc (3.4 KB, runs in any Boxedwine root).
+It listens on 127.0.0.1, connects to itself and calls `accept(server, NULL, NULL)`.
+Source and built program: https://github.com/Ralf1108/RunThemAll/tree/main/concepts/boxedwine-accept-repro
+(`accept-null.c`, `accept-null`).
 
-1. Copy `accept-null` into the root of a Boxedwine file system.
-2. Start it instead of Wine: `boxedwine -root <root folder> -zip <file system zip> /accept-null`
-3. Without the fix Boxedwine stops with "KMemory::performOnMemory failed to get ram";
-   with the fix it prints `OK: accept returned ...` (exit code 0, as on Linux).
+1. Put `accept-null` into an empty folder, for example `/tmp/root`.
+2. Run `boxedwine -root /tmp/root /accept-null` (no file system zip needed).
 
-Build (gcc on Linux, or clang/lld on any host):
+Results with Linux desktop builds (Ubuntu 24.04, `make release` in `project/linux`):
+
+```
+master 0fa70a84:          accept(server, NULL, NULL)
+                          KMemory::performOnMemory failed to get ram
+with this PR (0d4f13fc):  accept(server, NULL, NULL)
+                          OK: accept returned 0x00000005
+```
+
+Build of the program (or use the built one):
 
 ```sh
 gcc -m32 -march=i686 -mno-sse -static -nostdlib -fno-builtin -fno-stack-protector \
     -fno-pie -no-pie -O1 -o accept-null accept-null.c
 ```
 
-The socket leak has no repro of its own (desktop builds only, one native socket per accepted
-connection stays open until the process ends).
-
-The same folder has `accept-pollhup`, which showed the missing `connected = true` in 26R1.0
-(already fixed on master in cc9cfd76).
+Problem 2 has no repro of its own; it was found by reading the code.
 
 ### How we found it
 
-We run the Boxedwine web build in the browser and give Emscripten's SOCKFS our own socket
-operations, so that `listen`/`accept` work between browsers (a virtual LAN over a relay
-server, https://github.com/Ralf1108/RunThemAll). The changes are not specific to the browser:
-desktop builds use the same code.
+We run Boxedwine in the browser with our own socket layer between browsers
+(https://github.com/Ralf1108/RunThemAll). Testing 26R1.0 there, we found that accepted sockets
+were reported as hung up (already fixed on master in cc9cfd76) and the two problems above, which
+are still in master's `KNativeSocketObject`.

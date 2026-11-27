@@ -25,7 +25,17 @@ a second problem described in the issue text.
 Linux and Boxedwine with the fix print `OK: accept returned ...` (exit code 0); Boxedwine 26R1.0
 and master (0fa70a84) stop with "KMemory::performOnMemory failed to get ram", because
 `KNativeSocketObject::accept` reads the address before checking it. Built and run the same way as
-`accept-pollhup` (replace the name). Not yet run in a browser test.
+`accept-pollhup` (replace the name).
+
+Tested with Linux desktop builds of master (`linux-test.sh`, Ubuntu 24.04 in Docker):
+
+| Build | Output |
+|---|---|
+| master 0fa70a84 | `accept(server, NULL, NULL)`, then "KMemory::performOnMemory failed to get ram" |
+| master + fix 0d4f13fc | `OK: accept returned 0x00000005` |
+
+On master the web build uses `KBrowserSocketObject` instead, whose accept already handles NULL;
+the bug is in the desktop builds (`KNativeSocketObject`).
 
 ## Build
 
