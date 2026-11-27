@@ -16,7 +16,15 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Builds Boxedwine and publishes it as a release of this repository, but only if the release for
+  # the commit in scripts/build-boxedwine.mjs does not exist yet (otherwise a few seconds).
+  boxedwine:
+    uses: ./.github/workflows/boxedwine.yml
+    permissions:
+      contents: write
+
   build:
+    needs: boxedwine
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

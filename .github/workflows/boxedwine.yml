@@ -2,12 +2,21 @@ name: Build Boxedwine
 
 # Builds Boxedwine for the web from the commit in scripts/build-boxedwine.mjs (BOXEDWINE_COMMIT,
 # with Boxedwine's own makefile) and publishes the result as the release asset that
-# scripts/fetch-runtimes.mjs downloads. Run it by hand (Actions -> Build Boxedwine -> Run workflow)
-# after BOXEDWINE_COMMIT, BUILD_NUMBER or the patches changed; it takes a while (two builds).
-# Until the release exists, the site uses the emulator of the last Boxedwine release (no netplay).
+# scripts/fetch-runtimes.mjs downloads (release name = BUILD_NAME, e.g. boxedwine-0fa70a84-runthemall.1).
+#
+# The Pages workflow calls this before every deployment: when the release for the current
+# BUILD_NAME exists, nothing is built (a few seconds); after BOXEDWINE_COMMIT or BUILD_NUMBER
+# changed, the next deployment builds it first (two builds of Boxedwine).
+# Started by hand with "rebuild", it builds again and replaces the asset.
 
 on:
+  workflow_call:
   workflow_dispatch:
+    inputs:
+      rebuild:
+        description: Build again even if the release exists
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -22,7 +31,25 @@ jobs:
         with:
           node-version: 22
 
+      - name: Is the release already there?
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REBUILD: ${{ inputs.rebuild }}
+        run: |
+          name=$(node -e "import('./scripts/build-boxedwine.mjs').then(m => console.log(m.BUILD_NAME))")
+          asset=$(node -e "import('./scripts/build-boxedwine.mjs').then(m => console.log(m.BUILD_ASSET))")
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "asset=$asset" >> "$GITHUB_OUTPUT"
+          if [ "$REBUILD" != "true" ] && gh release view "$name" --json assets --jq '.assets[].name' 2>/dev/null | grep -qx "$asset"; then
+            echo "Release $name with $asset exists, nothing to build."
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Install Emscripten (version from scripts/build-boxedwine.mjs)
+        if: steps.check.outputs.exists != 'true'
         run: |
           version=$(node -e "import('./scripts/build-boxedwine.mjs').then(m => console.log(m.EMSCRIPTEN_VERSION))")
           git clone --depth 1 https://github.com/emscripten-core/emsdk.git "$RUNNER_TEMP/emsdk"
@@ -30,19 +57,21 @@ jobs:
           "$RUNNER_TEMP/emsdk/emsdk" activate "$version"
 
       - name: Build
+        if: steps.check.outputs.exists != 'true'
         run: |
           source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
           node scripts/build-boxedwine.mjs
 
       - name: Publish as release asset
+        if: steps.check.outputs.exists != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          NAME: ${{ steps.check.outputs.name }}
+          ASSET: ${{ steps.check.outputs.asset }}
         run: |
-          name=$(node -e "import('./scripts/build-boxedwine.mjs').then(m => console.log(m.BUILD_NAME))")
-          asset=$(node -e "import('./scripts/build-boxedwine.mjs').then(m => console.log(m.BUILD_ASSET))")
           notes="Boxedwine for the web, built from Boxedwine's source by scripts/build-boxedwine.mjs (RunThemAll commit ${GITHUB_SHA}). Details: RunThemAll-changes.txt in the zip."
-          if gh release view "$name" > /dev/null 2>&1; then
-            gh release upload "$name" "vendor/boxedwine-build/$asset" --clobber
+          if gh release view "$NAME" > /dev/null 2>&1; then
+            gh release upload "$NAME" "vendor/boxedwine-build/$ASSET" --clobber
           else
-            gh release create "$name" "vendor/boxedwine-build/$asset" --title "$name" --notes "$notes"
+            gh release create "$NAME" "vendor/boxedwine-build/$ASSET" --title "$NAME" --notes "$notes"
           fi

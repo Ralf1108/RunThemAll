@@ -104,6 +104,10 @@ Ergänzung zu [browser-netplay-konzept.md](browser-netplay-konzept.md). Stand: 2
   Die zwei accept-Fehler sind im Desktop-Build noch da und als Pull Request an Boxedwine gemeldet.
 - **Test mit OpenTTD** (Host `-D` als Server, Gast verbindet über die Konsole): Client und Server
   in zwei Browsern verbinden sich, der Server schickt die Karte (ca. 88 KB).
+  Danach bricht OpenTTD beim Client mit einem eigenen Absturzbericht ab
+  (`EXCEPTION_ACCESS_VIOLATION` in einer Wine-Systembibliothek, aufgerufen aus OpenTTD). Boxedwine
+  selbst läuft weiter; die Daten sind vollständig angekommen, der Fehler liegt in der Emulation oder
+  in Wine, nicht in der Netzwerkschicht. Eine ganze OpenTTD-Partie läuft daher noch nicht.
 
 ### Modem/Nullmodem
 

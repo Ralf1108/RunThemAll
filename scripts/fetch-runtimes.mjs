@@ -9,7 +9,8 @@
 //
 // Usage: node scripts/fetch-runtimes.mjs [--force]
 
-import { mkdir, readFile, writeFile, stat } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { copyFile, mkdir, readFile, writeFile, stat } from 'node:fs/promises';
 import { constants as zlibConstants, gunzipSync, zstdCompressSync } from 'node:zlib';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -32,8 +33,14 @@ const BOXEDWINE_FILES = {
   'MultiThreaded/boxedwine.js': 'mt/boxedwine.js',
   'MultiThreaded/boxedwine.wasm': 'mt/boxedwine.wasm',
   'SingleThreaded/boxedwine.zip': 'wine6/boxedwine.zip',
-  'Wine11/boxedwine.zip': 'wine11/boxedwine.zip',
   'readme.txt': 'README-boxedwine.txt',
+};
+// The Wine 11 file system for the web that belongs to the built commit (Boxedwine publishes the
+// file systems separately on boxedwine.org; tools/buildWine/webgl_filesystems.json, profile web-v48).
+const WINE11_FS = {
+  url: 'https://boxedwine.org/v2/48/TinyCore15Wine11.0-web.zip',
+  version: 48,
+  sha256: 'be55b078d6937d4ad5d0fb45d152307121b193a6e51c43d7cab3ae26e001d64e',
 };
 // The Wine 6 file system in the web release is stripped down and lacks most
 // 16-bit Windows modules (e.g. WinG, toolhelp, lzexpand, ole2). They are taken
@@ -166,7 +173,8 @@ async function fetchBoxedwine() {
     if (to.endsWith('boxedwine.js')) data = patchBoxedwineJs(data, to);
     if (to === 'README-boxedwine.txt') {
       const ownNote = own ? `\nThe emulator files (st/, mt/) are an own build (${BUILD_NAME}) of Boxedwine ${BOXEDWINE_VERSION},\n`
-        + 'not of this release; see source/RunThemAll-changes.txt. The Wine file systems are from this release.\n' : '';
+        + 'not of this release; see source/RunThemAll-changes.txt. The Wine 6 file system is from this release,\n'
+        + `the Wine 11 file system (v${WINE11_FS.version}) from ${WINE11_FS.url}.\n` : '';
       data = new TextEncoder().encode(new TextDecoder().decode(data) + BOXEDWINE_CHANGE_NOTE + ownNote);
     }
     await writeOut(join(out, to), data);
@@ -174,6 +182,15 @@ async function fetchBoxedwine() {
   }
 
   await buildWin16Overlay(entries.get('SingleThreaded/boxedwine.zip'), archive, join(out, 'wine6', 'win16-extras.zip'));
+
+  // Wine 11: the newer file system from boxedwine.org (checked against its SHA-256).
+  const wine11 = join(VENDOR, `TinyCore15Wine11.0-web-v${WINE11_FS.version}.zip`);
+  await download(WINE11_FS.url, wine11);
+  const hash = createHash('sha256').update(await readFile(wine11)).digest('hex');
+  if (hash !== WINE11_FS.sha256) throw new Error(`${WINE11_FS.url}: SHA-256 ${hash}, expected ${WINE11_FS.sha256}`);
+  await mkdir(join(out, 'wine11'), { recursive: true });
+  await copyFile(wine11, join(out, 'wine11', 'boxedwine.zip'));
+  console.log(`  wine11/boxedwine.zip (file system v${WINE11_FS.version})`);
 
   // Source of the release (file systems) and, for the own build, of the built commit.
   const source = `https://github.com/danoon2/Boxedwine/archive/refs/tags/${BOXEDWINE_TAG}.tar.gz`;
@@ -188,7 +205,7 @@ async function fetchBoxedwine() {
     tag: own ? BOXEDWINE_VERSION : BOXEDWINE_TAG,
     source: own ? BUILD_SOURCE_URL : source,
     build: own ? BUILD_NAME : null,
-    filesystems: source,
+    filesystems: { wine6: source, wine11: WINE11_FS.url },
   }, null, 2) + '\n');
 }
 

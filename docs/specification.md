@@ -213,11 +213,13 @@ CD tracks next to a `.cue` are not listed; the `.cue` is started with all its tr
 
 - Emulator: own build of a fixed commit of Boxedwine's master branch (`scripts/build-boxedwine.mjs`,
   Emscripten 5.0.7, Boxedwine's makefile), because netplay needs its browser networking.
-  File systems: GitHub release `26R1.0` of danoon2/Boxedwine, file `Boxedwine26R1Web.zip`.
+  File systems: Wine 6 from GitHub release `26R1.0` of danoon2/Boxedwine (`Boxedwine26R1Web.zip`),
+  Wine 11 the web file system v48 from boxedwine.org (`TinyCore15Wine11.0-web.zip`, SHA-256 checked),
+  which belongs to the built commit.
 - Boxedwine's own page is not used; `js/emulator.js` sets up `Module` (arguments, file system,
   the functions that show frames on a second canvas `boxedwine-webgl-canvas-0`, networking).
 - Single- and multithreaded builds. "Automatic" uses multithreaded when the page is *cross-origin isolated*.
-- File systems: Wine 6.0 (37 MB) and Wine 11.0 (49 MB, no 16-bit support).
+- File systems: Wine 6.0 (37 MB) and Wine 11.0 (v48, 97 MB, no 16-bit support).
 - **Win16 overlay**: the web Wine 6 file system lacks 34 16-bit modules (WinG, toolhelp, lzexpand, ole2, …).
   The build script takes them unchanged from the full Boxedwine file system `TinyCore15Wine6.0.zip`
   and stores them as `wine6/win16-extras.zip` (~385 KB), mounted with `-zip`. A few more missing modules

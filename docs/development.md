@@ -50,7 +50,9 @@ After an update:
    is not found in a new version. The changed files carry a notice (GPL 2.0) and the change is
    described at the end of `site/boxedwine/README-boxedwine.txt`.
 5. Boxedwine's emulator files (`st/`, `mt/`) come from an own build of a fixed commit of Boxedwine's
-   master branch (see below); the Wine file systems still come from the release. To update: set
+   master branch (see below); the Wine 6 file system still comes from the release, the Wine 11 file
+   system from boxedwine.org (`WINE11_FS` in `scripts/fetch-runtimes.mjs`: URL, version and SHA-256,
+   see Boxedwine's `tools/buildWine/webgl_filesystems.json` at the built commit). To update: set
    `BOXEDWINE_COMMIT` (and `EMSCRIPTEN_VERSION`, if Boxedwine's makefile asks for another one) in
    `scripts/build-boxedwine.mjs`, raise `BUILD_NUMBER`, build, test and run the workflow *Build Boxedwine*.
 
@@ -68,8 +70,10 @@ node scripts/build-boxedwine.mjs   # Linux: needs emsdk (activated), make, pytho
 ```
 
 The result is `vendor/boxedwine-build/boxedwine-<commit>-runthemall.<n>-web.zip`. The workflow
-*Build Boxedwine* (`.github/workflows/boxedwine.yml`, started by hand) builds the same and
-publishes it as release `boxedwine-<commit>-runthemall.<n>` of this repository.
+*Build Boxedwine* (`.github/workflows/boxedwine.yml`) builds the same and publishes it as release
+`boxedwine-<commit>-runthemall.<n>` of this repository. The Pages workflow calls it before every
+deployment; it only builds when that release does not exist yet (after `BOXEDWINE_COMMIT` or
+`BUILD_NUMBER` changed). By hand it can build again (*rebuild*).
 `scripts/fetch-runtimes.mjs` takes the emulator files from the local build or that release; if
 neither exists it warns and uses the emulator of the Boxedwine release (then without netplay).
 

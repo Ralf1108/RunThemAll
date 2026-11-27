@@ -11,8 +11,8 @@ and source code are published next to it.
 - Emulator (`boxedwine.js`, `boxedwine.wasm`): built by RunThemAll from the unchanged source of
   commit 0fa70a84 of the master branch (`scripts/build-boxedwine.mjs`). `boxedwine.js` is changed
   in one place (screen size, see `boxedwine/README-boxedwine.txt`).
-- Used unchanged from the official release `Boxedwine26R1Web.zip`: the file systems with Wine 6.0
-  and Wine 11.0
+- Used unchanged: the file system with Wine 6.0 from the official release `Boxedwine26R1Web.zip`,
+  and the web file system with Wine 11.0 (version 48) from https://boxedwine.org/v2/48/TinyCore15Wine11.0-web.zip
 - Added: `boxedwine/wine6/win16-extras.zip` with Wine 6.0 modules missing from the web file system
   (16-bit modules such as WinG, toolhelp, ole2, plus `winhttp` and `jsproxy` for OpenTTD).
   Taken unchanged from the full Boxedwine file system http://boxedwine.org/v2/2/TinyCore15Wine6.0.zip
