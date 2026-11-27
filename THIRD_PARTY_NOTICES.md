@@ -4,17 +4,22 @@ RunThemAll is an aggregator: these components are **not** part of this repositor
 by `scripts/fetch-runtimes.mjs` and published together with the website. For each one, its licence text
 and source code are published next to it.
 
-## Boxedwine 26R1.0
+## Boxedwine (master 0fa70a84, file systems of 26R1.0)
 
 - Project: https://github.com/danoon2/Boxedwine
 - Licence: GNU General Public License v2.0 (`boxedwine/LICENSE-GPL-2.0.txt`)
-- Used: unchanged files from the official release `Boxedwine26R1Web.zip`
-  (`boxedwine.js`, `boxedwine.wasm` and the file systems with Wine 6.0 and Wine 11.0)
+- Emulator (`boxedwine.js`, `boxedwine.wasm`): built by RunThemAll from the unchanged source of
+  commit 0fa70a84 of the master branch (`scripts/build-boxedwine.mjs`). `boxedwine.js` is changed
+  in one place (screen size, see `boxedwine/README-boxedwine.txt`).
+- Used unchanged from the official release `Boxedwine26R1Web.zip`: the file systems with Wine 6.0
+  and Wine 11.0
 - Added: `boxedwine/wine6/win16-extras.zip` with Wine 6.0 modules missing from the web file system
   (16-bit modules such as WinG, toolhelp, ole2, plus `winhttp` and `jsproxy` for OpenTTD).
   Taken unchanged from the full Boxedwine file system http://boxedwine.org/v2/2/TinyCore15Wine6.0.zip
   (Wine, LGPL-2.1+).
-- Source code: `boxedwine/source/Boxedwine-26R1.0-source.tar.gz` (also https://github.com/danoon2/Boxedwine/tree/26R1.0)
+- Source code: `boxedwine/source/Boxedwine-0fa70a84-source.tar.gz` (emulator, also
+  https://github.com/danoon2/Boxedwine/tree/0fa70a84992fb5bf638f05eaf889e0b465282d90) and
+  `boxedwine/source/Boxedwine-26R1.0-source.tar.gz` (release)
 
 The file system archives contain Wine (LGPL-2.1 or later) and parts of Tiny Core Linux (GPL); their
 licences are in the archives or with the upstream projects.

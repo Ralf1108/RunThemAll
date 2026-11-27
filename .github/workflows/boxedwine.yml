@@ -1,10 +1,10 @@
 name: Build Boxedwine
 
-# Builds Boxedwine for the web with RunThemAll's fixes (scripts/build-boxedwine.mjs) and publishes
-# the result as the release asset that scripts/fetch-runtimes.mjs downloads. Run it by hand
-# (Actions -> Build Boxedwine -> Run workflow) after BUILD_NUMBER or the patches changed; it takes
-# a while (two builds of Boxedwine). Until the release exists, the site uses the unchanged
-# Boxedwine release.
+# Builds Boxedwine for the web from the commit in scripts/build-boxedwine.mjs (BOXEDWINE_COMMIT,
+# with Boxedwine's own makefile) and publishes the result as the release asset that
+# scripts/fetch-runtimes.mjs downloads. Run it by hand (Actions -> Build Boxedwine -> Run workflow)
+# after BOXEDWINE_COMMIT, BUILD_NUMBER or the patches changed; it takes a while (two builds).
+# Until the release exists, the site uses the emulator of the last Boxedwine release (no netplay).
 
 on:
   workflow_dispatch:
@@ -40,7 +40,7 @@ jobs:
         run: |
           name=$(node -e "import('./scripts/build-boxedwine.mjs').then(m => console.log(m.BUILD_NAME))")
           asset=$(node -e "import('./scripts/build-boxedwine.mjs').then(m => console.log(m.BUILD_ASSET))")
-          notes="Boxedwine for the web with RunThemAll's fixes, built from the unchanged Boxedwine source and scripts/build-boxedwine.mjs (commit ${GITHUB_SHA}). Changes: RunThemAll-changes.txt in the zip."
+          notes="Boxedwine for the web, built from Boxedwine's source by scripts/build-boxedwine.mjs (RunThemAll commit ${GITHUB_SHA}). Details: RunThemAll-changes.txt in the zip."
           if gh release view "$name" > /dev/null 2>&1; then
             gh release upload "$name" "vendor/boxedwine-build/$asset" --clobber
           else

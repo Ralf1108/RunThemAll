@@ -22,9 +22,11 @@ export function pcAspect(w, h) {
  * @param {HTMLElement} box
  * @param {(w: number, h: number) => number} [aspect] displayed aspect ratio for a
  *   resolution; default: as the pixels (square pixels)
+ * @param {HTMLCanvasElement} [source] canvas whose resolution sets the size (default: `el`), for
+ *   emulators that draw the picture on another canvas than the one they get the input on
  * @returns {() => void} stops following size changes
  */
-export function fitToBox(el, box, aspect = (w, h) => w / h) {
+export function fitToBox(el, box, aspect = (w, h) => w / h, source = el) {
   const isCanvas = el instanceof HTMLCanvasElement;
   let frame = 0;
 
@@ -33,8 +35,8 @@ export function fitToBox(el, box, aspect = (w, h) => w / h) {
     const style = getComputedStyle(box);
     const boxW = box.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
     const boxH = box.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
-    const w = isCanvas ? el.width : el.offsetWidth;
-    const h = isCanvas ? el.height : el.offsetHeight;
+    const w = isCanvas ? source.width : el.offsetWidth;
+    const h = isCanvas ? source.height : el.offsetHeight;
     if (!w || !h || boxW <= 0 || boxH <= 0) return;
     const ratio = aspect(w, h);
     const width = Math.min(boxW, boxH * ratio);
@@ -54,7 +56,7 @@ export function fitToBox(el, box, aspect = (w, h) => w / h) {
   if (!isCanvas) resize.observe(el);
   // Emulators change the canvas resolution by setting its width/height attributes.
   const attrs = new MutationObserver(schedule);
-  attrs.observe(el, { attributes: true, attributeFilter: ['width', 'height'] });
+  attrs.observe(isCanvas ? source : el, { attributes: true, attributeFilter: ['width', 'height'] });
   schedule();
 
   return () => { resize.disconnect(); attrs.disconnect(); cancelAnimationFrame(frame); };

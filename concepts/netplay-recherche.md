@@ -80,38 +80,30 @@ Ergänzung zu [browser-netplay-konzept.md](browser-netplay-konzept.md). Stand: 2
 
 ### Boxedwine (Windows-Programme)
 
-- Winsock-Aufrufe landen im Linux-Kernel von Boxedwine und von dort in Emscriptens
-  Socket-Emulation (SOCKFS): Jede Verbindung wird zu einem WebSocket zu `ws://ziel:port`.
-- Damit gehen höchstens ausgehende TCP-Verbindungen über einen Proxy. Ein LAN (Broadcast zum
-  Finden von Spielen, Lauschen auf Ports, UDP zwischen Spielern) geht so nicht.
-- **Umgesetzt ohne neuen Build:** Die Sockets entstehen in `SOCKFS.createSocket` von
-  `boxedwine.js`. Das Fetch-Skript patcht diese Stelle (und `DNS.lookup_name`), sodass die Seite
-  eigene Socket-Operationen liefern kann: `site/js/wine-net.js`.
-  - Jeder Spieler hat die Adresse 192.168.78.n (n = Nummer im Raum vom Relay, /24 wie das Netz,
-    das Wine sieht). Der eigene Hostname löst darauf auf, die Namen der Mitspieler auf deren
-    Adressen.
+- Im Release 26R1.0 landen Winsock-Aufrufe im Linux-Kernel von Boxedwine und von dort in
+  Emscriptens Socket-Emulation (SOCKFS): Jede Verbindung wird zu einem WebSocket zu
+  `ws://ziel:port`. Ein LAN (Broadcast, Lauschen auf Ports, UDP zwischen Spielern) geht so nicht.
+- **Boxedwine master** (seit Juni 2026, noch in keinem Release) hat eine eigene Netzwerkschicht
+  für den Browser: `KBrowserSocketObject` im C++-Code und `project/emscripten/boxedwine-net.js`.
+  Die Seite kann in `Module.boxedwineNetworking.transport` ein eigenes Objekt für die Sockets des
+  Gastes übergeben (socket, bind, listen, accept, connect, send, recv, Ereignisse; ohne Transport
+  nimmt Boxedwine einen WebSocket-Gateway-Server). `transport.virtualIp` wird die Adresse von eth0.
+- **Umgesetzt:** RunThemAll baut Boxedwine aus einem festen master-Commit selbst
+  (`scripts/build-boxedwine.mjs`, Emscripten 5.0.7, Boxedwines Makefile; Workflow „Build
+  Boxedwine“), ohne Änderungen am C++-Code. `site/js/wine-net.js` ist der Transport:
+  - Jeder Spieler hat die Adresse 192.168.78.n (n = Nummer im Raum vom Relay, /24).
   - UDP: Datagramme an einen Spieler oder an alle (Broadcast). TCP: connect/listen/accept mit
     kleinem Handshake über den Relay. Der Relay ist zuverlässig und hält die Reihenfolge ein,
     daher keine Sequenznummern.
+  - DNS (UDP Port 53, jeder Server): Spielernamen und der eigene Hostname lösen auf die Adressen
+    im Raum auf, andere Namen gibt es nicht.
   - Kein Internet: andere Adressen werden abgelehnt.
-  - Im Multithread-Build laufen Socket-Aufrufe ohnehin auf dem Haupt-Thread (Emscripten leitet
-    sie weiter). Worker-Threads erfahren die eigene Adresse aus der Skript-URL (`?vnet=`).
-- **Test mit OpenTTD** (Host `-D` als Server, Gast verbindet über die Konsole): Der Server
-  meldet „Client connected from 192.168.78.2“ und empfängt das Join-Paket.
-- **Fehler in Boxedwine, behoben im eigenen Build:** `KNativeSocketObject::accept` setzt beim
-  neuen Socket `connected` nicht. `isOpen()` ist dann false, und `poll` meldet für den
-  angenommenen Socket immer POLLHUP; Wine sendet darüber nichts. Außerdem bricht `accept` mit
-  NULL als Adresse ab. Beides behebt `scripts/build-boxedwine.mjs` (eigener Build mit
-  Emscripten 4.0.10, Workflow „Build Boxedwine“). Meldung an Boxedwine mit Repro:
-  [boxedwine-upstream-issue.md](boxedwine-upstream-issue.md), [boxedwine-accept-repro/](boxedwine-accept-repro/).
-- **Stand mit dem eigenen Build:** OpenTTD-Client und -Server in zwei Browsern verbinden sich,
-  der Server antwortet und schickt die Karte (ca. 85 KB). Danach stürzt Boxedwine beim Client ab:
-  ein Speicherzugriffsfehler des Gastes wird als C++-Ausnahme gemeldet, die der Web-Build nicht
-  abfängt (Makefile ohne Ausnahmebehandlung; mit `-fwasm-exceptions` startet Boxedwine gar nicht).
-  Das passiert auch mit dem offiziellen Release und ist ein eigenes Thema.
-- Weitere Lücken in Boxedwine: `ioctl` SIOCGIFCONF/SIOCGIFBRDADDR fehlen, deshalb findet Wine
-  keine Broadcast-Adressen (Spielsuche im LAN per Broadcast geht so nicht), und blockierende
-  Sockets warten im Multithread-Build nicht (betrifft Linux-Programme wie `nc`, nicht Wine).
+  - Boxedwine ruft den Transport immer auf dem Haupt-Thread auf (auch im Multithread-Build).
+- Die Fehler im alten Socket-Code (`KNativeSocketObject::accept`: kein `connected`, Absturz bei
+  NULL als Adresse; fehlende Interface-ioctls) betreffen den Web-Build von master nicht mehr.
+  Die zwei accept-Fehler sind im Desktop-Build noch da und als Pull Request an Boxedwine gemeldet.
+- **Test mit OpenTTD** (Host `-D` als Server, Gast verbindet über die Konsole): Client und Server
+  in zwei Browsern verbinden sich, der Server schickt die Karte (ca. 88 KB).
 
 ### Modem/Nullmodem
 

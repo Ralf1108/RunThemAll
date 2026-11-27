@@ -15,9 +15,14 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createZip, listZip, readZipEntry, readZipEntryRaw } from '../site/js/zip.js';
 import { CORES, SYSTEMS } from '../site/js/systems.js';
-import { BUILD_ASSET, BUILD_NAME, changesText } from './build-boxedwine.mjs';
+import {
+  BOXEDWINE_COMMIT, BOXEDWINE_VERSION, BUILD_ASSET, BUILD_NAME, SOURCE_URL as BUILD_SOURCE_URL, changesText,
+} from './build-boxedwine.mjs';
 
 // --- Boxedwine -------------------------------------------------------------
+// The emulator (st/, mt/) is our build of Boxedwine's master branch (scripts/build-boxedwine.mjs),
+// which has the browser networking netplay needs. The Wine file systems, the readme and the
+// fallback emulator come from the last release.
 const BOXEDWINE_TAG = '26R1.0';
 const BOXEDWINE_ASSET = 'Boxedwine26R1Web.zip';
 const BOXEDWINE_RELEASE = `https://github.com/danoon2/Boxedwine/releases/download/${BOXEDWINE_TAG}/${BOXEDWINE_ASSET}`;
@@ -125,19 +130,19 @@ function readTar(data) {
   return files;
 }
 
-// Boxedwine with RunThemAll's fixes in the C++ code (netplay), built by scripts/build-boxedwine.mjs
-// (locally, or by the GitHub workflow "Build Boxedwine" as a release asset of this repository).
+// Boxedwine master, built by scripts/build-boxedwine.mjs (locally, or by the GitHub workflow
+// "Build Boxedwine" as a release asset of this repository).
 const BOXEDWINE_BUILD_URL = `https://github.com/Ralf1108/RunThemAll/releases/download/${BUILD_NAME}/${BUILD_ASSET}`;
 
-/** The own build (st/ and mt/ boxedwine.js + .wasm) as Map<name, loader>, or null: then the upstream files are used. */
+/** The own build (st/ and mt/ boxedwine.js + .wasm) as Map<name, loader>, or null: then the release's files are used. */
 async function ownBoxedwineBuild() {
   const local = join(VENDOR, 'boxedwine-build', BUILD_ASSET);
   try {
     await download(BOXEDWINE_BUILD_URL, local); // skipped when it was built locally
   } catch (err) {
     console.warn(`  WARNING: ${BUILD_ASSET} is not available (${err.message}).`);
-    console.warn('  Using the unchanged Boxedwine release: Windows programs work, but netplay servers inside Wine');
-    console.warn('  cannot answer. Build it with scripts/build-boxedwine.mjs or run the workflow "Build Boxedwine".');
+    console.warn(`  Using the emulator of the Boxedwine ${BOXEDWINE_TAG} release: Windows programs work, but without netplay.`);
+    console.warn('  Build it with scripts/build-boxedwine.mjs or run the workflow "Build Boxedwine".');
     return null;
   }
   const zip = new Uint8Array(await readFile(local));
@@ -150,7 +155,7 @@ async function fetchBoxedwine() {
   const release = join(VENDOR, BOXEDWINE_ASSET);
   await download(BOXEDWINE_RELEASE, release);
   const own = await ownBoxedwineBuild();
-  if (own) console.log(`  emulator from ${BUILD_NAME} (Boxedwine with RunThemAll's fixes)`);
+  if (own) console.log(`  emulator from ${BUILD_NAME} (Boxedwine ${BOXEDWINE_VERSION})`);
 
   const archive = new Uint8Array(await readFile(release));
   const entries = new Map(listZip(archive).map((e) => [e.name, e]));
@@ -160,8 +165,8 @@ async function fetchBoxedwine() {
     let data = own?.has(to) ? await own.get(to)() : await readZipEntry(archive, entry);
     if (to.endsWith('boxedwine.js')) data = patchBoxedwineJs(data, to);
     if (to === 'README-boxedwine.txt') {
-      const ownNote = own ? `\nThe emulator files (st/, mt/) are an own build (${BUILD_NAME}) with changes in the\n`
-        + 'C++ code, listed in source/RunThemAll-changes.txt.\n' : '';
+      const ownNote = own ? `\nThe emulator files (st/, mt/) are an own build (${BUILD_NAME}) of Boxedwine ${BOXEDWINE_VERSION},\n`
+        + 'not of this release; see source/RunThemAll-changes.txt. The Wine file systems are from this release.\n' : '';
       data = new TextEncoder().encode(new TextDecoder().decode(data) + BOXEDWINE_CHANGE_NOTE + ownNote);
     }
     await writeOut(join(out, to), data);
@@ -170,62 +175,54 @@ async function fetchBoxedwine() {
 
   await buildWin16Overlay(entries.get('SingleThreaded/boxedwine.zip'), archive, join(out, 'wine6', 'win16-extras.zip'));
 
+  // Source of the release (file systems) and, for the own build, of the built commit.
   const source = `https://github.com/danoon2/Boxedwine/archive/refs/tags/${BOXEDWINE_TAG}.tar.gz`;
   await download(`https://raw.githubusercontent.com/danoon2/Boxedwine/${BOXEDWINE_TAG}/license.txt`,
     join(out, 'LICENSE-GPL-2.0.txt'));
   await download(source, join(out, 'source', `Boxedwine-${BOXEDWINE_TAG}-source.tar.gz`));
-  if (own) await writeOut(join(out, 'source', 'RunThemAll-changes.txt'), changesText());
-  await writeOut(join(out, 'version.json'),
-    JSON.stringify({ tag: BOXEDWINE_TAG, source, build: own ? BUILD_NAME : null }, null, 2) + '\n');
+  if (own) {
+    await download(BUILD_SOURCE_URL, join(out, 'source', `Boxedwine-${BOXEDWINE_COMMIT.slice(0, 8)}-source.tar.gz`));
+    await writeOut(join(out, 'source', 'RunThemAll-changes.txt'), changesText());
+  }
+  await writeOut(join(out, 'version.json'), JSON.stringify({
+    tag: own ? BOXEDWINE_VERSION : BOXEDWINE_TAG,
+    source: own ? BUILD_SOURCE_URL : source,
+    build: own ? BUILD_NAME : null,
+    filesystems: source,
+  }, null, 2) + '\n');
 }
 
-// Changes to Boxedwine (GPL 2.0, section 2a: changed files carry a notice). 1. SDL takes the
-// device screen (emscripten_get_screen_size) as the display and switches to fullscreen when the Windows screen is larger,
-// which on phones is nearly always the case: the first touch then asks the browser for fullscreen
-// of the canvas, and the picture stays black if the browser refuses. Reporting a screen size of at
-// least 4096 x 4096 keeps Boxedwine in the page; js/fit.js scales the picture as for every emulator.
-// 2. Netplay: two hooks that let the page put sockets on a virtual LAN (see js/wine-net.js).
-const BOXEDWINE_CHANGE_DATE = '2026-11-26';
-const BOXEDWINE_PATCHES = [
-  ['HEAP32[((width)>>2)] = screen.width;', 'HEAP32[((width)>>2)] = Math.max(screen.width, 4096);'],
-  ['HEAP32[((height)>>2)] = screen.height;', 'HEAP32[((height)>>2)] = Math.max(screen.height, 4096);'],
-  // Netplay (js/wine-net.js): in a room the sockets use a virtual LAN over the relay instead of
-  // Emscripten's WebSocket sockets.
-  ['sock_ops: SOCKFS.websocket_sock_ops',
-    'sock_ops: globalThis.runThemAllNet?.sockOps(SOCKFS, FS) || SOCKFS.websocket_sock_ops'],
-  // The own hostname resolves to the address in the room. Worker threads have no runThemAllNet;
-  // they get the address from their script URL (?vnet=..., set by js/emulator.js).
-  ['  lookup_name(name) {',
-    '  lookup_name(name) {\n'
-    + '        var vnet = globalThis.runThemAllNet ? globalThis.runThemAllNet.lookupName(name)\n'
-    + "          : name == 'emscripten' && typeof location == 'object' && (/[?&]vnet=([0-9.]+)/.exec(location.search) || [])[1];\n"
-    + '        if (vnet) return vnet;'],
-];
+// Change to Boxedwine (GPL 2.0, section 2a: changed files carry a notice): SDL takes the device
+// screen (emscripten_get_screen_size) as the display and switches to fullscreen when the Windows
+// screen is larger, which on phones is nearly always the case: the first touch then asks the
+// browser for fullscreen of the canvas, and the picture stays black if the browser refuses.
+// Reporting a screen size of at least 4096 x 4096 keeps Boxedwine in the page; js/fit.js scales
+// the picture as for every emulator. The code is readable in the release and minified in our
+// build, so each change has a form for both.
+const BOXEDWINE_CHANGE_DATE = '2026-11-27';
+const BOXEDWINE_PATCHES = ['width', 'height'].map((d) => [
+  [`HEAP32[((${d})>>2)] = screen.${d};`, `HEAP32[((${d})>>2)] = Math.max(screen.${d}, 4096);`],
+  [`[${d}>>>2>>>0]=screen.${d}`, `[${d}>>>2>>>0]=Math.max(screen.${d},4096)`],
+]);
 const BOXEDWINE_CHANGE_NOTE = `
 
 Changes by RunThemAll (${BOXEDWINE_CHANGE_DATE})
 ------------------------------------
-st/boxedwine.js and mt/boxedwine.js are changed in three places:
-- The screen size reported to SDL is at least 4096 x 4096, so that Boxedwine does not switch to
-  fullscreen on small screens (phones).
-- SOCKFS.createSocket takes the socket operations from window.runThemAllNet when the page set it
-  (netplay: a virtual LAN between the players over a relay server), otherwise the original ones.
-- DNS.lookup_name asks window.runThemAllNet first (in worker threads: the vnet parameter of the
-  script URL), so the own hostname resolves to the address in the virtual LAN.
-The changes are made by scripts/fetch-runtimes.mjs in https://github.com/Ralf1108/RunThemAll; the
+st/boxedwine.js and mt/boxedwine.js are changed in one place: the screen size reported to SDL is
+at least 4096 x 4096, so that Boxedwine does not switch to fullscreen on small screens (phones).
+The change is made by scripts/fetch-runtimes.mjs in https://github.com/Ralf1108/RunThemAll; the
 unchanged Boxedwine source is in source/.
 `;
 
 function patchBoxedwineJs(data, name) {
   let text = new TextDecoder().decode(data);
-  for (const [from, to] of BOXEDWINE_PATCHES) {
-    const count = text.split(from).length - 1;
-    if (count !== 1) throw new Error(`Boxedwine patch: expected "${from}" once in ${name}, found ${count} times`);
-    text = text.replace(from, to);
+  for (const forms of BOXEDWINE_PATCHES) {
+    const form = forms.find(([from]) => text.split(from).length === 2);
+    if (!form) throw new Error(`Boxedwine patch: expected "${forms[0][0]}" (or its minified form) once in ${name}`);
+    text = text.replace(form[0], form[1]);
   }
   const notice = `// Modified by RunThemAll on ${BOXEDWINE_CHANGE_DATE}: the screen size reported to SDL is at least\n`
-    + '// 4096 x 4096 (no fullscreen on small screens), and sockets and the own hostname can use a\n'
-    + '// virtual LAN of the page (window.runThemAllNet, netplay). See README-boxedwine.txt. License: GPL 2.0.\n';
+    + '// 4096 x 4096 (no fullscreen on small screens). See README-boxedwine.txt. License: GPL 2.0.\n';
   return new TextEncoder().encode(notice + text);
 }
 

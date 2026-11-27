@@ -123,7 +123,7 @@ side the supported platforms and the emulators (3.3). The interface is in Englis
    - Touch on the emulator area (`.screen`, `touch-action: none`) goes to the emulator as mouse or touch input;
      it does not scroll or zoom the page.
    - *Quit*: reloads the page.
-   - A badge shows which emulator runs (e.g. "Boxedwine 26R1.0 · Wine 6 · Multithreaded").
+   - A badge shows which emulator runs (e.g. "Boxedwine master 0fa70a84 · Wine 6 · Multithreaded").
    - A message box tells what was saved, or that nothing changed.
    - EmulatorJS and v86 have no save/write back; EmulatorJS handles saves in its own menu.
 
@@ -211,7 +211,11 @@ CD tracks next to a `.cue` are not listed; the `.cue` is started with all its tr
 
 ### 5.1 Windows: Boxedwine
 
-- Source: GitHub release `26R1.0` of danoon2/Boxedwine, file `Boxedwine26R1Web.zip`.
+- Emulator: own build of a fixed commit of Boxedwine's master branch (`scripts/build-boxedwine.mjs`,
+  Emscripten 5.0.7, Boxedwine's makefile), because netplay needs its browser networking.
+  File systems: GitHub release `26R1.0` of danoon2/Boxedwine, file `Boxedwine26R1Web.zip`.
+- Boxedwine's own page is not used; `js/emulator.js` sets up `Module` (arguments, file system,
+  the functions that show frames on a second canvas `boxedwine-webgl-canvas-0`, networking).
 - Single- and multithreaded builds. "Automatic" uses multithreaded when the page is *cross-origin isolated*.
 - File systems: Wine 6.0 (37 MB) and Wine 11.0 (49 MB, no 16-bit support).
 - **Win16 overlay**: the web Wine 6 file system lacks 34 16-bit modules (WinG, toolhelp, lzexpand, ole2, …).

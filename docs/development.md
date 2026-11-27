@@ -46,34 +46,36 @@ After an update:
    `scripts/fetch-runtimes.mjs` has to be adapted.
 4. Boxedwine's `boxedwine.js` is patched (`BOXEDWINE_PATCHES`): `emscripten_get_screen_size` reports
    at least 4096 x 4096, otherwise SDL switches to fullscreen on phones (Windows screen larger than the
-   device screen) and the picture turns black when the browser refuses; and two hooks let netplay put
-   the sockets on a virtual LAN (`js/wine-net.js`). The build stops if a patched line is not found in
-   a new version. The changed files carry a notice (GPL 2.0) and the changes are described at the end
-   of `site/boxedwine/README-boxedwine.txt`.
-5. Boxedwine's emulator files (`st/`, `mt/`) come from an own build with fixes in the C++ code (see
-   below). After a Boxedwine update: set `BOXEDWINE_TAG` in `scripts/build-boxedwine.mjs` too, raise
-   `BUILD_NUMBER`, check that the patches still apply and run the workflow *Build Boxedwine*.
+   device screen) and the picture turns black when the browser refuses. The build stops if the line
+   is not found in a new version. The changed files carry a notice (GPL 2.0) and the change is
+   described at the end of `site/boxedwine/README-boxedwine.txt`.
+5. Boxedwine's emulator files (`st/`, `mt/`) come from an own build of a fixed commit of Boxedwine's
+   master branch (see below); the Wine file systems still come from the release. To update: set
+   `BOXEDWINE_COMMIT` (and `EMSCRIPTEN_VERSION`, if Boxedwine's makefile asks for another one) in
+   `scripts/build-boxedwine.mjs`, raise `BUILD_NUMBER`, build, test and run the workflow *Build Boxedwine*.
 
 ### Own Boxedwine build
 
-Netplay needs fixes in Boxedwine's C++ code (an accepted socket is not marked as connected, the
-browser has no network interfaces; details in `concepts/boxedwine-upstream-issue.md`, which is
-also the text for reporting them upstream). `scripts/build-boxedwine.mjs` builds Boxedwine
-from its unchanged source archive with these changes (`PATCHES`) and the settings of Boxedwine's
-own makefile:
+Netplay needs Boxedwine's browser networking (`project/emscripten/boxedwine-net.js`: the page can
+hand Boxedwine a "transport" for the guest's sockets, `js/wine-net.js` is ours), which is in the
+master branch but not in a release yet. `scripts/build-boxedwine.mjs` downloads the source of the
+commit `BOXEDWINE_COMMIT` and runs Boxedwine's own makefile (targets `release` and `multiThreaded`)
+with Emscripten `EMSCRIPTEN_VERSION` (5.0.7). `PATCHES` could change the C++ code; it is empty.
 
 ```sh
-emsdk install 4.0.10 && emsdk activate 4.0.10   # EMSCRIPTEN_VERSION in the script
-source emsdk/emsdk_env.sh      # Windows: emsdk_env.bat
-node scripts/build-boxedwine.mjs
+node scripts/build-boxedwine.mjs   # Linux: needs emsdk (activated), make, python3
+                                   # Windows/macOS: runs in Docker (emscripten/emsdk image)
 ```
 
-The result is `vendor/boxedwine-build/boxedwine-<tag>-runthemall.<n>-web.zip`. The workflow
+The result is `vendor/boxedwine-build/boxedwine-<commit>-runthemall.<n>-web.zip`. The workflow
 *Build Boxedwine* (`.github/workflows/boxedwine.yml`, started by hand) builds the same and
-publishes it as release `boxedwine-<tag>-runthemall.<n>` of this repository.
+publishes it as release `boxedwine-<commit>-runthemall.<n>` of this repository.
 `scripts/fetch-runtimes.mjs` takes the emulator files from the local build or that release; if
-neither exists it warns and uses the unchanged Boxedwine release (then Windows netplay servers
-cannot answer). Once Boxedwine releases the fixes, the own build can be dropped.
+neither exists it warns and uses the emulator of the Boxedwine release (then without netplay).
+
+Boxedwine's own page (`boxedwine-shell.js`) is not used: `js/emulator.js` sets up `Module` itself,
+including the two functions that show finished frames on a second canvas
+(`boxedwinePresentFrame`, `boxedwinePresentSoftwareFrame`, canvas `boxedwine-webgl-canvas-0`).
 
 The GitHub API allows 60 requests per hour without login (one check needs 3). If that is not enough,
 set a token first: `$env:GITHUB_TOKEN = '...'` (no permissions needed).

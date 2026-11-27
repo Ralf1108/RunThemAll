@@ -1,23 +1,28 @@
 // Netplay for Windows programs (Boxedwine): a virtual LAN on the level of sockets.
 //
-// Boxedwine passes Winsock calls on to the socket emulation of Emscripten (SOCKFS in
-// boxedwine.js), which would turn every connection into a WebSocket to the target address and
-// cannot listen for connections at all. In a netplay room the fetch script's patch of
-// boxedwine.js asks `window.runThemAllNet` for the socket operations instead, and this module
+// Boxedwine's web build passes the guest's TCP and UDP sockets to a "transport" object in
+// Module.boxedwineNetworking (project/emscripten/boxedwine-net.js in Boxedwine). Without one,
+// it uses a WebSocket gateway server. In a netplay room this module is the transport and
 // carries TCP and UDP between the players over the relay:
 //
-// - every player has the address 192.168.78.<number in the room> (/24, like the network Wine sees);
-//   the hostname of the browser resolves to it, the names of the players to theirs
+// - every player has the address 192.168.78.<number in the room> (/24); Boxedwine shows it as
+//   the address of eth0 (transport.virtualIp)
 // - UDP: datagrams to one player or to all (broadcast .255 or 255.255.255.255)
 // - TCP: connect/listen/accept with a small handshake; the relay is reliable and keeps the
 //   order, so the data needs no sequence numbers or retransmission
 // - 127.x and the own address reach the own sockets (loopback)
+// - DNS (UDP port 53, any server): the names of the players and the own hostname resolve to
+//   their addresses; other names do not exist
 // There is no internet: other addresses are refused.
+//
+// The transport runs on the page's main thread (Boxedwine proxies the calls from its workers).
+// It uses BoxedWineNetwork, HEAPU8 and growMemViews of boxedwine.js, which are globals.
 
 const LAN = '192.168.78.';
 const CHUNK = 12 * 1024; // below the relay's message limit
 const MAX_QUEUE = 1024; // datagrams waiting in one socket
 const BYTES_PER_SECOND = 512 * 1024; // stays below the relay's limit per player (1 MiB/s)
+const OWN_NAMES = ['boxedwine', 'box', 'localhost'];
 
 // Packet types (first byte); TCP packets carry a direction and the connection ID.
 const UDP = 0x21; // [type][src port u16][dst port u16][data]
@@ -29,33 +34,47 @@ const FIN = 0x26; // [type][dir][id u32]
 const TO_ACCEPTOR = 0;
 const TO_CONNECTOR = 1;
 
-// Emscripten's errno numbers (boxedwine.js ERRNO_CODES).
-const EADDRINUSE = 3;
-const EAGAIN = 6;
-const EALREADY = 7;
-const ECONNREFUSED = 14;
-const ECONNRESET = 15;
-const EDESTADDRREQ = 17;
-const EINVAL = 28;
-const EISCONN = 30;
-const EMSGSIZE = 35;
-const ENOTCONN = 53;
-const EPIPE = 64;
+// Linux errno values (Boxedwine passes them on to the guest).
+const EAGAIN = 11;
+const EINVAL = 22;
+const EMSGSIZE = 90;
+const EDESTADDRREQ = 89;
+const EAFNOSUPPORT = 97;
+const EADDRINUSE = 98;
+const ECONNRESET = 104;
+const EISCONN = 106;
+const ENOTCONN = 107;
+const ESHUTDOWN = 108;
+const ECONNREFUSED = 111;
+const EALREADY = 114;
+const EINPROGRESS = 115;
+const EPIPE = 32;
 
-const POLLIN = 1 | 64; // POLLIN | POLLRDNORM
-const POLLOUT = 4;
-const POLLHUP = 16;
+const POLLIN = 0x1;
+const POLLOUT = 0x4;
+const POLLERR = 0x8;
+const POLLHUP = 0x10;
+const MSG_PEEK = 0x2;
 
 /** The address of a player in the room. */
 export function wineAddress(num) {
   return num ? LAN + num : '0.0.0.0';
 }
 
+/** Boxedwine's IPv4 numbers: the first part of the address in the lowest byte. */
+export function ipv4ToString(n) {
+  return [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255].join('.');
+}
+export function ipv4FromString(s) {
+  const p = String(s).split('.').map(Number);
+  return p.length === 4 ? ((p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24)) >>> 0) : 0;
+}
+
 export class WineNet {
   /** @param {import('./netplay.js').NetplayClient} client */
   constructor(client) {
     this.client = client;
-    this.ops = null;
+    this.sockets = new Map(); // handle -> socket
     this.udp = new Map(); // port -> socket
     this.tcpPorts = new Map(); // port -> socket (bound or listening)
     this.conns = new Map(); // "c|a/peer/id" -> socket
@@ -72,6 +91,9 @@ export class WineNet {
 
   get ownAddress() { return wineAddress(this.client.num); }
 
+  /** Read by Boxedwine (bw_net_get_room_ipv4) as the address of eth0. */
+  get virtualIp() { return this.ownAddress; }
+
   addressOf(peer) {
     if (peer === this.client.peer) return this.ownAddress;
     return wineAddress(this.client.members.find((m) => m.peer === peer)?.num);
@@ -85,10 +107,10 @@ export class WineNet {
     return this.client.members.find((m) => wineAddress(m.num) === addr)?.peer ?? null;
   }
 
-  /** Name lookup (DNS.lookup_name): the hostname of the browser and the names of the players. */
+  /** Name lookup: the own hostname and the names of the players. */
   lookupName(name) {
-    const lower = String(name).toLowerCase();
-    if (lower === 'emscripten' || lower === 'boxedwine') return this.ownAddress;
+    const lower = String(name).toLowerCase().replace(/\.$/, '');
+    if (OWN_NAMES.includes(lower)) return lower === 'localhost' ? '127.0.0.1' : this.ownAddress;
     const m = this.client.members.find((p) => p.name.toLowerCase() === lower);
     return m ? wineAddress(m.num) : null;
   }
@@ -102,17 +124,41 @@ export class WineNet {
     return 0;
   }
 
-  // --- sending ---------------------------------------------------------------------------
+  // --- Boxedwine's state of a socket -----------------------------------------------------
 
-  send(peer, bytes) {
-    if (peer === this.client.peer) {
-      queueMicrotask(() => this.receive(peer, bytes));
-      return;
-    }
-    if (peer === 0) queueMicrotask(() => this.receive(this.client.peer, bytes)); // broadcast: also here
-    this.out.push([peer, bytes]);
-    this.pump();
+  events(s) {
+    let ev = 0;
+    if (s.error) ev |= POLLERR;
+    if (s.rx.length || s.pending.length || s.state === 'closed') ev |= POLLIN;
+    if (s.kind === 'udp' || (s.state === 'open' && !s.outClosed)) ev |= POLLOUT;
+    if (s.kind === 'tcp' && s.state === 'closed') ev |= POLLHUP;
+    return ev;
   }
+
+  /** Tells Boxedwine that the state changed (wakes up poll, select and blocking calls). */
+  notify(s) {
+    if (!s.handle) return;
+    const ev = this.events(s);
+    globalThis.BoxedWineNetwork?.setEvents(s.handle, ev, s.rxBytes);
+  }
+
+  newSocket(kind, handle = 0) {
+    return {
+      handle, kind, state: kind === 'udp' ? 'open' : 'new', rx: [], rxBytes: 0, error: 0,
+      localPort: 0, localIpv4: 0, peerIpv4: 0, peerPort: 0, pending: [], unsent: [],
+      outClosed: false, lastRecvIpv4: 0, lastRecvPort: 0,
+    };
+  }
+
+  /** UDP and TCP sockets get a local port on first use if the program did not bind one. */
+  autobind(s) {
+    if (s.localPort) return;
+    const map = s.kind === 'udp' ? this.udp : this.tcpPorts;
+    s.localPort = this.freePort(map);
+    if (s.kind === 'udp') map.set(s.localPort, s);
+  }
+
+  // --- sending ---------------------------------------------------------------------------
 
   /** Sends what the byte budget allows; the rest a little later (the relay drops excess). */
   pump() {
@@ -141,27 +187,26 @@ export class WineNet {
   }
 
   /** TCP data: writes in the same task go out together, in chunks below the message limit. */
-  queueData(sock, bytes) {
-    const v = sock.vnet;
-    v.unsent.push(bytes);
-    if (v.flushing) return;
-    v.flushing = true;
+  queueData(s, bytes) {
+    s.unsent.push(bytes);
+    if (s.flushing) return;
+    s.flushing = true;
     queueMicrotask(() => {
-      v.flushing = false;
-      if (v.state !== 'open') return;
-      const total = v.unsent.reduce((n, b) => n + b.length, 0);
+      s.flushing = false;
+      if (s.state !== 'open') return;
+      const total = s.unsent.reduce((n, b) => n + b.length, 0);
       const all = new Uint8Array(total);
       let at = 0;
-      for (const b of v.unsent) {
+      for (const b of s.unsent) {
         all.set(b, at);
         at += b.length;
       }
-      v.unsent = [];
+      s.unsent = [];
       for (let i = 0; i < total; i += CHUNK) {
         const part = all.subarray(i, i + CHUNK);
-        const buf = this.tcpPacket(DATA, v.dir, v.id, part.length);
+        const buf = this.tcpPacket(DATA, s.dir, s.id, part.length);
         buf.set(part, 6);
-        this.send(v.peer, buf);
+        this.sendRaw(s.peer, buf);
       }
     });
   }
@@ -172,9 +217,9 @@ export class WineNet {
     if (data.length < 1) return;
     const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
     if (data[0] === UDP && data.length >= 5) {
-      const sock = this.udp.get(view.getUint16(3));
-      if (sock && sock.recv_queue.length < MAX_QUEUE) {
-        sock.recv_queue.push({ addr: this.addressOf(from), port: view.getUint16(1), data: data.slice(5) });
+      const s = this.udp.get(view.getUint16(3));
+      if (s && s.rx.length < MAX_QUEUE) {
+        this.deliverUdp(s, ipv4FromString(this.addressOf(from)), view.getUint16(1), data.slice(5));
       }
       return;
     }
@@ -186,221 +231,362 @@ export class WineNet {
       return;
     }
     // The packet goes to the end named by dir; our socket for it is stored under that role.
-    const sock = this.conns.get(`${dir === TO_ACCEPTOR ? 'a' : 'c'}/${from}/${id}`);
-    if (!sock) {
-      if (data[0] === DATA) this.send(from, this.tcpPacket(RST, 1 - dir, id));
+    const s = this.conns.get(`${dir === TO_ACCEPTOR ? 'a' : 'c'}/${from}/${id}`);
+    if (!s) {
+      if (data[0] === DATA) this.sendRaw(from, this.tcpPacket(RST, 1 - dir, id));
       return;
     }
-    const v = sock.vnet;
     switch (data[0]) {
       case SYNACK:
-        if (v.state === 'connecting') {
-          v.state = 'open';
-          const unsent = v.unsent;
-          v.unsent = [];
-          for (const b of unsent) this.queueData(sock, b);
+        if (s.state === 'connecting') {
+          s.state = 'open';
+          const unsent = s.unsent;
+          s.unsent = [];
+          for (const b of unsent) this.queueData(s, b);
         }
         break;
-      case DATA:
-        sock.recv_queue.push({ addr: sock.daddr, port: sock.dport, data: data.slice(6) });
+      case DATA: {
+        const bytes = data.slice(6);
+        s.rx.push(bytes);
+        s.rxBytes += bytes.length;
         break;
+      }
       case RST:
-        if (v.state === 'connecting') sock.error = ECONNREFUSED;
-        else sock.error = ECONNRESET;
-        this.closed(sock);
+        s.error = s.state === 'connecting' ? ECONNREFUSED : ECONNRESET;
+        this.closed(s);
         break;
       case FIN:
-        this.closed(sock);
+        this.closed(s);
         break;
     }
+    this.notify(s);
+  }
+
+  deliverUdp(s, ipv4, port, bytes) {
+    s.rx.push({ ipv4, port, data: bytes });
+    s.rxBytes += bytes.length;
+    this.notify(s);
   }
 
   incomingConnection(from, id, srcPort, dstPort) {
     const listener = this.tcpPorts.get(dstPort);
-    if (!listener || listener.vnet.state !== 'listening' || listener.pending.length >= 64) {
-      this.send(from, this.tcpPacket(RST, TO_CONNECTOR, id));
+    if (!listener || listener.state !== 'listening' || listener.pending.length >= 64) {
+      this.sendRaw(from, this.tcpPacket(RST, TO_CONNECTOR, id));
       return;
     }
-    const sock = this.SOCKFS.createSocket(2, 1, 6); // AF_INET, SOCK_STREAM, TCP: uses our ops
-    sock.vnet = { state: 'open', peer: from, id, dir: TO_CONNECTOR, key: `a/${from}/${id}`, unsent: [] };
-    sock.saddr = this.ownAddress;
-    sock.sport = dstPort;
-    sock.daddr = this.addressOf(from);
-    sock.dport = srcPort;
-    this.conns.set(sock.vnet.key, sock);
-    listener.pending.push(sock);
-    this.send(from, this.tcpPacket(SYNACK, TO_CONNECTOR, id));
+    // The socket gets its handle when the program accepts it; data can arrive before.
+    const s = this.newSocket('tcp');
+    Object.assign(s, {
+      state: 'open', peer: from, id, dir: TO_CONNECTOR, key: `a/${from}/${id}`,
+      localIpv4: ipv4FromString(this.ownAddress), localPort: dstPort,
+      peerIpv4: ipv4FromString(this.addressOf(from)), peerPort: srcPort,
+    });
+    this.conns.set(s.key, s);
+    listener.pending.push(s);
+    this.sendRaw(from, this.tcpPacket(SYNACK, TO_CONNECTOR, id));
+    this.notify(listener);
   }
 
   /** The connection ended (data already received can still be read, then EOF). */
-  closed(sock) {
-    sock.vnet.state = 'closed';
-    this.conns.delete(sock.vnet.key);
+  closed(s) {
+    s.state = 'closed';
+    this.conns.delete(s.key);
   }
 
   membersChanged() {
     const present = new Set(this.client.members.map((m) => m.peer));
-    for (const sock of [...this.conns.values()]) {
-      if (!present.has(sock.vnet.peer)) {
-        sock.error = ECONNRESET;
-        this.closed(sock);
+    for (const s of [...this.conns.values()]) {
+      if (!present.has(s.peer)) {
+        s.error = ECONNRESET;
+        this.closed(s);
+        this.notify(s);
       }
     }
   }
 
-  // --- the socket operations for SOCKFS --------------------------------------------------
-
-  /**
-   * Called by the patched SOCKFS.createSocket for every new socket.
-   * @returns {object} sock_ops like SOCKFS.websocket_sock_ops
-   */
-  sockOps(SOCKFS, FS) {
-    if (this.ops) return this.ops;
-    this.SOCKFS = SOCKFS;
-    const net = this;
-    const fail = (errno) => new FS.ErrnoError(errno);
-    const state = (sock) => (sock.vnet ??= { state: 'new', unsent: [] });
-
-    // UDP and TCP sockets get a local port on first use if the program did not bind one.
-    const autobind = (sock) => {
-      if (sock.sport) return;
-      const map = sock.type === 2 ? net.udp : net.tcpPorts;
-      sock.sport = net.freePort(map);
-      sock.saddr ??= '0.0.0.0';
-      if (sock.type === 2) map.set(sock.sport, sock);
-    };
-
-    this.ops = {
-      poll(sock) {
-        const v = state(sock);
-        if (v.state === 'listening') return sock.pending.length ? POLLIN : 0;
-        let mask = 0;
-        if (sock.recv_queue.length) mask |= POLLIN;
-        if (sock.type === 2) return mask | POLLOUT;
-        if (v.state === 'open') mask |= POLLOUT;
-        if (v.state === 'closed') mask |= POLLIN | (sock.error === ECONNREFUSED ? POLLOUT : POLLHUP);
-        if (v.state === 'new') mask |= POLLOUT;
-        return mask;
-      },
-      ioctl: SOCKFS.websocket_sock_ops.ioctl,
-      close(sock) {
-        const v = state(sock);
-        if (sock.type === 2) {
-          if (net.udp.get(sock.sport) === sock) net.udp.delete(sock.sport);
-        } else {
-          if (net.tcpPorts.get(sock.sport) === sock) net.tcpPorts.delete(sock.sport);
-          for (const p of sock.pending) net.ops.close(p);
-          if (v.state === 'open' || v.state === 'connecting') net.send(v.peer, net.tcpPacket(FIN, v.dir, v.id));
-          if (v.key) net.conns.delete(v.key);
-          v.state = 'closed';
-        }
-        return 0;
-      },
-      bind(sock, addr, port) {
-        if (sock.sport) throw fail(EINVAL); // already bound
-        const map = sock.type === 2 ? net.udp : net.tcpPorts;
-        if (!port) port = net.freePort(map);
-        else if (map.has(port)) throw fail(EADDRINUSE);
-        sock.saddr = addr;
-        sock.sport = port;
-        map.set(port, sock);
-      },
-      connect(sock, addr, port) {
-        const v = state(sock);
-        if (sock.type === 2) {
-          autobind(sock);
-          sock.daddr = addr;
-          sock.dport = port;
-          return;
-        }
-        if (v.state === 'connecting') throw fail(EALREADY);
-        if (v.state === 'open') throw fail(EISCONN);
-        const peer = net.peerOf(addr);
-        if (!peer) throw fail(ECONNREFUSED); // not in the room (no internet), or broadcast
-        autobind(sock);
-        const id = crypto.getRandomValues(new Uint32Array(1))[0];
-        Object.assign(v, { state: 'connecting', peer, id, dir: TO_ACCEPTOR, key: `c/${peer}/${id}` });
-        net.conns.set(v.key, sock);
-        sock.daddr = addr;
-        sock.dport = port;
-        const syn = net.tcpPacket(SYN, TO_ACCEPTOR, id, 4);
-        new DataView(syn.buffer).setUint16(6, sock.sport);
-        new DataView(syn.buffer).setUint16(8, port);
-        net.send(peer, syn);
-        // Like Emscripten's own sockets: report success now, data waits until the other side accepts.
-      },
-      listen(sock) {
-        if (sock.type !== 1) throw fail(EINVAL);
-        if (!sock.sport) {
-          sock.sport = net.freePort(net.tcpPorts);
-          net.tcpPorts.set(sock.sport, sock);
-        }
-        state(sock).state = 'listening';
-        sock.server = true; // SOCKFS: no recv() on a listening socket
-      },
-      accept(sock) {
-        if (state(sock).state !== 'listening') throw fail(EINVAL);
-        if (!sock.pending.length) throw fail(EAGAIN);
-        const newsock = sock.pending.shift();
-        newsock.stream.flags = sock.stream.flags;
-        return newsock;
-      },
-      getname(sock, peer) {
-        if (peer) {
-          if (sock.daddr === undefined) throw fail(ENOTCONN);
-          return { addr: sock.daddr, port: sock.dport };
-        }
-        let addr = sock.saddr || '0.0.0.0';
-        if (addr === '0.0.0.0' && sock.daddr !== undefined) addr = net.ownAddress;
-        return { addr, port: sock.sport || 0 };
-      },
-      sendmsg(sock, buffer, offset, length, addr, port) {
-        const v = state(sock);
-        const bytes = new Uint8Array(buffer.buffer ?? buffer, (buffer.byteOffset ?? 0) + offset, length).slice();
-        if (sock.type === 2) {
-          if (addr === undefined || port === undefined) {
-            addr = sock.daddr;
-            port = sock.dport;
-          }
-          if (addr === undefined) throw fail(EDESTADDRREQ);
-          if (length > CHUNK) throw fail(EMSGSIZE);
-          autobind(sock);
-          const peer = net.peerOf(addr);
-          if (peer === null) return length; // outside the LAN: lost, like on a network without a router
-          const buf = new Uint8Array(5 + length);
-          buf[0] = UDP;
-          new DataView(buf.buffer).setUint16(1, sock.sport);
-          new DataView(buf.buffer).setUint16(3, port);
-          buf.set(bytes, 5);
-          net.send(peer, buf);
-          return length;
-        }
-        if (v.state === 'closed') throw fail(EPIPE);
-        if (v.state !== 'open' && v.state !== 'connecting') throw fail(ENOTCONN);
-        if (v.state === 'connecting') v.unsent.push(bytes);
-        else net.queueData(sock, bytes);
-        return length;
-      },
-      recvmsg(sock, length) {
-        const v = state(sock);
-        if (v.state === 'listening') throw fail(ENOTCONN);
-        const queued = sock.recv_queue.shift();
-        if (!queued) {
-          if (sock.type === 1 && v.state === 'closed') return null; // EOF
-          if (sock.type === 1 && v.state === 'new') throw fail(ENOTCONN);
-          throw fail(EAGAIN);
-        }
-        const n = Math.min(length, queued.data.length);
-        if (sock.type === 1 && n < queued.data.length) {
-          sock.recv_queue.unshift({ ...queued, data: queued.data.subarray(n) });
-        }
-        return { buffer: queued.data.subarray(0, n), addr: queued.addr, port: queued.port };
-      },
-    };
-    return this.ops;
+  /** Answers a DNS query (A records) from lookupName; other questions get "no such name". */
+  dnsAnswer(query) {
+    if (query.length < 12) return null;
+    let at = 12;
+    const labels = [];
+    while (at < query.length && query[at]) {
+      const n = query[at];
+      labels.push(new TextDecoder().decode(query.subarray(at + 1, at + 1 + n)));
+      at += 1 + n;
+    }
+    const qEnd = at + 5; // zero byte, type, class
+    if (qEnd > query.length) return null;
+    const qtype = (query[at + 1] << 8) | query[at + 2];
+    const addr = this.lookupName(labels.join('.'));
+    const answer = addr && qtype === 1;
+    const out = new Uint8Array(qEnd + (answer ? 16 : 0));
+    out.set(query.subarray(0, qEnd));
+    out[2] = 0x81 | (query[2] & 0x01); // response, recursion desired as asked
+    out[3] = answer || addr ? 0x80 : 0x83; // recursion available; NXDOMAIN if the name is unknown
+    out.set([0, 1, 0, answer ? 1 : 0, 0, 0, 0, 0], 4);
+    if (answer) {
+      out.set([0xc0, 12, 0, 1, 0, 1, 0, 0, 0, 60, 0, 4, ...addr.split('.').map(Number)], qEnd);
+    }
+    return out;
   }
 
-  close() {
+  // --- heap access -----------------------------------------------------------------------
+
+  copyFromHeap(ptr, len) {
+    globalThis.growMemViews?.();
+    return globalThis.HEAPU8.slice(ptr, ptr + len);
+  }
+
+  copyToHeap(ptr, bytes) {
+    globalThis.growMemViews?.();
+    globalThis.HEAPU8.set(bytes, ptr);
+  }
+
+  // --- the transport (called by boxedwine-net.js) ----------------------------------------
+
+  /** Module.boxedwineNetworking for boxedwine.js. */
+  get networking() {
+    return { enabled: true, transport: this };
+  }
+
+  getSocket(handle) { return this.sockets.get(handle) ?? null; }
+
+  socket(domain, type) {
+    if (type !== 1 && type !== 2) return -EAFNOSUPPORT;
+    const handle = globalThis.BoxedWineNetwork.allocateSocket(domain, type, 0);
+    const s = this.newSocket(type === 2 ? 'udp' : 'tcp', handle);
+    this.sockets.set(handle, s);
+    if (s.kind === 'udp') this.autobind(s);
+    this.notify(s);
+    return handle;
+  }
+
+  close(handle) {
+    const s = this.sockets.get(handle);
+    if (!s) return 0;
+    this.sockets.delete(handle);
+    if (s.kind === 'udp') {
+      if (this.udp.get(s.localPort) === s) this.udp.delete(s.localPort);
+      return 0;
+    }
+    if (this.tcpPorts.get(s.localPort) === s) this.tcpPorts.delete(s.localPort);
+    for (const p of s.pending) {
+      this.sendRaw(p.peer, this.tcpPacket(FIN, p.dir, p.id));
+      this.conns.delete(p.key);
+    }
+    if (s.state === 'open' || s.state === 'connecting') this.sendRaw(s.peer, this.tcpPacket(FIN, s.dir, s.id));
+    if (s.key) this.conns.delete(s.key);
+    s.state = 'closed';
+    return 0;
+  }
+
+  bind(handle, ipv4, port) {
+    const s = this.sockets.get(handle);
+    if (!s) return -EAFNOSUPPORT;
+    const map = s.kind === 'udp' ? this.udp : this.tcpPorts;
+    if (s.localPort && map.get(s.localPort) === s) map.delete(s.localPort);
+    if (!port) port = this.freePort(map);
+    else if (map.has(port)) return -EADDRINUSE;
+    s.localIpv4 = ipv4 >>> 0;
+    s.localPort = port;
+    map.set(port, s);
+    if (s.kind === 'tcp') s.state = 'bound';
+    this.notify(s);
+    return 0;
+  }
+
+  listen(handle) {
+    const s = this.sockets.get(handle);
+    if (!s || s.kind !== 'tcp') return -EAFNOSUPPORT;
+    if (!s.localPort) {
+      s.localPort = this.freePort(this.tcpPorts);
+      this.tcpPorts.set(s.localPort, s);
+    }
+    s.state = 'listening';
+    this.notify(s);
+    return 0;
+  }
+
+  accept(handle) {
+    const listener = this.sockets.get(handle);
+    if (!listener || listener.state !== 'listening') return -EINVAL;
+    const s = listener.pending.shift();
+    if (!s) return -EAGAIN;
+    s.handle = globalThis.BoxedWineNetwork.allocateSocket(2, 1, 0);
+    this.sockets.set(s.handle, s);
+    this.notify(listener);
+    this.notify(s);
+    return s.handle;
+  }
+
+  connect(handle, ipv4, port) {
+    const s = this.sockets.get(handle);
+    if (!s) return -ENOTCONN;
+    const addr = ipv4ToString(ipv4);
+    if (s.kind === 'udp') {
+      this.autobind(s);
+      s.peerIpv4 = ipv4 >>> 0;
+      s.peerPort = port;
+      return 0;
+    }
+    if (s.state === 'open') return s.peerIpv4 === (ipv4 >>> 0) ? 0 : -EISCONN;
+    if (s.state === 'connecting') return -EALREADY;
+    if (s.state === 'closed' || s.error) return -(s.error || ECONNREFUSED);
+    const peer = this.peerOf(addr);
+    if (!peer) { // not in the room (no internet), or broadcast
+      s.error = ECONNREFUSED;
+      s.state = 'closed';
+      this.notify(s);
+      return -ECONNREFUSED;
+    }
+    this.autobind(s);
+    const id = crypto.getRandomValues(new Uint32Array(1))[0];
+    Object.assign(s, {
+      state: 'connecting', peer, id, dir: TO_ACCEPTOR, key: `c/${peer}/${id}`,
+      peerIpv4: ipv4 >>> 0, peerPort: port, localIpv4: ipv4FromString(this.ownAddress),
+    });
+    this.conns.set(s.key, s);
+    const syn = this.tcpPacket(SYN, TO_ACCEPTOR, id, 4);
+    new DataView(syn.buffer).setUint16(6, s.localPort);
+    new DataView(syn.buffer).setUint16(8, port);
+    this.sendRaw(peer, syn);
+    this.notify(s);
+    return -EINPROGRESS;
+  }
+
+  send(handle, buffer, len, flags, ipv4, port) {
+    const s = this.sockets.get(handle);
+    if (!s) return -ENOTCONN;
+    const bytes = this.copyFromHeap(buffer, len);
+    if (s.kind === 'udp') {
+      if (!ipv4 || !port) {
+        ipv4 = s.peerIpv4;
+        port = s.peerPort;
+      }
+      if (!ipv4 || !port) return -EDESTADDRREQ;
+      if (len > CHUNK) return -EMSGSIZE;
+      this.autobind(s);
+      const addr = ipv4ToString(ipv4);
+      if (port === 53 && !addr.startsWith(LAN)) { // DNS: answered here
+        const reply = this.dnsAnswer(bytes);
+        if (reply) queueMicrotask(() => this.deliverUdp(s, ipv4 >>> 0, 53, reply));
+        return len;
+      }
+      const peer = this.peerOf(addr);
+      if (peer === null) return len; // outside the LAN: lost, like on a network without a router
+      const buf = new Uint8Array(5 + len);
+      buf[0] = UDP;
+      new DataView(buf.buffer).setUint16(1, s.localPort);
+      new DataView(buf.buffer).setUint16(3, port);
+      buf.set(bytes, 5);
+      this.sendRaw(peer, buf);
+      return len;
+    }
+    if (s.error) return -s.error;
+    if (s.outClosed) return -ESHUTDOWN;
+    if (s.state === 'closed') return -EPIPE;
+    if (s.state === 'connecting') return -EAGAIN;
+    if (s.state !== 'open') return -ENOTCONN;
+    this.queueData(s, bytes);
+    return len;
+  }
+
+  recv(handle, buffer, len, flags) {
+    const s = this.sockets.get(handle);
+    if (!s) return -ENOTCONN;
+    const peek = (flags & MSG_PEEK) !== 0;
+    if (s.kind === 'udp') {
+      const d = s.rx[0];
+      if (!d) return -EAGAIN;
+      const n = Math.min(d.data.length, len);
+      s.lastRecvIpv4 = d.ipv4;
+      s.lastRecvPort = d.port;
+      if (n) this.copyToHeap(buffer, d.data.subarray(0, n));
+      if (!peek) {
+        s.rx.shift();
+        s.rxBytes -= d.data.length;
+      }
+      this.notify(s);
+      return n;
+    }
+    if (!s.rxBytes) {
+      if (s.error) return -s.error;
+      if (s.state === 'closed') return 0; // EOF
+      if (s.state !== 'open' && s.state !== 'connecting') return -ENOTCONN;
+      return -EAGAIN;
+    }
+    let written = 0;
+    for (let i = 0; i < s.rx.length && written < len;) {
+      const chunk = s.rx[i];
+      const n = Math.min(chunk.length, len - written);
+      this.copyToHeap(buffer + written, chunk.subarray(0, n));
+      written += n;
+      if (peek) {
+        i++;
+      } else if (n === chunk.length) {
+        s.rx.shift();
+      } else {
+        s.rx[0] = chunk.subarray(n);
+      }
+    }
+    if (!peek) s.rxBytes -= written;
+    this.notify(s);
+    return written;
+  }
+
+  shutdown(handle, how) {
+    const s = this.sockets.get(handle);
+    if (!s) return -ENOTCONN;
+    if (how < 0 || how > 2) return -EINVAL;
+    if ((how === 1 || how === 2) && s.kind === 'tcp' && !s.outClosed) {
+      s.outClosed = true;
+      if (s.state === 'open') this.sendRaw(s.peer, this.tcpPacket(FIN, s.dir, s.id));
+    }
+    this.notify(s);
+    return 0;
+  }
+
+  getEvents(handle) {
+    const s = this.sockets.get(handle);
+    return s ? this.events(s) : POLLHUP;
+  }
+
+  getError(handle) { return this.sockets.get(handle)?.error ?? ECONNRESET; }
+
+  readableBytes(handle) {
+    const s = this.sockets.get(handle);
+    if (!s) return 0;
+    return s.kind === 'udp' ? (s.rx[0]?.data.length ?? 0) : s.rxBytes;
+  }
+
+  getPeerIpv4(handle) { return this.sockets.get(handle)?.peerIpv4 ?? 0; }
+
+  getPeerPort(handle) { return this.sockets.get(handle)?.peerPort ?? 0; }
+
+  getLocalIpv4(handle) {
+    const s = this.sockets.get(handle);
+    if (!s) return 0;
+    if (!s.localIpv4 && (s.state === 'open' || s.state === 'connecting')) return ipv4FromString(this.ownAddress);
+    return s.localIpv4;
+  }
+
+  getLocalPort(handle) { return this.sockets.get(handle)?.localPort ?? 0; }
+
+  setsockopt() { return 0; }
+
+  /** Sends bytes to a peer (the transport's send() is the socket call). */
+  sendRaw(peer, bytes) {
+    if (peer === this.client.peer) {
+      queueMicrotask(() => this.receive(peer, bytes));
+      return;
+    }
+    if (peer === 0) queueMicrotask(() => this.receive(this.client.peer, bytes)); // broadcast: also here
+    this.out.push([peer, bytes]);
+    this.pump();
+  }
+
+  /** Stops listening to the room. */
+  dispose() {
     this.client.removeEventListener('packet', this.onPacket);
     this.client.removeEventListener('members', this.onMembers);
   }
