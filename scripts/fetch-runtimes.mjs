@@ -15,6 +15,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createZip, listZip, readZipEntry, readZipEntryRaw } from '../site/js/zip.js';
 import { CORES, SYSTEMS } from '../site/js/systems.js';
+import { BUILD_ASSET, BUILD_NAME, changesText } from './build-boxedwine.mjs';
 
 // --- Boxedwine -------------------------------------------------------------
 const BOXEDWINE_TAG = '26R1.0';
@@ -124,20 +125,45 @@ function readTar(data) {
   return files;
 }
 
+// Boxedwine with RunThemAll's fixes in the C++ code (netplay), built by scripts/build-boxedwine.mjs
+// (locally, or by the GitHub workflow "Build Boxedwine" as a release asset of this repository).
+const BOXEDWINE_BUILD_URL = `https://github.com/Ralf1108/RunThemAll/releases/download/${BUILD_NAME}/${BUILD_ASSET}`;
+
+/** The own build (st/ and mt/ boxedwine.js + .wasm) as Map<name, loader>, or null: then the upstream files are used. */
+async function ownBoxedwineBuild() {
+  const local = join(VENDOR, 'boxedwine-build', BUILD_ASSET);
+  try {
+    await download(BOXEDWINE_BUILD_URL, local); // skipped when it was built locally
+  } catch (err) {
+    console.warn(`  WARNING: ${BUILD_ASSET} is not available (${err.message}).`);
+    console.warn('  Using the unchanged Boxedwine release: Windows programs work, but netplay servers inside Wine');
+    console.warn('  cannot answer. Build it with scripts/build-boxedwine.mjs or run the workflow "Build Boxedwine".');
+    return null;
+  }
+  const zip = new Uint8Array(await readFile(local));
+  return new Map(listZip(zip).map((e) => [e.name, () => readZipEntry(zip, e)]));
+}
+
 async function fetchBoxedwine() {
   console.log(`Boxedwine ${BOXEDWINE_TAG}`);
   const out = join(SITE, 'boxedwine');
   const release = join(VENDOR, BOXEDWINE_ASSET);
   await download(BOXEDWINE_RELEASE, release);
+  const own = await ownBoxedwineBuild();
+  if (own) console.log(`  emulator from ${BUILD_NAME} (Boxedwine with RunThemAll's fixes)`);
 
   const archive = new Uint8Array(await readFile(release));
   const entries = new Map(listZip(archive).map((e) => [e.name, e]));
   for (const [from, to] of Object.entries(BOXEDWINE_FILES)) {
     const entry = entries.get(from);
     if (!entry) throw new Error(`Missing in the Boxedwine release: ${from}`);
-    let data = await readZipEntry(archive, entry);
+    let data = own?.has(to) ? await own.get(to)() : await readZipEntry(archive, entry);
     if (to.endsWith('boxedwine.js')) data = patchBoxedwineJs(data, to);
-    if (to === 'README-boxedwine.txt') data = new TextEncoder().encode(new TextDecoder().decode(data) + BOXEDWINE_CHANGE_NOTE);
+    if (to === 'README-boxedwine.txt') {
+      const ownNote = own ? `\nThe emulator files (st/, mt/) are an own build (${BUILD_NAME}) with changes in the\n`
+        + 'C++ code, listed in source/RunThemAll-changes.txt.\n' : '';
+      data = new TextEncoder().encode(new TextDecoder().decode(data) + BOXEDWINE_CHANGE_NOTE + ownNote);
+    }
     await writeOut(join(out, to), data);
     console.log(`  ${to}`);
   }
@@ -148,8 +174,9 @@ async function fetchBoxedwine() {
   await download(`https://raw.githubusercontent.com/danoon2/Boxedwine/${BOXEDWINE_TAG}/license.txt`,
     join(out, 'LICENSE-GPL-2.0.txt'));
   await download(source, join(out, 'source', `Boxedwine-${BOXEDWINE_TAG}-source.tar.gz`));
+  if (own) await writeOut(join(out, 'source', 'RunThemAll-changes.txt'), changesText());
   await writeOut(join(out, 'version.json'),
-    JSON.stringify({ tag: BOXEDWINE_TAG, source }, null, 2) + '\n');
+    JSON.stringify({ tag: BOXEDWINE_TAG, source, build: own ? BUILD_NAME : null }, null, 2) + '\n');
 }
 
 // Changes to Boxedwine (GPL 2.0, section 2a: changed files carry a notice). 1. SDL takes the

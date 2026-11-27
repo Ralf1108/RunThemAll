@@ -1,0 +1,48 @@
+name: Build Boxedwine
+
+# Builds Boxedwine for the web with RunThemAll's fixes (scripts/build-boxedwine.mjs) and publishes
+# the result as the release asset that scripts/fetch-runtimes.mjs downloads. Run it by hand
+# (Actions -> Build Boxedwine -> Run workflow) after BUILD_NUMBER or the patches changed; it takes
+# a while (two builds of Boxedwine). Until the release exists, the site uses the unchanged
+# Boxedwine release.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Emscripten (version from scripts/build-boxedwine.mjs)
+        run: |
+          version=$(node -e "import('./scripts/build-boxedwine.mjs').then(m => console.log(m.EMSCRIPTEN_VERSION))")
+          git clone --depth 1 https://github.com/emscripten-core/emsdk.git "$RUNNER_TEMP/emsdk"
+          "$RUNNER_TEMP/emsdk/emsdk" install "$version"
+          "$RUNNER_TEMP/emsdk/emsdk" activate "$version"
+
+      - name: Build
+        run: |
+          source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
+          node scripts/build-boxedwine.mjs
+
+      - name: Publish as release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          name=$(node -e "import('./scripts/build-boxedwine.mjs').then(m => console.log(m.BUILD_NAME))")
+          asset=$(node -e "import('./scripts/build-boxedwine.mjs').then(m => console.log(m.BUILD_ASSET))")
+          notes="Boxedwine for the web with RunThemAll's fixes, built from the unchanged Boxedwine source and scripts/build-boxedwine.mjs (commit ${GITHUB_SHA}). Changes: RunThemAll-changes.txt in the zip."
+          if gh release view "$name" > /dev/null 2>&1; then
+            gh release upload "$name" "vendor/boxedwine-build/$asset" --clobber
+          else
+            gh release create "$name" "vendor/boxedwine-build/$asset" --title "$name" --notes "$notes"
+          fi

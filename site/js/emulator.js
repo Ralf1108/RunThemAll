@@ -90,7 +90,7 @@ export class WindowsRunner extends Runner {
     log(`Parameter: ${args.join(' ')}`, false);
 
     // Netplay: the patched boxedwine.js takes its sockets from window.runThemAllNet; worker
-    // threads learn the own address from their script URL.
+    // threads learn the own address from their script URL (boxedwine.js?vnet=...).
     let vnet = '';
     if (this.netplay) {
       window.runThemAllNet = new WineNet(this.netplay.client);
@@ -104,7 +104,6 @@ export class WindowsRunner extends Runner {
       arguments: args,
       canvas,
       locateFile: (path) => buildBase + path,
-      mainScriptUrlOrBlob: buildBase + 'boxedwine.js' + vnet,
       print: (...a) => log(a.join(' '), false),
       printErr: (...a) => log(a.join(' '), true),
       setStatus: (text) => {
@@ -149,7 +148,8 @@ export class WindowsRunner extends Runner {
     };
 
     this.ui.step(2);
-    await loadScript(buildBase + 'boxedwine.js');
+    // Worker threads load the same URL as this script (Emscripten's _scriptName), so they see ?vnet= too.
+    await loadScript(buildBase + 'boxedwine.js' + vnet);
   }
 
   async readAllFiles() {

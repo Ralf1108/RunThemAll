@@ -29,7 +29,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: vendor
-          key: runtimes-${{ hashFiles('scripts/fetch-runtimes.mjs') }}
+          key: runtimes-${{ hashFiles('scripts/fetch-runtimes.mjs', 'scripts/build-boxedwine.mjs') }}
 
       - name: Fetch emulators (Boxedwine, js-dos, latest EmulatorJS), licenses and sources
         run: node scripts/fetch-runtimes.mjs

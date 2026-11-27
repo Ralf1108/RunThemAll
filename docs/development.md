@@ -44,11 +44,36 @@ After an update:
 2. Commit only if they still work. `git diff` shows the new versions and lets you undo them.
 3. If the download fails, the new version is built differently (e.g. other file names) and
    `scripts/fetch-runtimes.mjs` has to be adapted.
-4. Boxedwine is patched in one place (`BOXEDWINE_SCREEN_PATCH`): `emscripten_get_screen_size` reports
+4. Boxedwine's `boxedwine.js` is patched (`BOXEDWINE_PATCHES`): `emscripten_get_screen_size` reports
    at least 4096 x 4096, otherwise SDL switches to fullscreen on phones (Windows screen larger than the
-   device screen) and the picture turns black when the browser refuses. The build stops if the patched
-   line is not found in a new version. The changed files carry a notice (GPL 2.0) and the change is
-   described at the end of `site/boxedwine/README-boxedwine.txt`.
+   device screen) and the picture turns black when the browser refuses; and two hooks let netplay put
+   the sockets on a virtual LAN (`js/wine-net.js`). The build stops if a patched line is not found in
+   a new version. The changed files carry a notice (GPL 2.0) and the changes are described at the end
+   of `site/boxedwine/README-boxedwine.txt`.
+5. Boxedwine's emulator files (`st/`, `mt/`) come from an own build with fixes in the C++ code (see
+   below). After a Boxedwine update: set `BOXEDWINE_TAG` in `scripts/build-boxedwine.mjs` too, raise
+   `BUILD_NUMBER`, check that the patches still apply and run the workflow *Build Boxedwine*.
+
+### Own Boxedwine build
+
+Netplay needs fixes in Boxedwine's C++ code (an accepted socket is not marked as connected, the
+browser has no network interfaces; details in `concepts/boxedwine-upstream-issue.md`, which is
+also the text for reporting them upstream). `scripts/build-boxedwine.mjs` builds Boxedwine
+from its unchanged source archive with these changes (`PATCHES`) and the settings of Boxedwine's
+own makefile:
+
+```sh
+emsdk install 4.0.10 && emsdk activate 4.0.10   # EMSCRIPTEN_VERSION in the script
+source emsdk/emsdk_env.sh      # Windows: emsdk_env.bat
+node scripts/build-boxedwine.mjs
+```
+
+The result is `vendor/boxedwine-build/boxedwine-<tag>-runthemall.<n>-web.zip`. The workflow
+*Build Boxedwine* (`.github/workflows/boxedwine.yml`, started by hand) builds the same and
+publishes it as release `boxedwine-<tag>-runthemall.<n>` of this repository.
+`scripts/fetch-runtimes.mjs` takes the emulator files from the local build or that release; if
+neither exists it warns and uses the unchanged Boxedwine release (then Windows netplay servers
+cannot answer). Once Boxedwine releases the fixes, the own build can be dropped.
 
 The GitHub API allows 60 requests per hour without login (one check needs 3). If that is not enough,
 set a token first: `$env:GITHUB_TOKEN = '...'` (no permissions needed).
@@ -113,6 +138,7 @@ demos/local/           demo files stored in the repository
 docs/                  documentation, docs/images/ has the README screenshots
 scripts/
   fetch-runtimes.mjs   downloads emulators, licences and source code
+  build-boxedwine.mjs  builds Boxedwine with RunThemAll's fixes (Emscripten)
   update-runtimes.mjs  checks Boxedwine, js-dos and v86 for new versions
   update.ps1           the same for PowerShell
   serve.mjs            local test server with COOP/COEP headers

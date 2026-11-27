@@ -98,11 +98,17 @@ Ergänzung zu [browser-netplay-konzept.md](browser-netplay-konzept.md). Stand: 2
     sie weiter). Worker-Threads erfahren die eigene Adresse aus der Skript-URL (`?vnet=`).
 - **Test mit OpenTTD** (Host `-D` als Server, Gast verbindet über die Konsole): Der Server
   meldet „Client connected from 192.168.78.2“ und empfängt das Join-Paket.
-- **Grenze: Fehler in Boxedwine.** `KNativeSocketObject::accept` setzt beim neuen Socket
-  `connected` nicht. `isOpen()` ist dann false, und `poll` meldet für den angenommenen Socket
-  immer POLLHUP. Wine sendet darüber nichts, der Server antwortet also nie. Die Lösung ist eine
-  Zeile (`s->connected = true;`) im C++-Code, also ein eigener Boxedwine-Build oder ein Fix
-  upstream.
+- **Fehler in Boxedwine, behoben im eigenen Build:** `KNativeSocketObject::accept` setzt beim
+  neuen Socket `connected` nicht. `isOpen()` ist dann false, und `poll` meldet für den
+  angenommenen Socket immer POLLHUP; Wine sendet darüber nichts. Außerdem bricht `accept` mit
+  NULL als Adresse ab. Beides behebt `scripts/build-boxedwine.mjs` (eigener Build mit
+  Emscripten 4.0.10, Workflow „Build Boxedwine“). Meldung an Boxedwine mit Repro:
+  [boxedwine-upstream-issue.md](boxedwine-upstream-issue.md), [boxedwine-accept-repro/](boxedwine-accept-repro/).
+- **Stand mit dem eigenen Build:** OpenTTD-Client und -Server in zwei Browsern verbinden sich,
+  der Server antwortet und schickt die Karte (ca. 85 KB). Danach stürzt Boxedwine beim Client ab:
+  ein Speicherzugriffsfehler des Gastes wird als C++-Ausnahme gemeldet, die der Web-Build nicht
+  abfängt (Makefile ohne Ausnahmebehandlung; mit `-fwasm-exceptions` startet Boxedwine gar nicht).
+  Das passiert auch mit dem offiziellen Release und ist ein eigenes Thema.
 - Weitere Lücken in Boxedwine: `ioctl` SIOCGIFCONF/SIOCGIFBRDADDR fehlen, deshalb findet Wine
   keine Broadcast-Adressen (Spielsuche im LAN per Broadcast geht so nicht), und blockierende
   Sockets warten im Multithread-Build nicht (betrifft Linux-Programme wie `nc`, nicht Wine).
