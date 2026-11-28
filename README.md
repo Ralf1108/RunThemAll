@@ -65,6 +65,9 @@ Where they come from: [demos/README.md](demos/README.md)
 - **Save games**: *Save* shows the files the program changed. Download it as a ZIP or, in Chrome or
   Edge with an opened folder, write it back directly (*Apply to folder*).
 - **Settings**: every demo has an *Options* button (speed, memory, Windows version).
+- **Multiplayer** (beta): *Multiplayer* at the top right, everybody enters the same room name
+  (and password). Then start the same game; the multiplayer demos connect by themselves. Several
+  players on one computer: one browser window each, not tabs. Needs a relay server ([netplay/](netplay/)).
 
 ## Good to know
 
@@ -79,6 +82,9 @@ Where they come from: [demos/README.md](demos/README.md)
 ## Privacy
 
 - Everything runs in your browser. Your files are **never uploaded**.
+- Multiplayer is **end-to-end encrypted**: the relay server only passes on encrypted data and sees
+  neither room name, player names nor game data. The key is the room password, or the room name
+  when there is none, so pick a password that is hard to guess.
 - Page visits are counted anonymously and without cookies ([GoatCounter](https://www.goatcounter.com)).
 
 ## Behind the scenes

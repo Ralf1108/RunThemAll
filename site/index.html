@@ -257,6 +257,8 @@
       <label>Room <input type="text" id="np-code" maxlength="32" placeholder="e.g. 4711 or Doom night" spellcheck="false" autocomplete="off" required></label>
       <label><span>Password <span class="mp-optional">(optional)</span></span>
         <input type="password" id="np-password" autocomplete="off"></label>
+      <p class="mp-note">End-to-end encrypted: the relay server sees neither room name, names nor
+        game data. The key is the password, or the room name without one.</p>
       <button type="submit" id="np-enter" class="wx-btn wx-primary">Enter room</button>
       <details id="np-server" class="mp-server">
         <summary>Server</summary>
@@ -269,8 +271,9 @@
           <span class="mp-label">Room</span>
           <strong id="np-room-code" class="mp-room-name"></strong>
         </div>
-        <span id="np-lock" class="mp-lock" title="Protected by a password" hidden>
+        <span id="np-lock" class="mp-lock">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+          <span id="np-lock-text">Encrypted</span>
         </span>
       </div>
       <h3 class="mp-sub"><span id="np-count"></span></h3>

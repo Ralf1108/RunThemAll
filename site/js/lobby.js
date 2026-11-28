@@ -9,6 +9,7 @@
 // shows who is already on the network in an emulator. Quitting a program reloads the page; the
 // room is entered again by itself (sessionStorage, this tab only).
 
+import { cleanRoomName, roomSecrets } from './netcrypt.js';
 import { NetplayClient, ethernetUrl, jsdosNet } from './netplay.js';
 import { wineAddress } from './wine-net.js';
 
@@ -43,11 +44,11 @@ export function netplayForDos() {
 
 /**
  * What a PC (v86) needs for its network card, or null when not in a room.
- * @returns {{ethUrl:string, room:string}|null}
+ * @returns {{client:NetplayClient, ethUrl:string, room:string}|null}
  */
 export function netplayForPc() {
   if (!client.connected) return null;
-  return { ethUrl: ethernetUrl(client.relay, client.token), room: client.room };
+  return { client, ethUrl: ethernetUrl(client.relay, client.token), room: client.room };
 }
 
 /** Windows programs (Boxedwine) get a virtual LAN on the level of sockets (wine-net.js). */
@@ -136,7 +137,11 @@ export function initLobby($) {
     const members = client.members;
     $('mp-button-room').textContent = `${client.room} · ${members.length}`;
     $('np-room-code').textContent = client.room;
-    $('np-lock').hidden = !withPassword;
+    $('np-lock-text').textContent = withPassword ? 'Encrypted' : 'Encrypted (room name)';
+    $('np-lock').title = withPassword
+      ? 'End-to-end encrypted with the room password: the relay server cannot read anything.'
+      : 'End-to-end encrypted with the room name as key: the relay server cannot read anything, '
+        + 'but whoever guesses the room name can. Set a password for more protection.';
     $('np-count').textContent = `${members.length} in the room`
       + ` · ${members.filter((m) => activityOf(m.peer)).length} on the network`;
     $('np-members').replaceChildren(...members.map((m) => memberItem(m, activityOf(m.peer))));
@@ -187,7 +192,12 @@ export function initLobby($) {
     error('');
     $('np-enter').disabled = true;
     try {
-      await client.open(relayUrl, { type: 'enter', room, password, name: who || 'Player' });
+      // End-to-end encryption (netcrypt.js): the relay gets a room ID and a password check
+      // instead of name and password, and "Player" instead of the player's name.
+      $('np-enter').textContent = 'Encrypting …';
+      const { roomId, check, cipher } = await roomSecrets(room, password);
+      await client.open(relayUrl, { type: 'enter', room: roomId, password: check, name: 'Player' },
+        { cipher, room: cleanRoomName(room), name: who || 'Player' });
       withPassword = !!password;
       sessionStorage.setItem(REJOIN_KEY, JSON.stringify({ relayUrl, room, password, who }));
       render();
@@ -197,6 +207,7 @@ export function initLobby($) {
       return false;
     } finally {
       $('np-enter').disabled = false;
+      $('np-enter').textContent = 'Enter room';
     }
   }
 

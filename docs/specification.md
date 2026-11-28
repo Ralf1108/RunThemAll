@@ -107,7 +107,11 @@ side the supported platforms and the emulators (3.3). The interface is in Englis
      characters, case does not matter) and an optional password, *Enter room*: whoever enters the
      same room name lands in the same room (the first one creates it, with the password). The relay
      address is under *Server* (remembered; `ws://localhost:8090` on localhost; open when empty).
-     In the room: room name (lock when entered with a password), *Share link* (`?room=…&relay=…`,
+     Everything in the room is end-to-end encrypted (`js/netcrypt.js`, AES-256-GCM): the key comes
+     from the password, or from the room name without one; the relay only gets a room ID and a
+     password check value derived from them (PBKDF2 + HKDF), "Player" as name (the real names go
+     encrypted to the members) and sealed packets and messages. A note in the form says so.
+     In the room: room name, lock with "Encrypted" or "Encrypted (room name)" (tooltip explains), *Share link* (`?room=…&relay=…`,
      Web Share API or clipboard), *Leave room*, and the members with host/you and what they run:
      every page sends `{lobby: 'status', activity: {title, system, net}}` to the room when it starts
      a program and when members change, so the list shows who is on the network in an emulator
@@ -118,7 +122,8 @@ side the supported platforms and the emulators (3.3). The interface is in Englis
      room, DOS programs start with IPX over the relay: the host with `startIpxServer`, guests with
      `connectIpxAddress` = host peer ID, js-dos' network replaced by `sharedNet` (`js/netplay.js`).
      Operating systems (v86) get an NE2000 network card whose cable is the relay's Ethernet port
-     (`/v1/eth?token=…`); the relay hands out addresses by DHCP (192.168.77.x, no internet).
+     (`/v1/eth?token=…`); the frames are sealed in `js/pc-net.js` (MAC addresses readable), which
+     also answers DHCP itself: 192.168.77.<9 + number in the room>, no internet.
      Console games (EmulatorJS) share the inputs in lockstep (`js/ejs-netplay.js`): the host's save
      state is copied to everybody whose game runs, each local input takes effect 4 frames later on
      every player, a frame only runs when the inputs of all players for it have arrived (Emscripten

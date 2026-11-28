@@ -7,7 +7,9 @@ A room is one network segment, found by its name (or a generated code) and optio
 by a password.
 
 The relay is a pure switch: no game logic, no file storage, and **no gateway to the internet**.
-Packets only go between the players of a room.
+Packets only go between the players of a room. The web page encrypts everything end to end
+(see [Encryption](#encryption)): the relay only passes on sealed bytes and never learns room
+names, player names or passwords.
 
 Status: **beta**. Connected: DOS games with IPX network play (js-dos), whole PCs with a network
 card (v86, any protocol: TCP/IP, UDP, IPX …) and console games (EmulatorJS, shared inputs). Tested
@@ -51,6 +53,55 @@ docker run -p 8090:8090 runthemall-netplay
 On the web page, click **Multiplayer** at the top right, enter the relay address under *Server*
 (`wss://relay.example.org`, or `ws://localhost:8090` for a local test), a name and a room.
 
+## Encryption
+
+Two layers protect the traffic:
+
+- **Transport (TLS):** run the relay with `wss://` (certificate or reverse proxy, see above).
+  This hides everything from the networks in between. Pages on https can only use `wss://`.
+- **End to end (in the browser, `site/js/netcrypt.js`):** everything the players send each other
+  is sealed with AES-256-GCM before it leaves the browser. The relay, its hoster and anybody who
+  reads its memory or logs see only random-looking bytes. The relay itself needs no change for
+  this: it never looks into packets and messages anyway.
+
+The key comes from the **room password**, or from the **room name** when the room has no
+password. The relay gets neither:
+
+| The page knows | The relay gets |
+|---|---|
+| room name "Doom night" | room ID `HKDF(PBKDF2(NAME))`, 32 hex digits (the name cannot be computed back, only guessed) |
+| password | a password check value `HKDF(PBKDF2(password, salt from the name))`, 32 hex digits (empty without a password) |
+| player name | `"Player"`; the real names go to the members encrypted (`{netplay: 'name'}` messages) |
+| key | nothing: `HKDF(secret, "packets")`, secret = password-derived bits, or the name-derived bits without a password |
+
+PBKDF2-SHA256 with 210,000 rounds, separate HKDF labels for room ID, check value and key, so none
+of them gives away another. Names are compared like before (spaces collapsed, case ignored).
+
+What is sealed (12 bytes random nonce + ciphertext + 16 bytes tag, 28 bytes more per packet):
+
+- **Packets** (`[4 bytes peer ID][sealed]`): plain text `[4 bytes receiver][payload]`, additional
+  data `"p"` + sender peer ID. A packet the relay changes, redirects to another member or claims
+  to come from someone else does not open and is dropped.
+- **Messages** (`{"type":"msg","data":"<base64 of sealed>"}`): plain text `[4 bytes receiver][JSON]`,
+  additional data `"m"` + sender peer ID. Packets and messages are opened in the order received.
+- **Ethernet frames** (v86, `/v1/eth`): the two MAC addresses (12 bytes) stay readable, because the
+  relay switches by them; type and content of the frame are sealed, with the MAC addresses as
+  additional data. Since the relay cannot read the frames, its DHCP server is not used: every
+  browser answers DHCP and ARP of its own PC for the virtual server 192.168.77.1 and gives it
+  192.168.77.<9 + number in the room> (`site/js/pc-net.js`). `-lan` therefore only applies to
+  clients that do not encrypt.
+
+What the relay still sees: who is in a room (peer IDs, IP addresses), when and how much they send,
+the MAC addresses of PCs, and how long a room exists. Limits of the scheme:
+
+- **Without a password the room name is the key.** Whoever knows or guesses the room name can
+  read along, including a relay hoster who tries common names against the room ID. A password
+  that is hard to guess protects much better; the room panel says which of the two is in use.
+- A weak password can be guessed offline by somebody who recorded the traffic (the rounds of
+  PBKDF2 only make each guess slower).
+- Everybody with the password can read everything; there are no keys per session (no forward
+  secrecy) and no protection against the relay sending recorded packets again (replay).
+
 ### Options
 
 | Flag | Environment | Default | Meaning |
@@ -83,7 +134,8 @@ smallest free one from 1); the Windows netplay derives the address 192.168.78.nu
    `{"type":"join","room":"ABCDE-FGHJK","name":"Bob","password":"…"}` or
    `{"type":"enter","room":"Doom night","name":"Carol","password":"optional"}`: joins the room
    with this name, or creates it with this password when it does not exist (names: up to 32
-   printable characters, spaces collapsed, compared ignoring case; the web page uses only `enter`).
+   printable characters, spaces collapsed, compared ignoring case; the web page uses only `enter`,
+   with the room ID and password check value instead of name and password, see Encryption).
 2. The relay answers `{"type":"joined","room":"ABCDE-FGHJK","peer":123,"host":123,"token":"…"}`
    or `{"type":"error","code":"not-found|bad-password|no-password|full|busy|rate-limited","message":"…"}`
    (`no-password`: `enter` with a password into a room without one).
@@ -106,7 +158,8 @@ token comes from the `joined` message, so the port belongs to a player of the ro
 works as a switch: it learns the MAC addresses behind the ports, sends unicast frames only to
 their port and broadcast/multicast frames to all others.
 
-Every room also has a small **DHCP server** (a virtual host with the address .1 of `-lan`, MAC
+Every room also has a small **DHCP server** (used by clients that do not encrypt; the web page
+answers DHCP in the browser, see Encryption) (a virtual host with the address .1 of `-lan`, MAC
 `02:52:54:41:00:01`), so the PCs get addresses without any setup: from .10 on, one per MAC
 address, for the life of the room. It answers DHCP and ARP for its own address, nothing else;
 there is no router and no DNS, the LAN only reaches the other players.
@@ -116,7 +169,7 @@ there is no router and no DNS, the LAN only reaches the other players.
 | Emulator | How it connects | State |
 |---|---|---|
 | js-dos 8.5 (DOSBox) | `sharedNet` option: our `Net` object (`site/js/netplay.js`) replaces js-dos' WebRTC network; the host runs the IPX server (`startIpxServer`), the others connect to its peer ID (`connectIpxAddress`) | works (IPX handshake tested) |
-| v86 | NE2000 card with `net_device: { relay_url: "wss://…/v1/eth?token=…" }`, addresses from the room's DHCP server | works (two Tiny Core PCs get addresses and ping each other, ~1.3 ms) |
+| v86 | NE2000 card; its frames go through `site/js/pc-net.js` (sealed) to `/v1/eth?token=…`, addresses from DHCP answered in the browser (unencrypted clients: `net_device.relay_url` and the room's DHCP server) | works (two Tiny Core PCs get addresses and ping each other, ~1.8 ms encrypted, ~1.3 ms before) |
 | EmulatorJS | lockstep in `site/js/ejs-netplay.js` over the control socket: the host's save state goes to everybody (binary chunks, gzip), every player sends its inputs for 4 frames ahead, one packet per frame; a frame runs when all inputs are there. EmulatorJS' own netplay (Socket.IO, experimental in 4.2) is not used | works (NES and SNES: the state checksums stay the same with inputs on both sides) |
 | Boxedwine | `site/js/wine-net.js` is the socket "transport" of Boxedwine's browser networking (`Module.boxedwineNetworking`, Boxedwine master, own build by scripts/build-boxedwine.mjs): a virtual LAN on the level of sockets, every player is 192.168.78.n (n = number in the room), TCP and UDP go as small packets over the control socket, DNS for player names | experimental. Tested with OpenTTD: client and server in two browsers connect, the server sends the map (~88 KB); then OpenTTD on the client stops with its own crash report, so a full OpenTTD game does not run yet |
 

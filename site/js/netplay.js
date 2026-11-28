@@ -1,6 +1,13 @@
 // Netplay: the browser side of the relay in /netplay (Go). One WebSocket per player carries
 // the room handshake (JSON text messages) and the network packets of the emulator (binary
 // messages: 4 bytes peer ID, big endian, then the packet). See netplay/README.md.
+// With a room cipher (netcrypt.js) packets, messages and player names are end-to-end encrypted:
+// the relay only sees sealed bytes.
+
+import { context, fromBase64, toBase64 } from './netcrypt.js';
+
+const enc = new TextEncoder();
+const dec = new TextDecoder();
 
 /**
  * @typedef {object} Member
@@ -45,7 +52,19 @@ export class NetplayClient extends EventTarget {
     this.members = [];
     this.sent = 0;
     this.received = 0;
+    /** @type {import('./netcrypt.js').RoomCipher|null} */
+    this.cipher = null;
+    this.name = '';
+    /** Player names from the members themselves (encrypted rooms): peer -> name. */
+    this.names = new Map();
+    this.relayMembers = [];
+    // Sealing and opening run in parallel, sending and handing on keep the order.
+    this.tx = Promise.resolve();
+    this.rx = Promise.resolve();
+    this.rejected = 0; // messages that could not be opened (other key or changed on the way)
   }
+
+  get encrypted() { return Boolean(this.cipher); }
 
   get connected() { return this.ws?.readyState === WebSocket.OPEN && this.peer !== 0; }
   get isHost() { return this.peer !== 0 && this.peer === this.host; }
@@ -53,10 +72,15 @@ export class NetplayClient extends EventTarget {
   /**
    * Connects and creates or joins a room.
    * @param {string} relay
-   * @param {{type:'create'|'join', room?:string, password?:string, name?:string}} hello
+   * @param {{type:'create'|'join'|'enter', room?:string, password?:string, name?:string}} hello
+   * @param {{cipher?:import('./netcrypt.js').RoomCipher, room?:string, name?:string}} [secure]
+   *   encrypted room: hello carries only the room ID and password check; the room name and the
+   *   player name stay in the browser (the name goes to the members encrypted)
    */
-  open(relay, hello) {
+  open(relay, hello, secure = {}) {
     this.close();
+    this.cipher = secure.cipher ?? null;
+    this.name = secure.name ?? hello.name ?? '';
     return new Promise((resolve, reject) => {
       let ws;
       try {
@@ -91,8 +115,15 @@ export class NetplayClient extends EventTarget {
           const view = new DataView(e.data);
           if (e.data.byteLength < 4) return;
           this.received += e.data.byteLength - 4;
-          // A copy with its own buffer: js-dos hands the buffer on to its worker.
-          this.dispatchEvent(new CustomEvent('packet', { detail: { from: view.getUint32(0), data: new Uint8Array(e.data, 4).slice() } }));
+          const from = view.getUint32(0);
+          if (!this.cipher) {
+            // A copy with its own buffer: js-dos hands the buffer on to its worker.
+            this.dispatchEvent(new CustomEvent('packet', { detail: { from, data: new Uint8Array(e.data, 4).slice() } }));
+            return;
+          }
+          this.receiveSealed(ws, from, 'p', new Uint8Array(e.data, 4), (data) => {
+            this.dispatchEvent(new CustomEvent('packet', { detail: { from, data } }));
+          });
           return;
         }
         let msg;
@@ -102,15 +133,32 @@ export class NetplayClient extends EventTarget {
           fail(msg.message || msg.code);
         } else if (msg.type === 'joined') {
           clearTimeout(timer);
-          Object.assign(this, { room: msg.room, peer: msg.peer, host: msg.host, token: msg.token, num: msg.num ?? 0 });
+          Object.assign(this, { room: secure.room ?? msg.room, peer: msg.peer, host: msg.host, token: msg.token, num: msg.num ?? 0 });
           settled = true;
           resolve(msg);
         } else if (msg.type === 'members') {
-          this.members = msg.members ?? [];
+          const before = new Set(this.relayMembers.map((m) => m.peer));
+          this.relayMembers = msg.members ?? [];
           this.host = msg.host;
-          this.dispatchEvent(new CustomEvent('members', { detail: this.members }));
+          // Somebody new: tell them the own name (encrypted rooms; the relay only knows "Player").
+          if (this.cipher && this.relayMembers.some((m) => !before.has(m.peer))) this.sendMessage(0, { netplay: 'name', name: this.name });
+          this.updateMembers();
         } else if (msg.type === 'msg') {
-          this.dispatchEvent(new CustomEvent('message', { detail: { from: msg.from, data: msg.data } }));
+          if (!this.cipher) {
+            this.dispatchEvent(new CustomEvent('message', { detail: { from: msg.from, data: msg.data } }));
+            return;
+          }
+          if (typeof msg.data !== 'string') return; // not sealed: not from a member of this room
+          let sealed;
+          try { sealed = fromBase64(msg.data); } catch { return; }
+          this.receiveSealed(ws, msg.from, 'm', sealed, (plain) => {
+            let data;
+            try { data = JSON.parse(dec.decode(plain)); } catch { return; }
+            if (data?.netplay === 'name') {
+              this.names.set(msg.from, String(data.name ?? '').trim().slice(0, 32) || 'Player');
+              this.updateMembers();
+            } else this.dispatchEvent(new CustomEvent('message', { detail: { from: msg.from, data } }));
+          });
         }
       };
     });
@@ -119,21 +167,65 @@ export class NetplayClient extends EventTarget {
   /** Sends a packet to one member (0: to everybody else). */
   sendPacket(to, data) {
     if (!this.connected) return false;
-    const buf = new Uint8Array(4 + data.byteLength);
-    new DataView(buf.buffer).setUint32(0, to);
-    buf.set(data, 4);
-    this.ws.send(buf);
     this.sent += data.byteLength;
+    if (!this.cipher) {
+      const buf = new Uint8Array(4 + data.byteLength);
+      new DataView(buf.buffer).setUint32(0, to);
+      buf.set(data, 4);
+      this.ws.send(buf);
+      return true;
+    }
+    // Sealed: [receiver, 4 bytes][data], so the relay cannot hand it to somebody else.
+    this.sendSealed('p', to, data, (sealed) => {
+      const buf = new Uint8Array(4 + sealed.length);
+      new DataView(buf.buffer).setUint32(0, to);
+      buf.set(sealed, 4);
+      return buf;
+    });
     return true;
   }
 
   /** Sends a small JSON message to one member (0: everybody else). */
   sendMessage(to, data) {
-    if (this.connected) this.ws.send(JSON.stringify({ type: 'msg', to, data }));
+    if (!this.connected) return;
+    if (!this.cipher) this.ws.send(JSON.stringify({ type: 'msg', to, data }));
+    else this.sendSealed('m', to, enc.encode(JSON.stringify(data)), (sealed) => JSON.stringify({ type: 'msg', to, data: toBase64(sealed) }));
+  }
+
+  /** The members with their own names (encrypted rooms: from their name messages). */
+  updateMembers() {
+    this.members = !this.cipher ? this.relayMembers : this.relayMembers.map((m) => ({
+      ...m, name: m.peer === this.peer ? this.name || 'Player' : this.names.get(m.peer) ?? `Player ${m.num ?? ''}`.trim(),
+    }));
+    this.dispatchEvent(new CustomEvent('members', { detail: this.members }));
+  }
+
+  /** Seals [receiver][data] now and sends it in the order of the calls (wrap: sealed -> what goes to the relay). */
+  sendSealed(kind, to, data, wrap) {
+    const ws = this.ws;
+    const plain = new Uint8Array(4 + data.byteLength);
+    new DataView(plain.buffer).setUint32(0, to);
+    plain.set(data, 4);
+    const sealed = this.cipher.seal(plain, context(kind, this.peer));
+    this.tx = this.tx.then(() => sealed).then((s) => {
+      if (this.ws === ws && ws.readyState === WebSocket.OPEN) ws.send(wrap(s));
+    }).catch(() => {});
+  }
+
+  /** Opens a sealed packet or message of `from` and hands its data on, in the order received. */
+  receiveSealed(ws, from, kind, sealed, deliver) {
+    const opened = this.cipher.open(sealed.slice(), context(kind, from));
+    this.rx = this.rx.then(() => opened).then((plain) => {
+      if (this.ws !== ws || plain.length < 4) return;
+      const to = new DataView(plain.buffer, plain.byteOffset).getUint32(0);
+      if (to !== 0 && to !== this.peer) return; // meant for somebody else
+      deliver(plain.slice(4)); // own buffer: js-dos hands it on to its worker
+    }, () => { this.rejected++; });
   }
 
   reset() {
-    Object.assign(this, { ws: null, room: '', peer: 0, host: 0, token: '', num: 0, members: [] });
+    Object.assign(this, { ws: null, room: '', peer: 0, host: 0, token: '', num: 0, members: [], relayMembers: [] });
+    this.names = new Map();
   }
 
   close() {

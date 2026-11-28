@@ -6,6 +6,7 @@ import { releaseScancodes } from './keys.js';
 import { Runner, prefetch, splitPath } from './runner.js';
 import { extOf } from './systems.js';
 import { fitToBox, pcAspect } from './fit.js';
+import { SealedEthernet } from './pc-net.js';
 
 /** Standard floppy sizes in bytes (160 KB to 2.88 MB). */
 const FLOPPY_SIZES = new Set([163840, 184320, 327680, 368640, 737280, 1228800, 1474560, 1720320, 2949120]);
@@ -34,7 +35,7 @@ const SLOT_LABELS = { cdrom: 'CD-ROM', fda: 'floppy', hda: 'hard disk' };
 export class V86Runner extends Runner {
   constructor(ui) {
     super(ui);
-    /** Netplay room (lobby.js): {ethUrl, room} gives the PC a network card on the relay. */
+    /** Netplay room (lobby.js): {client, ethUrl, room} gives the PC a network card on the relay. */
     this.netplay = null;
   }
 
@@ -104,9 +105,13 @@ export class V86Runner extends Runner {
       acpi: false,
       autostart: true,
       // In a netplay room: an NE2000 network card, its cable is the relay (one LAN per room).
-      ...(this.netplay ? { net_device: { type: 'ne2k', relay_url: this.netplay.ethUrl } } : {}),
+      // Encrypted rooms: the frames go through pc-net.js (sealed), not straight to the relay.
+      ...(this.netplay ? { net_device: { type: 'ne2k', ...(this.netplay.client?.encrypted ? {} : { relay_url: this.netplay.ethUrl }) } } : {}),
     });
-    if (this.netplay) log(`Network card NE2000 in room ${this.netplay.room}: the relay hands out addresses by DHCP.`, false);
+    if (this.netplay?.client?.encrypted) {
+      const lan = new SealedEthernet(this.emulator, this.netplay.client);
+      log(`Network card NE2000 in room ${this.netplay.room}, end-to-end encrypted: DHCP gives this PC ${lan.addressText}.`, false);
+    } else if (this.netplay) log(`Network card NE2000 in room ${this.netplay.room}: the relay hands out addresses by DHCP.`, false);
     this.emulator.add_listener('emulator-started', () => {
       this.ui.ready();
       this.ui.hint?.('Click into the picture to use the mouse; Esc releases it.');
