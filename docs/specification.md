@@ -102,10 +102,17 @@ side the supported platforms and the emulators (3.3). The interface is in Englis
    - There is no status line: while loading, the loading screen shows the steps and progress; afterwards
      the *Play/Pause* button shows the state. Hints (no sound yet, mouse in v86, crash) appear below the picture.
    - Keys that games use (arrows, space, page up/down, home/end) do not scroll the page while a program runs.
-   - *Play together over the network* (beta, start page, collapsible): relay address (remembered;
-     `ws://localhost:8090` on localhost), name, *Create room* (optional password) or *Join* with the
-     room code (10 characters, typed in any case) and password. In the room: code, *Share link*
-     (`?room=…&relay=…`, Web Share API or clipboard), member list with the host, *Leave*. While in a
+   - *Multiplayer* (beta): a prominent button at the top right opens the room panel in place of the
+     two side panels (on phones above the main column). Name, room (any name or number, up to 32
+     characters, case does not matter) and an optional password, *Enter room*: whoever enters the
+     same room name lands in the same room (the first one creates it, with the password). The relay
+     address is under *Server* (remembered; `ws://localhost:8090` on localhost; open when empty).
+     In the room: room name (lock when entered with a password), *Share link* (`?room=…&relay=…`,
+     Web Share API or clipboard), *Leave room*, and the members with host/you and what they run:
+     every page sends `{lobby: 'status', activity: {title, system, net}}` to the room when it starts
+     a program and when members change, so the list shows who is on the network in an emulator
+     (e.g. "SkiFree · IP 192.168.78.2"). The button turns green and shows room and number of members.
+     Quitting a program reloads the page; the tab enters the room again by itself (sessionStorage). While in a
      room, DOS programs start with IPX over the relay: the host with `startIpxServer`, guests with
      `connectIpxAddress` = host peer ID, js-dos' network replaced by `sharedNet` (`js/netplay.js`).
      Operating systems (v86) get an NE2000 network card whose cable is the relay's Ethernet port

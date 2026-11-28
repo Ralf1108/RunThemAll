@@ -3,7 +3,8 @@
 A small server that connects emulators in different browsers to one virtual LAN. Browsers
 cannot open raw TCP or UDP sockets, so every emulator sends its network packets to this relay
 over a WebSocket, and the relay passes them on to the other players in the same **room**.
-A room is one network segment, found by its room code and optionally protected by a password.
+A room is one network segment, found by its name (or a generated code) and optionally protected
+by a password.
 
 The relay is a pure switch: no game logic, no file storage, and **no gateway to the internet**.
 Packets only go between the players of a room.
@@ -47,8 +48,8 @@ docker build -t runthemall-netplay netplay
 docker run -p 8090:8090 runthemall-netplay
 ```
 
-On the web page, open **Play together over the network**, enter the relay address
-(`wss://relay.example.org`, or `ws://localhost:8090` for a local test) and create a room.
+On the web page, click **Multiplayer** at the top right, enter the relay address under *Server*
+(`wss://relay.example.org`, or `ws://localhost:8090` for a local test), a name and a room.
 
 ### Options
 
@@ -79,9 +80,13 @@ smallest free one from 1); the Windows netplay derives the address 192.168.78.nu
 
 1. The first message is JSON text, either
    `{"type":"create","name":"Alice","password":"optional"}` or
-   `{"type":"join","room":"ABCDE-FGHJK","name":"Bob","password":"…"}`.
+   `{"type":"join","room":"ABCDE-FGHJK","name":"Bob","password":"…"}` or
+   `{"type":"enter","room":"Doom night","name":"Carol","password":"optional"}`: joins the room
+   with this name, or creates it with this password when it does not exist (names: up to 32
+   printable characters, spaces collapsed, compared ignoring case; the web page uses only `enter`).
 2. The relay answers `{"type":"joined","room":"ABCDE-FGHJK","peer":123,"host":123,"token":"…"}`
-   or `{"type":"error","code":"not-found|bad-password|full|busy|rate-limited","message":"…"}`.
+   or `{"type":"error","code":"not-found|bad-password|no-password|full|busy|rate-limited","message":"…"}`
+   (`no-password`: `enter` with a password into a room without one).
 3. Whenever somebody joins or leaves, everybody gets
    `{"type":"members","host":123,"members":[{"peer":123,"name":"Alice","host":true}, …]}`.
    The first player in the room is the host; when the host leaves, the next one becomes host.

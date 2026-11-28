@@ -3,7 +3,7 @@ import { fromDataTransfer, fromDirectoryHandle, fromFileList, fromStoredFiles, f
 import { clearRestart, saveRestart, takeRestart } from './restart.js';
 import { KEY_BY_ID, VIRTUAL_KEYS } from './keys.js';
 import { createGamepad, loadMapping, PAD_BUTTONS, saveMapping } from './gamepad.js';
-import { initLobby, netplayForConsole, netplayForDos, netplayForPc, netplayForWindows, netplayStatus } from './lobby.js';
+import { initLobby, netplayForConsole, netplayForDos, netplayForPc, netplayForWindows, netplayStatus, setActivity } from './lobby.js';
 import { fetchWithProgress } from './runner.js';
 import { WindowsRunner, canUseThreads, clearPersistentStorage } from './emulator.js';
 import { DosRunner } from './dos.js';
@@ -394,7 +394,10 @@ async function start(overrides = {}) {
   $('choose').hidden = true;
   hideDemoDetail();
   $('demos').hidden = true;
-  $('netplay').hidden = true;
+  $('multiplayer').hidden = true; // the room panel covers the side panels
+  $('btn-multiplayer').setAttribute('aria-expanded', 'false');
+  $('btn-multiplayer').classList.remove('active');
+  document.querySelector('.layout').classList.remove('mp-open');
   $('platforms').hidden = true; // the emulator gets the full width
   $('emulators').hidden = true;
   $('run').hidden = false;
@@ -427,7 +430,11 @@ async function start(overrides = {}) {
   else if (emulator instanceof WindowsRunner) emulator.netplay = netplayForWindows();
   $('run-netplay').hidden = !emulator.netplay;
   $('run-netplay').textContent = netplayStatus();
-  if (emulator.netplay) log(`Netplay: ${netplayStatus()}`, false);
+  if (emulator.netplay) {
+    log(`Netplay: ${netplayStatus()}`, false);
+    const kind = emulator instanceof DosRunner ? 'dos' : emulator instanceof V86Runner ? 'pc' : emulator instanceof WindowsRunner ? 'windows' : 'console';
+    setActivity({ title: currentDemo?.title ?? program.path.split('/').pop(), system: what, kind });
+  }
   // Touch gamepad: DOS games for now; shown at once on touch screens.
   const padFits = runningKind(program, opts) === 'dos';
   $('btn-pad').hidden = !padFits;

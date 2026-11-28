@@ -1,12 +1,20 @@
-// Netplay lobby on the start page: create or join a room on a relay server. While the page is
-// in a room, programs start connected to the room: DOS programs with IPX networking (dos.js),
-// PCs (v86) with a network card on the room's LAN (v86.js) and console games with their
-// inputs shared between the players (ejs-netplay.js).
+// Multiplayer: the room panel of the start page (opened with the Multiplayer button at the top
+// right). Everybody who enters the same room name (and password) lands in the same room on the
+// relay server. While the page is in a room, programs start connected to the room: DOS programs
+// with IPX networking (dos.js), PCs (v86) with a network card on the room's LAN (v86.js),
+// Windows programs on a virtual LAN (wine-net.js) and console games with their inputs shared
+// between the players (ejs-netplay.js).
+//
+// The members tell each other what they are running ({lobby: 'status'} messages), so the list
+// shows who is already on the network in an emulator. Quitting a program reloads the page; the
+// room is entered again by itself (sessionStorage, this tab only).
 
-import { NetplayClient, ethernetUrl, jsdosNet, normalizeCode } from './netplay.js';
+import { NetplayClient, ethernetUrl, jsdosNet } from './netplay.js';
+import { wineAddress } from './wine-net.js';
 
 const RELAY_KEY = 'runthemall-netplay-relay';
 const NAME_KEY = 'runthemall-netplay-name';
+const REJOIN_KEY = 'runthemall-netplay-room'; // sessionStorage: the room of this tab
 
 /** Default relay: the one used last; on a local copy of the site the local relay. */
 function defaultRelay() {
@@ -16,6 +24,13 @@ function defaultRelay() {
 }
 
 export const client = new NetplayClient();
+
+/** What the members run: peer -> {title, system, net}. */
+const activities = new Map();
+/** What this page runs, sent to the others. */
+let ownActivity = null;
+let render = () => {};
+let withPassword = false;
 
 /**
  * What a DOS start needs to join the network, or null when not in a room.
@@ -45,87 +60,162 @@ export function netplayForConsole() {
   return client.connected ? { client } : null;
 }
 
-/** Short text for the toolbar while a program runs, e.g. "Room ABCDE-FGHJK · host · 2 players". */
+/** Short text for the toolbar while a program runs, e.g. "Room 4711 · host · 2 players". */
 export function netplayStatus() {
   if (!client.connected) return '';
   const n = client.members.length;
   return `Room ${client.room} · ${client.isHost ? 'host' : 'guest'} · ${n} player${n === 1 ? '' : 's'}`;
 }
 
+/**
+ * Tells the room what this page runs now (null: nothing).
+ * @param {{title:string, system:string, kind:'dos'|'pc'|'windows'|'console'}|null} what
+ */
+export function setActivity(what) {
+  ownActivity = what && { title: what.title, system: what.system, net: networkText(what.kind) };
+  sendActivity(0);
+  render();
+}
+
+function networkText(kind) {
+  switch (kind) {
+    case 'dos': return 'IPX network';
+    case 'pc': return 'network card (DHCP)';
+    case 'windows': return `IP ${wineAddress(client.num)}`;
+    case 'console': return 'shared controllers';
+    default: return '';
+  }
+}
+
+function sendActivity(to) {
+  if (client.connected) client.sendMessage(to, { lobby: 'status', activity: ownActivity });
+}
+
 /** @param {(id:string)=>HTMLElement} $ */
 export function initLobby($) {
+  const panel = $('multiplayer');
+  const button = $('btn-multiplayer');
   const relay = $('np-relay');
   const name = $('np-name');
   relay.value = defaultRelay();
   name.value = localStorage.getItem(NAME_KEY) ?? '';
+  $('np-server').open = !relay.value;
 
-  // A shared link: ?room=CODE (and &relay=...) opens the lobby with the code filled in.
+  const open = (show) => {
+    panel.hidden = !show;
+    button.setAttribute('aria-expanded', String(show));
+    button.classList.toggle('active', show);
+    document.querySelector('.layout')?.classList.toggle('mp-open', show);
+    if (!show) return;
+    panel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    if (!client.connected) (name.value ? $('np-code') : name).focus({ preventScroll: true });
+  };
+  button.addEventListener('click', () => open(panel.hidden));
+  $('mp-close').addEventListener('click', () => open(false));
+
+  // A shared link: ?room=NAME (and &relay=...) opens the panel with the room filled in.
   const params = new URLSearchParams(location.search);
   if (params.get('room')) {
-    $('np-code').value = normalizeCode(params.get('room')) || params.get('room');
+    $('np-code').value = params.get('room');
     if (params.get('relay')) relay.value = params.get('relay');
-    $('netplay').open = true;
+    open(true);
   }
 
   const error = (text) => {
     $('np-error').textContent = text;
     $('np-error').hidden = !text;
   };
-  const show = () => {
+
+  render = () => {
     const inRoom = client.connected;
     $('np-setup').hidden = inRoom;
     $('np-room').hidden = !inRoom;
+    $('mp-button-room').hidden = !inRoom;
+    button.classList.toggle('in-room', inRoom);
     if (!inRoom) return;
+    const members = client.members;
+    $('mp-button-room').textContent = `${client.room} · ${members.length}`;
     $('np-room-code').textContent = client.room;
-    $('np-members').replaceChildren(...client.members.map((m) => {
-      const li = document.createElement('li');
-      li.textContent = `${m.name}${m.host ? ' (host)' : ''}${m.peer === client.peer ? ' – you' : ''}`;
-      return li;
-    }));
+    $('np-lock').hidden = !withPassword;
+    $('np-count').textContent = `${members.length} in the room`
+      + ` · ${members.filter((m) => activityOf(m.peer)).length} on the network`;
+    $('np-members').replaceChildren(...members.map((m) => memberItem(m, activityOf(m.peer))));
     $('np-role').textContent = client.isHost
-      ? 'You are the host. Everybody starts the same program. DOS games: start first, then the others; '
-        + 'choose IPX network play in the game. Console games: your game is copied to the others, you are player 1.'
-      : 'Everybody starts the same program. DOS games: start after the host, then choose IPX network play in the game. '
+      ? 'You are the host: start the game first, the others follow. DOS games: choose IPX network play. '
+        + 'Console games: your game is copied to the others, you are player 1.'
+      : 'Start the same game as the host, after the host. DOS games: choose IPX network play. '
         + 'Console games: you play as player 2, 3 or 4.';
-    $('np-role').title = 'Operating systems (v86) get a network card on the room’s LAN, addresses by DHCP.';
   };
-  client.addEventListener('members', show);
-  // The toolbar badge while a program runs.
+  const activityOf = (peer) => (peer === client.peer ? ownActivity : activities.get(peer));
+
   client.addEventListener('members', () => {
+    // Somebody new does not know yet what everybody runs.
+    const known = new Set(client.members.map((m) => m.peer));
+    for (const peer of activities.keys()) if (!known.has(peer)) activities.delete(peer);
+    if (ownActivity) sendActivity(0);
+    render();
     if (!$('run-netplay').hidden) $('run-netplay').textContent = netplayStatus();
   });
-  client.addEventListener('close', (e) => { show(); error(e.detail); });
+  client.addEventListener('message', (e) => {
+    const { from, data } = e.detail;
+    if (data?.lobby !== 'status') return;
+    if (data.activity && typeof data.activity === 'object') {
+      activities.set(from, {
+        title: String(data.activity.title ?? '').slice(0, 80),
+        system: String(data.activity.system ?? '').slice(0, 40),
+        net: String(data.activity.net ?? '').slice(0, 40),
+      });
+    } else activities.delete(from);
+    render();
+  });
+  client.addEventListener('close', (e) => {
+    activities.clear();
+    sessionStorage.removeItem(REJOIN_KEY);
+    render();
+    error(e.detail);
+    open(true);
+  });
 
-  async function enter(hello) {
-    const relayUrl = relay.value.trim();
+  async function enter({ relayUrl, room, password, who }) {
     if (!relayUrl) {
-      error('Enter the address of a relay server first.');
-      return;
+      $('np-server').open = true;
+      error('Enter the address of a relay server first (under Server).');
+      return false;
     }
     error('');
-    localStorage.setItem(RELAY_KEY, relayUrl);
-    localStorage.setItem(NAME_KEY, name.value.trim());
-    for (const b of [$('np-create'), $('np-join')]) b.disabled = true;
+    $('np-enter').disabled = true;
     try {
-      await client.open(relayUrl, { ...hello, name: name.value.trim() || 'Player' });
-      show();
+      await client.open(relayUrl, { type: 'enter', room, password, name: who || 'Player' });
+      withPassword = !!password;
+      sessionStorage.setItem(REJOIN_KEY, JSON.stringify({ relayUrl, room, password, who }));
+      render();
+      return true;
     } catch (err) {
       error(err.message);
+      return false;
     } finally {
-      for (const b of [$('np-create'), $('np-join')]) b.disabled = false;
+      $('np-enter').disabled = false;
     }
   }
 
-  $('np-create').addEventListener('click', () => enter({ type: 'create', password: $('np-create-password').value }));
-  $('np-join').addEventListener('click', () => {
-    const room = normalizeCode($('np-code').value);
+  $('np-setup').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const room = $('np-code').value.trim();
     if (!room) {
-      error('A room code has 10 letters and digits, e.g. ABCDE-FGHJK.');
+      error('Enter a room name or number.');
       return;
     }
-    enter({ type: 'join', room, password: $('np-join-password').value });
+    const relayUrl = relay.value.trim();
+    localStorage.setItem(RELAY_KEY, relayUrl);
+    localStorage.setItem(NAME_KEY, name.value.trim());
+    enter({ relayUrl, room, password: $('np-password').value, who: name.value.trim() });
   });
-  $('np-leave').addEventListener('click', () => { client.close(); show(); });
+  $('np-leave').addEventListener('click', () => {
+    sessionStorage.removeItem(REJOIN_KEY);
+    activities.clear();
+    client.close();
+    render();
+  });
   $('np-share').addEventListener('click', async () => {
     const url = new URL(location.href);
     url.search = '';
@@ -141,5 +231,49 @@ export function initLobby($) {
       }
     } catch { /* cancelled */ }
   });
-  show();
+
+  // Back on the start page after quitting a program (the page reloads): enter the room again.
+  try {
+    const again = JSON.parse(sessionStorage.getItem(REJOIN_KEY) ?? 'null');
+    if (again && !params.get('room')) {
+      $('np-code').value = again.room;
+      enter(again);
+    }
+  } catch { /* nothing stored */ }
+  render();
+}
+
+/** One line of the member list: name, host/you, and what the member runs on the network. */
+function memberItem(m, activity) {
+  const li = document.createElement('li');
+  li.className = activity ? 'mp-member online' : 'mp-member';
+  const avatar = document.createElement('span');
+  avatar.className = 'mp-avatar';
+  avatar.textContent = [...(m.name || '?')][0].toUpperCase();
+  avatar.style.setProperty('--hue', String((m.num * 67) % 360));
+  const text = document.createElement('div');
+  text.className = 'mp-member-text';
+  const line = document.createElement('div');
+  line.className = 'mp-member-name';
+  const nameEl = document.createElement('span');
+  nameEl.textContent = m.name;
+  line.append(nameEl);
+  for (const [show, label, cls] of [[m.host, 'host', 'mp-tag-host'], [m.peer === client.peer, 'you', 'mp-tag-you']]) {
+    if (!show) continue;
+    const tag = document.createElement('span');
+    tag.className = `mp-tag ${cls}`;
+    tag.textContent = label;
+    line.append(tag);
+  }
+  const state = document.createElement('div');
+  state.className = 'mp-member-state';
+  if (activity) {
+    state.title = `${activity.title} (${activity.system}) · ${activity.net}`;
+    const dot = document.createElement('span');
+    dot.className = 'mp-dot';
+    state.append(dot, `${activity.title} · ${activity.net}`);
+  } else state.textContent = 'in the room, no game started';
+  text.append(line, state);
+  li.append(avatar, text);
+  return li;
 }

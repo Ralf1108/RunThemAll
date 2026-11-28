@@ -84,7 +84,8 @@ func NewHub(cfg Config) *Hub {
 
 // Room is one virtual network segment.
 type Room struct {
-	code    string
+	code    string // shown to the players: a generated code or the name of a named room
+	key     string // in Hub.rooms: the code, or the name in upper case
 	salt    []byte
 	pwHash  []byte // nil: no password
 	created time.Time
@@ -242,6 +243,12 @@ func (h *Hub) serveControl(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		room, err = h.findRoom(hello.Room, hello.Password)
+	case "enter":
+		if !h.joins.Allow(ip) {
+			c.fail(conn, "rate-limited", "Too many attempts, please wait a minute.")
+			return
+		}
+		room, err = h.enterRoom(hello.Room, hello.Password, func() bool { return h.creates.Allow(ip) })
 	default:
 		err = errProtocol
 	}
@@ -417,6 +424,9 @@ var (
 	errBadPassword = errors.New("Wrong password.")
 	errFull        = errors.New("The room is full.")
 	errTooMany     = errors.New("The relay has no free rooms, please try later.")
+	errNoName      = errors.New("Enter a room name.")
+	errNoPassword  = errors.New("This room has no password: leave the password empty, or choose another room name.")
+	errRateLimited = errors.New("Too many rooms created, please wait a minute.")
 )
 
 func errCode(err error) string {
@@ -429,6 +439,10 @@ func errCode(err error) string {
 		return "full"
 	case errTooMany:
 		return "busy"
+	case errNoPassword:
+		return "no-password"
+	case errRateLimited:
+		return "rate-limited"
 	}
 	return "protocol"
 }
@@ -477,20 +491,26 @@ func (h *Hub) createRoom(password string) (*Room, error) {
 	if len(h.rooms) >= h.cfg.MaxRooms {
 		return nil, errTooMany
 	}
-	r := &Room{created: time.Now(), members: map[uint32]*Client{}, sw: NewSwitch(NewLAN(h.cfg.LAN))}
-	if password != "" {
-		r.salt = make([]byte, 16)
-		_, _ = rand.Read(r.salt)
-		r.pwHash = hashPassword(r.salt, password)
-	}
+	r := h.newRoom(password)
 	for {
 		r.code = newCode()
 		if _, taken := h.rooms[r.code]; !taken {
 			break
 		}
 	}
-	h.rooms[r.code] = r
+	r.key = r.code
+	h.rooms[r.key] = r
 	return r, nil
+}
+
+func (h *Hub) newRoom(password string) *Room {
+	r := &Room{created: time.Now(), members: map[uint32]*Client{}, sw: NewSwitch(NewLAN(h.cfg.LAN))}
+	if password != "" {
+		r.salt = make([]byte, 16)
+		_, _ = rand.Read(r.salt)
+		r.pwHash = hashPassword(r.salt, password)
+	}
+	return r
 }
 
 func (h *Hub) findRoom(code, password string) (*Room, error) {
@@ -500,16 +520,71 @@ func (h *Hub) findRoom(code, password string) (*Room, error) {
 	if r == nil {
 		return nil, errNotFound
 	}
-	if r.pwHash != nil && subtle.ConstantTimeCompare(r.pwHash, hashPassword(r.salt, password)) != 1 {
+	if !r.passwordOK(password) {
 		return nil, errBadPassword
 	}
 	return r, nil
 }
 
+func (r *Room) passwordOK(password string) bool {
+	return r.pwHash == nil || subtle.ConstantTimeCompare(r.pwHash, hashPassword(r.salt, password)) == 1
+}
+
+// enterRoom joins the named room, or creates it when nobody is in it yet (with the given
+// password; allowCreate applies the rate limit for new rooms). Names are compared ignoring case.
+func (h *Hub) enterRoom(name, password string, allowCreate func() bool) (*Room, error) {
+	name = cleanRoomName(name)
+	if name == "" {
+		return nil, errNoName
+	}
+	key := strings.ToUpper(name)
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if r := h.rooms[key]; r != nil {
+		if r.pwHash == nil && password != "" {
+			return nil, errNoPassword
+		}
+		if !r.passwordOK(password) {
+			return nil, errBadPassword
+		}
+		return r, nil
+	}
+	if len(h.rooms) >= h.cfg.MaxRooms {
+		return nil, errTooMany
+	}
+	if !allowCreate() {
+		return nil, errRateLimited
+	}
+	r := h.newRoom(password)
+	r.code, r.key = name, key
+	h.rooms[key] = r
+	return r, nil
+}
+
+// cleanRoomName: printable characters, spaces collapsed, at most 32 characters.
+func cleanRoomName(s string) string {
+	var b strings.Builder
+	n := 0
+	for _, f := range strings.Fields(s) {
+		for _, r := range f {
+			if r < 32 || r == 127 || n >= 32 {
+				continue
+			}
+			b.WriteRune(r)
+			n++
+		}
+		if n < 32 {
+			b.WriteRune(' ')
+			n++
+		}
+	}
+	return strings.TrimSpace(b.String())
+}
+
 func (h *Hub) addMember(r *Room, c *Client) error {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	if h.rooms[r.code] != r {
+	if h.rooms[r.key] != r {
 		return errNotFound // closed in the meantime
 	}
 	r.mu.Lock()
@@ -557,7 +632,7 @@ func (h *Hub) removeMember(c *Client) {
 	c.ports = nil
 	r.mu.Unlock()
 	if empty {
-		delete(h.rooms, r.code)
+		delete(h.rooms, r.key)
 	}
 	h.mu.Unlock()
 	c.close()

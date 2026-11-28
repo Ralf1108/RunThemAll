@@ -14,6 +14,11 @@
   <header class="site-header">
     <div class="wrap">
       <nav class="header-links" aria-label="Project links">
+      <button type="button" id="btn-multiplayer" class="mp-button" aria-expanded="false" aria-controls="multiplayer" title="Play together with friends over the network">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c.6-3.2 3-5 6-5s5.4 1.8 6 5"/><circle cx="17" cy="9" r="2.6"/><path d="M16.2 14.6c2.6.1 4.3 1.7 4.8 4.4"/></svg>
+        <span>Multiplayer</span>
+        <span id="mp-button-room" class="mp-button-room" hidden></span>
+      </button>
       <a class="github-link" href="https://github.com/Ralf1108/RunThemAll/issues/new/choose" rel="noopener" title="Something does not work, or an idea? Tell us on GitHub">
         <svg viewBox="0 0 16 16" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="7"/><path d="M6 6.2a2 2 0 1 1 2.6 1.9c-.4.15-.6.5-.6.9v.6"/><circle cx="8" cy="11.6" r=".45" fill="currentColor" stroke="none"/></svg>
         <span>Problem or idea?</span>
@@ -62,37 +67,6 @@
       <input type="file" id="input-folder" webkitdirectory hidden>
       <p id="pick-error" class="error" hidden></p>
     </section>
-
-    <!-- Netplay: a virtual LAN between browsers over a relay server (see netplay/) -->
-    <details id="netplay" class="wx-card netplay">
-      <summary><h2>Play together over the network <span class="badge">beta</span></h2></summary>
-      <p class="hint">Everybody joins the same room, then opens and starts the same file. DOS games play
-        over IPX (e.g. Doom, Warcraft II, the host starts first), console games share the controllers
-        (players 1–4), operating systems (v86) are connected to one LAN.</p>
-      <div id="np-setup" class="np-grid">
-        <label>Relay server <input type="text" id="np-relay" placeholder="wss://relay.example.org" spellcheck="false"></label>
-        <label>Your name <input type="text" id="np-name" maxlength="32" placeholder="Player"></label>
-        <div class="np-box">
-          <h3>New room</h3>
-          <label>Password (optional) <input type="password" id="np-create-password" autocomplete="new-password"></label>
-          <button type="button" id="np-create" class="wx-btn wx-primary wx-small">Create room</button>
-        </div>
-        <div class="np-box">
-          <h3>Join a room</h3>
-          <label>Room code <input type="text" id="np-code" placeholder="ABCDE-FGHJK" spellcheck="false" autocomplete="off"></label>
-          <label>Password <input type="password" id="np-join-password" autocomplete="off"></label>
-          <button type="button" id="np-join" class="wx-btn wx-small">Join</button>
-        </div>
-      </div>
-      <div id="np-room" class="np-room" hidden>
-        <p>Room <strong id="np-room-code" class="np-code"></strong>
-          <button type="button" id="np-share" class="wx-btn wx-small">Share link</button>
-          <button type="button" id="np-leave" class="wx-btn wx-small">Leave</button></p>
-        <ul id="np-members" class="np-members"></ul>
-        <p id="np-role" class="hint"></p>
-      </div>
-      <p id="np-error" class="error" hidden></p>
-    </details>
 
     <!-- Demos: one tile per platform, scrolls sideways -->
     <section id="demos" class="wx-card demos" aria-labelledby="demos-title" hidden>
@@ -267,6 +241,48 @@
       </div>
     </section>
   </main>
+
+  <!-- Multiplayer: rooms on a relay server (js/lobby.js, netplay/). Covers the two side panels while open. -->
+  <aside id="multiplayer" class="side-panel multiplayer" aria-labelledby="mp-title" hidden>
+    <div class="mp-head">
+      <h2 id="mp-title">Multiplayer <span class="badge">beta</span></h2>
+      <button type="button" id="mp-close" class="mp-close" aria-label="Close" title="Close">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <form id="np-setup" class="mp-setup">
+      <p class="side-intro">Everybody enters the same room. In the room you are on one network:
+        start the same game and play together.</p>
+      <label>Your name <input type="text" id="np-name" maxlength="32" placeholder="Player" autocomplete="nickname"></label>
+      <label>Room <input type="text" id="np-code" maxlength="32" placeholder="e.g. 4711 or Doom night" spellcheck="false" autocomplete="off" required></label>
+      <label><span>Password <span class="mp-optional">(optional)</span></span>
+        <input type="password" id="np-password" autocomplete="off"></label>
+      <button type="submit" id="np-enter" class="wx-btn wx-primary">Enter room</button>
+      <details id="np-server" class="mp-server">
+        <summary>Server</summary>
+        <label>Relay server <input type="text" id="np-relay" placeholder="wss://relay.example.org" spellcheck="false"></label>
+      </details>
+    </form>
+    <div id="np-room" class="mp-room" hidden>
+      <div class="mp-room-head">
+        <div>
+          <span class="mp-label">Room</span>
+          <strong id="np-room-code" class="mp-room-name"></strong>
+        </div>
+        <span id="np-lock" class="mp-lock" title="Protected by a password" hidden>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+        </span>
+      </div>
+      <h3 class="mp-sub"><span id="np-count"></span></h3>
+      <ul id="np-members" class="mp-members"></ul>
+      <p id="np-role" class="hint"></p>
+      <div class="mp-actions">
+        <button type="button" id="np-share" class="wx-btn wx-small">Share link</button>
+        <button type="button" id="np-leave" class="wx-btn wx-small">Leave room</button>
+      </div>
+    </div>
+    <p id="np-error" class="error" hidden></p>
+  </aside>
 
   <!-- The emulators behind RunThemAll; versions are filled in from */version.json -->
   <aside id="emulators" class="side-panel emulators" aria-labelledby="emulators-title">

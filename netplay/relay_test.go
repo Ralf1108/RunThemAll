@@ -240,3 +240,37 @@ func TestNormalizeCode(t *testing.T) {
 		}
 	}
 }
+
+func TestNamedRoom(t *testing.T) {
+	url := startRelay(t, DefaultConfig()) + "/v1"
+	a := dial(t, url)
+	a.sendJSON(map[string]string{"type": "enter", "room": "  Doom   Night ", "password": "pw", "name": "Alice"})
+	ja, _ := a.expect("joined")
+	if ja.Room != "Doom Night" || ja.Host != ja.Peer {
+		t.Fatalf("unexpected joined message %+v", ja)
+	}
+	wrong := dial(t, url)
+	wrong.sendJSON(map[string]string{"type": "enter", "room": "doom night", "password": "nope"})
+	if msg, _ := wrong.next(); msg.Code != "bad-password" {
+		t.Fatalf("expected bad-password, got %+v", msg)
+	}
+	b := dial(t, url)
+	b.sendJSON(map[string]string{"type": "enter", "room": "DOOM NIGHT", "password": "pw", "name": "Bob"})
+	jb, _ := b.expect("joined")
+	if jb.Room != "Doom Night" || jb.Host != ja.Peer || jb.Num != 2 {
+		t.Fatalf("Bob did not land in Alice's room: %+v", jb)
+	}
+	open := dial(t, url)
+	open.sendJSON(map[string]string{"type": "enter", "room": "lobby"})
+	open.expect("joined")
+	sneaky := dial(t, url)
+	sneaky.sendJSON(map[string]string{"type": "enter", "room": "Lobby", "password": "x"})
+	if msg, _ := sneaky.next(); msg.Code != "no-password" {
+		t.Fatalf("expected no-password, got %+v", msg)
+	}
+	empty := dial(t, url)
+	empty.sendJSON(map[string]string{"type": "enter", "room": "   "})
+	if msg, _ := empty.next(); msg.Type != "error" {
+		t.Fatalf("expected an error for an empty name, got %+v", msg)
+	}
+}
