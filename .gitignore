@@ -41,5 +41,3 @@ desktop.ini
 netplay/netplay
 netplay/*.exe
 
-# Boxedwine checkout for the upstream pull request (own git repository)
-concepts/boxedwine-accept-repro/Boxedwine/
