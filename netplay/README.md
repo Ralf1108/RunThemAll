@@ -71,22 +71,33 @@ password. The relay gets neither:
 |---|---|
 | room name "Doom night" | room ID `HKDF(PBKDF2(NAME))`, 32 hex digits (the name cannot be computed back, only guessed) |
 | password | a password check value `HKDF(PBKDF2(password, salt from the name))`, 32 hex digits (empty without a password) |
-| player name | `"Player"`; the real names go to the members encrypted (`{netplay: 'name'}` messages) |
+| player name | `"Player"`; the real names go to the members encrypted (hello messages, see below) |
 | key | nothing: `HKDF(secret, "packets")`, secret = password-derived bits, or the name-derived bits without a password |
 
 PBKDF2-SHA256 with 210,000 rounds, separate HKDF labels for room ID, check value and key, so none
 of them gives away another. Names are compared like before (spaces collapsed, case ignored).
 
-What is sealed (12 bytes random nonce + ciphertext + 16 bytes tag, 28 bytes more per packet):
+What is sealed (12 bytes random nonce + ciphertext + 16 bytes tag):
 
-- **Packets** (`[4 bytes peer ID][sealed]`): plain text `[4 bytes receiver][payload]`, additional
-  data `"p"` + sender peer ID. A packet the relay changes, redirects to another member or claims
-  to come from someone else does not open and is dropped.
-- **Messages** (`{"type":"msg","data":"<base64 of sealed>"}`): plain text `[4 bytes receiver][JSON]`,
-  additional data `"m"` + sender peer ID. Packets and messages are opened in the order received.
+- **Packets** (`[4 bytes peer ID][sealed]`): plain text `[4 bytes receiver][8 bytes session][8 bytes
+  sequence number][payload]`, additional data `"p"` + sender peer ID. A packet the relay changes,
+  redirects to another member or claims to come from someone else does not open and is dropped.
+  48 bytes more per packet.
+- **Messages** (`{"type":"msg","data":"<base64 of sealed>"}`): plain text like packets with JSON as
+  payload, additional data `"m"` + sender peer ID. Packets and messages are opened in the order received.
 - **Ethernet frames** (v86, `/v1/eth`): the two MAC addresses (12 bytes) stay readable, because the
-  relay switches by them; type and content of the frame are sealed, with the MAC addresses as
-  additional data. Since the relay cannot read the frames, its DHCP server is not used: every
+  relay switches by them; `[8 bytes session][8 bytes sequence number]` + type and content of the
+  frame are sealed, with the MAC addresses as additional data.
+
+**Replay protection.** Every connection has a random session (8 bytes) and counts its sealed data
+(one counter for the control socket, one for the Ethernet port). A receiver takes data only from a
+sender whose session it knows as *live*, and only with a higher number than the last one; anything
+else is dropped (`NetplayClient.replayed` counts it). Sessions are learned from hello messages
+`{netplay: 'hello', name, know: [sessions]}`: a sender is live for a receiver once its hello lists the
+receiver's own session. That session is new and random, so a recording of an older session cannot
+contain it. Everybody sends a hello when somebody new joins and when it learns a new session; two
+rounds later all members know each other. So the relay can neither send a packet again nor play
+back a recorded session, even when it pretends that an old member is in the room. Since the relay cannot read the frames, its DHCP server is not used: every
   browser answers DHCP and ARP of its own PC for the virtual server 192.168.77.1 and gives it
   192.168.77.<9 + number in the room> (`site/js/pc-net.js`). `-lan` therefore only applies to
   clients that do not encrypt.
@@ -100,7 +111,7 @@ the MAC addresses of PCs, and how long a room exists. Limits of the scheme:
 - A weak password can be guessed offline by somebody who recorded the traffic (the rounds of
   PBKDF2 only make each guess slower).
 - Everybody with the password can read everything; there are no keys per session (no forward
-  secrecy) and no protection against the relay sending recorded packets again (replay).
+  secrecy). The relay can still drop or delay data, or keep players apart.
 
 ### Options
 

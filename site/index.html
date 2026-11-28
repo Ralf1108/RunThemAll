@@ -257,8 +257,9 @@
       <label>Room <input type="text" id="np-code" maxlength="32" placeholder="e.g. 4711 or Doom night" spellcheck="false" autocomplete="off" required></label>
       <label><span>Password <span class="mp-optional">(optional)</span></span>
         <input type="password" id="np-password" autocomplete="off"></label>
-      <p class="mp-note">End-to-end encrypted: the relay server sees neither room name, names nor
-        game data. The key is the password, or the room name without one.</p>
+      <p class="mp-note">With a password, everything is end-to-end encrypted with it: the relay
+        server cannot read anything. <strong>Without a password</strong> the room name is the key,
+        so the relay server could read along if it guesses the name.</p>
       <button type="submit" id="np-enter" class="wx-btn wx-primary">Enter room</button>
       <details id="np-server" class="mp-server">
         <summary>Server</summary>

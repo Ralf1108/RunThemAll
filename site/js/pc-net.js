@@ -2,7 +2,9 @@
 // frame to us ("net0-send") instead of talking to the relay itself; the frames go over the
 // player's Ethernet port of the relay (/v1/eth), sealed with the room key (netcrypt.js).
 // Only the two MAC addresses stay readable, the relay switches by them; type and content of
-// every frame are encrypted.
+// every frame are encrypted. Sealed is [8 bytes session][8 bytes sequence number][rest of the
+// frame]: the player's session (netplay.js) with its own numbering for the Ethernet port, so the
+// relay cannot send a frame again (replay protection, see NetplayClient.accept).
 //
 // Because the relay cannot read the frames, it cannot hand out addresses either: every browser
 // answers DHCP (and ARP for the server address) of its own PC. The address comes from the
@@ -30,6 +32,7 @@ export class SealedEthernet {
     this.waiting = []; // frames before the port is open
     this.tx = Promise.resolve();
     this.rx = Promise.resolve();
+    this.seq = 0n;
     this.ws = new WebSocket(ethernetUrl(client.relay, client.token));
     this.ws.binaryType = 'arraybuffer';
     this.ws.onopen = () => { for (const f of this.waiting.splice(0)) this.ws.send(f); };
@@ -47,7 +50,11 @@ export class SealedEthernet {
       return;
     }
     const header = frame.slice(0, 12);
-    const sealed = this.cipher.seal(frame.slice(12), context('e', header));
+    const plain = new Uint8Array(16 + frame.length - 12);
+    plain.set(this.client.session);
+    new DataView(plain.buffer).setBigUint64(8, ++this.seq);
+    plain.set(frame.subarray(12), 16);
+    const sealed = this.cipher.seal(plain, context('e', header));
     this.tx = this.tx.then(() => sealed).then((s) => {
       const out = new Uint8Array(12 + s.length);
       out.set(header);
@@ -61,10 +68,13 @@ export class SealedEthernet {
     if (data.length < 12) return;
     const header = data.slice(0, 12);
     const opened = this.cipher.open(data.slice(12), context('e', header));
-    this.rx = this.rx.then(() => opened).then((rest) => {
-      const frame = new Uint8Array(12 + rest.length);
+    this.rx = this.rx.then(() => opened).then((plain) => {
+      if (plain.length < 16) return;
+      const session = [...plain.subarray(0, 8)].map((b) => b.toString(16).padStart(2, '0')).join('');
+      if (!this.client.accept(null, session, new DataView(plain.buffer, plain.byteOffset).getBigUint64(8), 'eseq')) return;
+      const frame = new Uint8Array(12 + plain.length - 16);
       frame.set(header);
-      frame.set(rest, 12);
+      frame.set(plain.subarray(16), 12);
       this.emulator.bus.send('net0-receive', frame);
     }, () => { /* not sealed with the room key: dropped */ });
   }

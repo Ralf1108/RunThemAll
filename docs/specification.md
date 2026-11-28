@@ -110,7 +110,10 @@ side the supported platforms and the emulators (3.3). The interface is in Englis
      Everything in the room is end-to-end encrypted (`js/netcrypt.js`, AES-256-GCM): the key comes
      from the password, or from the room name without one; the relay only gets a room ID and a
      password check value derived from them (PBKDF2 + HKDF), "Player" as name (the real names go
-     encrypted to the members) and sealed packets and messages. A note in the form says so.
+     encrypted to the members) and sealed packets and messages. Replay protection: every sealed
+     packet carries a random session and a sequence number; data counts only from sessions that
+     proved they are live (their hello lists the receiver's own session) and with a new number.
+     A note at the password says that without a password the relay could read along.
      In the room: room name, lock with "Encrypted" or "Encrypted (room name)" (tooltip explains), *Share link* (`?room=…&relay=…`,
      Web Share API or clipboard), *Leave room*, and the members with host/you and what they run:
      every page sends `{lobby: 'status', activity: {title, system, net}}` to the room when it starts

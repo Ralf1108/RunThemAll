@@ -140,8 +140,8 @@ export function initLobby($) {
     $('np-lock-text').textContent = withPassword ? 'Encrypted' : 'Encrypted (room name)';
     $('np-lock').title = withPassword
       ? 'End-to-end encrypted with the room password: the relay server cannot read anything.'
-      : 'End-to-end encrypted with the room name as key: the relay server cannot read anything, '
-        + 'but whoever guesses the room name can. Set a password for more protection.';
+      : 'Encrypted with the room name as key: whoever guesses the room name, the relay server too, '
+        + 'could read along. Use a password to prevent that.';
     $('np-count').textContent = `${members.length} in the room`
       + ` · ${members.filter((m) => activityOf(m.peer)).length} on the network`;
     $('np-members').replaceChildren(...members.map((m) => memberItem(m, activityOf(m.peer))));

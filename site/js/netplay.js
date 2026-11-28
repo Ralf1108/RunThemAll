@@ -8,6 +8,9 @@ import { context, fromBase64, toBase64 } from './netcrypt.js';
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
+/** Sealed data starts with receiver (4 bytes), session (8) and sequence number (8). */
+const SEALED_HEAD = 20;
+const hexOf = (bytes) => [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
 
 /**
  * @typedef {object} Member
@@ -55,13 +58,18 @@ export class NetplayClient extends EventTarget {
     /** @type {import('./netcrypt.js').RoomCipher|null} */
     this.cipher = null;
     this.name = '';
-    /** Player names from the members themselves (encrypted rooms): peer -> name. */
-    this.names = new Map();
     this.relayMembers = [];
+    /** Encrypted rooms, what we know of the other members: peer -> {session, seq, eseq, live, name}. */
+    this.senders = new Map();
+    this.session = new Uint8Array(8); // own session, new for every connection (reset)
+    this.sessionHex = '';
+    this.seq = 0;
     // Sealing and opening run in parallel, sending and handing on keep the order.
     this.tx = Promise.resolve();
     this.rx = Promise.resolve();
     this.rejected = 0; // messages that could not be opened (other key or changed on the way)
+    this.replayed = 0; // opened, but sent again, too old or from an unknown session
+    this.reset();
   }
 
   get encrypted() { return Boolean(this.cipher); }
@@ -140,8 +148,12 @@ export class NetplayClient extends EventTarget {
           const before = new Set(this.relayMembers.map((m) => m.peer));
           this.relayMembers = msg.members ?? [];
           this.host = msg.host;
-          // Somebody new: tell them the own name (encrypted rooms; the relay only knows "Player").
-          if (this.cipher && this.relayMembers.some((m) => !before.has(m.peer))) this.sendMessage(0, { netplay: 'name', name: this.name });
+          if (this.cipher) {
+            const now = new Set(this.relayMembers.map((m) => m.peer));
+            for (const peer of this.senders.keys()) if (!now.has(peer)) this.senders.delete(peer);
+            // Somebody new: introduce ourselves (name and session, see sendHello).
+            if (this.relayMembers.some((m) => !before.has(m.peer))) this.sendHello();
+          }
           this.updateMembers();
         } else if (msg.type === 'msg') {
           if (!this.cipher) {
@@ -151,13 +163,8 @@ export class NetplayClient extends EventTarget {
           if (typeof msg.data !== 'string') return; // not sealed: not from a member of this room
           let sealed;
           try { sealed = fromBase64(msg.data); } catch { return; }
-          this.receiveSealed(ws, msg.from, 'm', sealed, (plain) => {
-            let data;
-            try { data = JSON.parse(dec.decode(plain)); } catch { return; }
-            if (data?.netplay === 'name') {
-              this.names.set(msg.from, String(data.name ?? '').trim().slice(0, 32) || 'Player');
-              this.updateMembers();
-            } else this.dispatchEvent(new CustomEvent('message', { detail: { from: msg.from, data } }));
+          this.receiveSealed(ws, msg.from, 'm', sealed, (data) => {
+            this.dispatchEvent(new CustomEvent('message', { detail: { from: msg.from, data } }));
           });
         }
       };
@@ -175,7 +182,6 @@ export class NetplayClient extends EventTarget {
       this.ws.send(buf);
       return true;
     }
-    // Sealed: [receiver, 4 bytes][data], so the relay cannot hand it to somebody else.
     this.sendSealed('p', to, data, (sealed) => {
       const buf = new Uint8Array(4 + sealed.length);
       new DataView(buf.buffer).setUint32(0, to);
@@ -195,17 +201,36 @@ export class NetplayClient extends EventTarget {
   /** The members with their own names (encrypted rooms: from their name messages). */
   updateMembers() {
     this.members = !this.cipher ? this.relayMembers : this.relayMembers.map((m) => ({
-      ...m, name: m.peer === this.peer ? this.name || 'Player' : this.names.get(m.peer) ?? `Player ${m.num ?? ''}`.trim(),
+      ...m, name: m.peer === this.peer ? this.name || 'Player' : this.senders.get(m.peer)?.name ?? `Player ${m.num ?? ''}`.trim(),
     }));
     this.dispatchEvent(new CustomEvent('members', { detail: this.members }));
   }
 
-  /** Seals [receiver][data] now and sends it in the order of the calls (wrap: sealed -> what goes to the relay). */
+  // Replay protection (encrypted rooms). Every sealed packet and message starts with
+  //   [4 bytes receiver][8 bytes session][8 bytes sequence number]
+  // The session is random per connection, the sequence number counts up per session. A receiver
+  // takes data only from a sender whose session it knows and only with a higher number than the
+  // last one: the relay can neither send a packet again nor replay a recorded older session.
+  // Sessions are learned from hello messages ({netplay:'hello', name, know:[sessions]}), and a
+  // sender only counts once its hello lists the receiver's own (fresh, random) session: an old
+  // recording cannot contain it. Everybody sends a hello when somebody new joins and when it
+  // learns a new session, so all members know each other after two rounds.
+
+  /** Introduces this player: name, and the sessions it knows (proof that it is live). */
+  sendHello() {
+    const know = [...this.senders.values()].map((s) => s.session);
+    this.sendMessage(0, { netplay: 'hello', name: this.name, know });
+  }
+
+  /** Seals [receiver][session][sequence][data] now and sends it in the order of the calls. */
   sendSealed(kind, to, data, wrap) {
     const ws = this.ws;
-    const plain = new Uint8Array(4 + data.byteLength);
-    new DataView(plain.buffer).setUint32(0, to);
-    plain.set(data, 4);
+    const plain = new Uint8Array(SEALED_HEAD + data.byteLength);
+    const view = new DataView(plain.buffer);
+    view.setUint32(0, to);
+    plain.set(this.session, 4);
+    view.setBigUint64(12, BigInt(++this.seq));
+    plain.set(data, SEALED_HEAD);
     const sealed = this.cipher.seal(plain, context(kind, this.peer));
     this.tx = this.tx.then(() => sealed).then((s) => {
       if (this.ws === ws && ws.readyState === WebSocket.OPEN) ws.send(wrap(s));
@@ -216,16 +241,61 @@ export class NetplayClient extends EventTarget {
   receiveSealed(ws, from, kind, sealed, deliver) {
     const opened = this.cipher.open(sealed.slice(), context(kind, from));
     this.rx = this.rx.then(() => opened).then((plain) => {
-      if (this.ws !== ws || plain.length < 4) return;
-      const to = new DataView(plain.buffer, plain.byteOffset).getUint32(0);
+      if (this.ws !== ws || plain.length < SEALED_HEAD) return;
+      const view = new DataView(plain.buffer, plain.byteOffset);
+      const to = view.getUint32(0);
       if (to !== 0 && to !== this.peer) return; // meant for somebody else
-      deliver(plain.slice(4)); // own buffer: js-dos hands it on to its worker
+      const session = hexOf(plain.subarray(4, 12));
+      const seq = view.getBigUint64(12);
+      const body = plain.slice(SEALED_HEAD); // own buffer: js-dos hands it on to its worker
+      if (kind === 'm') {
+        let data;
+        try { data = JSON.parse(dec.decode(body)); } catch { return; }
+        if (data?.netplay === 'hello') {
+          this.receiveHello(from, session, seq, data);
+          return;
+        }
+        if (this.accept(from, session, seq, 'seq')) deliver(data);
+      } else if (this.accept(from, session, seq, 'seq')) deliver(body);
     }, () => { this.rejected++; });
+  }
+
+  receiveHello(from, session, seq, data) {
+    let s = this.senders.get(from);
+    if (s?.live && s.session !== session) { this.replayed++; return; } // an old hello of a live member
+    const isNew = !s || s.session !== session;
+    if (isNew) s = { session, seq: 0n, eseq: 0n, live: false, name: '' };
+    else if (seq <= s.seq) { this.replayed++; return; }
+    s.seq = seq;
+    s.name = String(data.name ?? '').trim().slice(0, 32) || 'Player';
+    const wasLive = s.live;
+    s.live = Array.isArray(data.know) && data.know.includes(this.sessionHex);
+    this.senders.set(from, s);
+    if (isNew) this.sendHello(); // tell the new session that we know it
+    if (s.live !== wasLive || isNew) this.updateMembers();
+  }
+
+  /**
+   * Replay check: true when the data comes from a live session with a new sequence number.
+   * @param {number|null} from peer ID (null: find the sender by its session, for Ethernet frames)
+   * @param {'seq'|'eseq'} counter control socket or Ethernet port (each has its own numbering)
+   */
+  accept(from, session, seq, counter) {
+    const s = from === null ? [...this.senders.values()].find((x) => x.session === session) : this.senders.get(from);
+    if (!s || !s.live || s.session !== session || seq <= s[counter]) {
+      this.replayed++;
+      return false;
+    }
+    s[counter] = seq;
+    return true;
   }
 
   reset() {
     Object.assign(this, { ws: null, room: '', peer: 0, host: 0, token: '', num: 0, members: [], relayMembers: [] });
-    this.names = new Map();
+    this.senders = new Map();
+    this.session = crypto.getRandomValues(new Uint8Array(8));
+    this.sessionHex = hexOf(this.session);
+    this.seq = 0;
   }
 
   close() {
