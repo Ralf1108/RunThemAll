@@ -274,3 +274,17 @@ func TestNamedRoom(t *testing.T) {
 		t.Fatalf("expected an error for an empty name, got %+v", msg)
 	}
 }
+
+func TestClientIPBehindProxy(t *testing.T) {
+	h := NewHub(Config{TrustProxy: true})
+	r := httptest.NewRequest("GET", "/v1", nil)
+	r.RemoteAddr = "127.0.0.1:5000"
+	r.Header.Set("X-Forwarded-For", "6.6.6.6, 203.0.113.7") // first entry made up by the client
+	if got := h.clientIP(r); got != "203.0.113.7" {
+		t.Fatalf("clientIP = %s, want the entry of the proxy", got)
+	}
+	h = NewHub(Config{})
+	if got := h.clientIP(r); got != "127.0.0.1" {
+		t.Fatalf("without -trust-proxy: %s", got)
+	}
+}

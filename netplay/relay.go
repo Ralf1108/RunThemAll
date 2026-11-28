@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -43,6 +44,9 @@ type Config struct {
 
 	// Network of every room for the DHCP server (PCs with a network card); invalid: no DHCP.
 	LAN netip.Prefix
+
+	// Connections per address, strikes and bans (guard.go).
+	Guard GuardConfig
 }
 
 func DefaultConfig() Config {
@@ -57,6 +61,14 @@ func DefaultConfig() Config {
 		CreatePerMin: 10,
 		JoinPerMin:   30,
 		LAN:          netip.MustParsePrefix("192.168.77.0/24"),
+		Guard: GuardConfig{
+			MaxConnsPerIP: 20, // a LAN party of 8 behind one router: control socket + Ethernet port each
+			ConnPerMin:    60,
+			BanStrikes:    20,
+			BanWindow:     10 * time.Minute,
+			BanTime:       10 * time.Minute,
+			BanMax:        24 * time.Hour,
+		},
 	}
 }
 
@@ -69,6 +81,9 @@ type Hub struct {
 	tokens  map[string]*Client
 	creates *IPLimiter
 	joins   *IPLimiter
+	guard   *Guard
+
+	proxyWarning sync.Once
 }
 
 func NewHub(cfg Config) *Hub {
@@ -79,6 +94,7 @@ func NewHub(cfg Config) *Hub {
 		tokens:  map[string]*Client{},
 		creates: NewIPLimiter(cfg.CreatePerMin/60, cfg.CreatePerMin),
 		joins:   NewIPLimiter(cfg.JoinPerMin/60, cfg.JoinPerMin),
+		guard:   NewGuard(cfg.Guard),
 	}
 }
 
@@ -110,6 +126,29 @@ type Client struct {
 	bytes *Bucket
 	done  chan struct{}
 	once  sync.Once
+
+	ip       string // for the guard
+	overMu   sync.Mutex
+	overMsgs float64 // dropped over the limit since the last strike
+	overB    float64
+}
+
+// overLimit counts data dropped over the traffic limit (control socket and Ethernet ports
+// together). Every second's worth of excess (MsgPerSec messages or BytePerSec bytes) is a
+// strike: a client that floods the relay for a while gets banned.
+func (c *Client) overLimit(size int) {
+	cfg := &c.hub.cfg
+	c.overMu.Lock()
+	c.overMsgs++
+	c.overB += float64(size)
+	strike := c.overMsgs >= cfg.MsgPerSec || c.overB >= cfg.BytePerSec
+	if strike {
+		c.overMsgs, c.overB = 0, 0
+	}
+	c.overMu.Unlock()
+	if strike {
+		c.hub.guard.Strike(c.ip, "traffic far over the limit")
+	}
 }
 
 type outMsg struct {
@@ -167,7 +206,7 @@ func (h *Hub) Routes() http.Handler {
 		rooms, peers := len(h.rooms), len(h.peers)
 		h.mu.Unlock()
 		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(map[string]any{"ok": true, "version": Version, "rooms": rooms, "clients": peers})
+		_ = json.NewEncoder(w).Encode(map[string]any{"ok": true, "version": Version, "rooms": rooms, "clients": peers, "banned": h.guard.Stats()})
 	})
 	mux.HandleFunc("/v1", h.serveControl)
 	mux.HandleFunc("/v1/eth", h.serveEthernet)
@@ -189,11 +228,48 @@ func (h *Hub) accept(w http.ResponseWriter, r *http.Request) (*websocket.Conn, e
 	return conn, nil
 }
 
+// refuse answers a connection the guard did not let in. A banned page gets a readable error on
+// its control socket (as long as it does not hammer the relay), everything else a plain status.
+func (h *Hub) refuse(w http.ResponseWriter, r *http.Request, ip string, err error, control bool) {
+	if err != errBanned {
+		http.Error(w, err.Error(), http.StatusTooManyRequests)
+		return
+	}
+	banned, b := h.guard.Banned(ip)
+	if !control || !banned || !h.guard.rate.Allow(ipKey(ip)) {
+		http.Error(w, "banned", http.StatusForbidden)
+		return
+	}
+	conn, aerr := h.accept(w, r)
+	if aerr != nil {
+		return
+	}
+	text := "This address is blocked by the relay operator."
+	if !b.until.IsZero() {
+		text = fmt.Sprintf("This address is blocked until %s UTC (%s). Please try again later.", b.until.UTC().Format("15:04"), b.reason)
+	}
+	msg, _ := json.Marshal(ctrlOut{Type: "error", Code: "banned", Message: text})
+	wctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+	_ = conn.Write(wctx, websocket.MessageText, msg)
+	conn.Close(websocket.StatusPolicyViolation, "banned")
+}
+
+// clientIP: the address limits and bans apply to. Behind a reverse proxy (-trust-proxy) it is
+// the last entry of X-Forwarded-For, the one the proxy added: the entries before it come from the
+// client and could be made up to dodge a ban.
 func (h *Hub) clientIP(r *http.Request) string {
 	if h.cfg.TrustProxy {
-		if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
-			return strings.TrimSpace(strings.Split(fwd, ",")[0])
+		if fwd := r.Header.Values("X-Forwarded-For"); len(fwd) > 0 {
+			parts := strings.Split(fwd[len(fwd)-1], ",")
+			if ip := strings.TrimSpace(parts[len(parts)-1]); ip != "" {
+				return ip
+			}
 		}
+	} else if r.Header.Get("X-Forwarded-For") != "" {
+		h.proxyWarning.Do(func() {
+			log.Print("warning: requests come through a reverse proxy, but -trust-proxy is off: all players count as one address for limits and bans")
+		})
 	}
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
@@ -205,15 +281,23 @@ func (h *Hub) clientIP(r *http.Request) string {
 // serveControl: the first text message must be "create" or "join"; after that binary
 // messages are packets for other members and text messages are small JSON messages.
 func (h *Hub) serveControl(w http.ResponseWriter, r *http.Request) {
+	ip := h.clientIP(r)
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+	release, err := h.guard.Admit(ip, cancel)
+	if err != nil {
+		h.refuse(w, r, ip, err, true)
+		return
+	}
+	defer release()
 	conn, err := h.accept(w, r)
 	if err != nil {
 		return
 	}
-	ip := h.clientIP(r)
-	ctx, cancel := context.WithCancel(r.Context())
-	defer cancel()
+	defer conn.CloseNow() // also when the guard ended the connection from inside the read loop
 
 	c := &Client{
+		ip:    ip,
 		hub:   h,
 		out:   make(chan outMsg, 256),
 		quota: NewBucket(h.cfg.MsgPerSec, 2*h.cfg.MsgPerSec),
@@ -225,6 +309,7 @@ func (h *Hub) serveControl(w http.ResponseWriter, r *http.Request) {
 	// Handshake.
 	hello, err := readJSON(ctx, conn, 15*time.Second)
 	if err != nil {
+		h.guard.Strike(ip, "broken handshake")
 		conn.Close(websocket.StatusPolicyViolation, "expected create or join")
 		return
 	}
@@ -232,27 +317,38 @@ func (h *Hub) serveControl(w http.ResponseWriter, r *http.Request) {
 	var room *Room
 	switch hello.Type {
 	case "create":
-		if !h.creates.Allow(ip) {
+		if !h.creates.Allow(ipKey(ip)) {
+			h.guard.Strike(ip, "rate limit (rooms)")
 			c.fail(conn, "rate-limited", "Too many rooms created, please wait a minute.")
 			return
 		}
 		room, err = h.createRoom(hello.Password)
 	case "join":
-		if !h.joins.Allow(ip) {
+		if !h.joins.Allow(ipKey(ip)) {
+			h.guard.Strike(ip, "rate limit (joins)")
 			c.fail(conn, "rate-limited", "Too many attempts, please wait a minute.")
 			return
 		}
 		room, err = h.findRoom(hello.Room, hello.Password)
 	case "enter":
-		if !h.joins.Allow(ip) {
+		if !h.joins.Allow(ipKey(ip)) {
+			h.guard.Strike(ip, "rate limit (joins)")
 			c.fail(conn, "rate-limited", "Too many attempts, please wait a minute.")
 			return
 		}
-		room, err = h.enterRoom(hello.Room, hello.Password, func() bool { return h.creates.Allow(ip) })
+		room, err = h.enterRoom(hello.Room, hello.Password, func() bool { return h.creates.Allow(ipKey(ip)) })
 	default:
 		err = errProtocol
 	}
 	if err != nil {
+		switch err { // guessing passwords or room codes, or not our client
+		case errBadPassword:
+			h.guard.Strike(ip, "wrong passwords")
+		case errNotFound:
+			h.guard.Strike(ip, "unknown rooms")
+		case errProtocol, errNoName:
+			h.guard.Strike(ip, "invalid requests")
+		}
 		c.fail(conn, errCode(err), err.Error())
 		return
 	}
@@ -276,6 +372,7 @@ func (h *Hub) serveControl(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if !c.quota.Take(1) || !c.bytes.Take(float64(len(data))) {
+			c.overLimit(len(data))
 			continue // over the limit: dropped like a lost packet
 		}
 		if typ == websocket.MessageBinary {
@@ -677,6 +774,7 @@ func (h *Hub) Janitor(ctx context.Context) {
 		}
 		h.creates.Forget(10 * time.Minute)
 		h.joins.Forget(10 * time.Minute)
+		h.guard.Forget()
 		var old []*Client
 		h.mu.Lock()
 		for _, r := range h.rooms {

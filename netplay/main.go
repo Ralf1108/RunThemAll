@@ -45,6 +45,14 @@ func main() {
 	flag.Float64Var(&cfg.BytePerSec, "byte-rate", cfg.BytePerSec, "bytes per second per player (more are dropped)")
 	flag.Float64Var(&cfg.CreatePerMin, "create-rate", cfg.CreatePerMin, "new rooms per minute per IP address")
 	flag.Float64Var(&cfg.JoinPerMin, "join-rate", cfg.JoinPerMin, "join attempts per minute per IP address")
+	flag.IntVar(&cfg.Guard.MaxConnsPerIP, "max-conns-per-ip", cfg.Guard.MaxConnsPerIP, "open connections per IP address (IPv6: per /64), 0: no limit")
+	flag.Float64Var(&cfg.Guard.ConnPerMin, "conn-rate", cfg.Guard.ConnPerMin, "new connections per minute per IP address")
+	flag.IntVar(&cfg.Guard.BanStrikes, "ban-strikes", cfg.Guard.BanStrikes, "strikes (rate limits hit, wrong passwords, flooding …) within -ban-window that ban an address, 0: never ban")
+	flag.DurationVar(&cfg.Guard.BanWindow, "ban-window", cfg.Guard.BanWindow, "time in which -ban-strikes lead to a ban")
+	flag.DurationVar(&cfg.Guard.BanTime, "ban-time", cfg.Guard.BanTime, "length of the first ban; every further ban within a day is twice as long")
+	flag.DurationVar(&cfg.Guard.BanMax, "ban-max", cfg.Guard.BanMax, "longest ban")
+	bans := flag.String("ban", os.Getenv("NETPLAY_BAN"), "always refused: IP addresses or networks, comma separated (e.g. 203.0.113.7,198.51.100.0/24)")
+	exempt := flag.String("ban-exempt", os.Getenv("NETPLAY_BAN_EXEMPT"), "never limited or banned: IP addresses or networks, comma separated")
 	lan := flag.String("lan", envOr("NETPLAY_LAN", cfg.LAN.String()), "network of every room, the relay hands out addresses by DHCP (PCs with a network card); off: no DHCP")
 	showVersion := flag.Bool("version", false, "print the version")
 	flag.Parse()
@@ -56,6 +64,12 @@ func main() {
 	var err error
 	if cfg.LAN, err = ParseLAN(*lan); err != nil {
 		log.Fatal(err)
+	}
+	if cfg.Guard.Bans, err = ParsePrefixes(*bans); err != nil {
+		log.Fatal("-ban: ", err)
+	}
+	if cfg.Guard.BanExempt, err = ParsePrefixes(*exempt); err != nil {
+		log.Fatal("-ban-exempt: ", err)
 	}
 
 	hub := NewHub(cfg)

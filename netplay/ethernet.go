@@ -103,10 +103,20 @@ func (s *Switch) Forward(from *EthPort, frame []byte) {
 }
 
 func (h *Hub) serveEthernet(w http.ResponseWriter, r *http.Request) {
+	ip := h.clientIP(r)
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+	release, err := h.guard.Admit(ip, cancel)
+	if err != nil {
+		h.refuse(w, r, ip, err, false)
+		return
+	}
+	defer release()
 	h.mu.Lock()
 	owner := h.tokens[r.URL.Query().Get("token")]
 	h.mu.Unlock()
 	if owner == nil {
+		h.guard.Strike(ip, "unknown Ethernet token")
 		http.Error(w, "unknown token: join a room first", http.StatusForbidden)
 		return
 	}
@@ -114,6 +124,7 @@ func (h *Hub) serveEthernet(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
+	defer conn.CloseNow() // also when the guard ended the connection from inside the read loop
 	room := owner.room
 	port := &EthPort{out: make(chan []byte, 256), done: make(chan struct{})}
 
@@ -129,8 +140,6 @@ func (h *Hub) serveEthernet(w http.ResponseWriter, r *http.Request) {
 	defer room.sw.remove(port)
 	log.Printf("room %s: peer %d opened an Ethernet port", room.code, owner.peer)
 
-	ctx, cancel := context.WithCancel(r.Context())
-	defer cancel()
 	go func() {
 		for {
 			select {
@@ -160,6 +169,7 @@ func (h *Hub) serveEthernet(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		if !owner.quota.Take(1) || !owner.bytes.Take(float64(len(data))) {
+			owner.overLimit(len(data))
 			continue
 		}
 		room.sw.Forward(port, data)

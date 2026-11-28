@@ -40,8 +40,10 @@ relay.example.org {
 }
 ```
 
-Start the relay with `-trust-proxy` behind a proxy, so that rate limits use the real client IP
-(from `X-Forwarded-For`).
+Start the relay with `-trust-proxy` behind a proxy, so that rate limits and bans use the real
+client IP: the last entry of `X-Forwarded-For`, the one your proxy adds (entries before it come
+from the client and could be made up). Without `-trust-proxy` all players behind the proxy count
+as one address; the relay logs a warning when it sees `X-Forwarded-For` then.
 
 Docker:
 
@@ -60,7 +62,7 @@ On the web page, click **Multiplayer** at the top right, enter the relay address
 | `-addr` | `NETPLAY_ADDR` | `:8090` | listen address |
 | `-tls-cert`, `-tls-key` | `NETPLAY_TLS_CERT`, `NETPLAY_TLS_KEY` | – | TLS without a reverse proxy |
 | `-origins` | `NETPLAY_ORIGINS` | `*` | pages allowed to connect, e.g. `ralf1108.github.io,localhost:*` |
-| `-trust-proxy` | `NETPLAY_TRUST_PROXY=1` | off | client IP from `X-Forwarded-For` |
+| `-trust-proxy` | `NETPLAY_TRUST_PROXY=1` | off | client IP from `X-Forwarded-For` (last entry) |
 | `-max-rooms` | | 1000 | rooms at the same time |
 | `-max-members` | | 8 | players per room |
 | `-max-message` | | 16384 | largest message in bytes |
@@ -69,12 +71,49 @@ On the web page, click **Multiplayer** at the top right, enter the relay address
 | `-byte-rate` | | 1048576 | bytes per second per player |
 | `-create-rate` | | 10 | new rooms per minute per IP address |
 | `-join-rate` | | 30 | join attempts per minute per IP address |
+| `-max-conns-per-ip` | | 20 | open connections per address (control sockets and Ethernet ports), 0: no limit |
+| `-conn-rate` | | 60 | new connections per minute per address |
+| `-ban-strikes` | | 20 | strikes within `-ban-window` that ban an address, 0: never ban |
+| `-ban-window` | | 10m | strikes are forgotten at this pace (20 per 10 minutes) |
+| `-ban-time` | | 10m | first ban; every further ban within a day twice as long |
+| `-ban-max` | | 24h | longest ban |
+| `-ban` | `NETPLAY_BAN` | – | always refused: addresses or networks, e.g. `203.0.113.7,198.51.100.0/24` |
+| `-ban-exempt` | `NETPLAY_BAN_EXEMPT` | – | never limited or banned, e.g. your own network |
 | `-lan` | `NETPLAY_LAN` | `192.168.77.0/24` | network of every room for the DHCP server (/16 to /28); `off`: no DHCP |
 
 Every member also gets a small number in the room (`num` in `joined` and `members`: the
 smallest free one from 1); the Windows netplay derives the address 192.168.78.num from it.
 
-`GET /healthz` answers `{"ok":true,"rooms":…,"clients":…}` for monitoring.
+`GET /healthz` answers `{"ok":true,"rooms":…,"clients":…,"banned":…}` for monitoring.
+
+### Limits and bans
+
+Per player the relay drops traffic over `-msg-rate` / `-byte-rate` (like lost packets); per
+address it limits new rooms (`-create-rate`), join attempts (`-join-rate`), new connections
+(`-conn-rate`) and open connections (`-max-conns-per-ip`). An address is an IPv4 address or an
+IPv6 /64 network (one home or phone connection). Rejected connections get HTTP 429.
+
+Addresses that overdo it collect **strikes** (`netplay/guard.go`):
+
+| Strike | When |
+|---|---|
+| rate limit | a room or join attempt over `-create-rate` / `-join-rate`, a connection over `-conn-rate` or `-max-conns-per-ip` |
+| guessing | a wrong password, a room code that does not exist |
+| invalid | a broken handshake (nothing or garbage within 15 s), an unknown Ethernet token |
+| flooding | for every second's worth of traffic dropped over the limit (`-msg-rate` messages or `-byte-rate` bytes) |
+
+Strikes run out at `-ban-strikes` per `-ban-window` (a token bucket). More strikes than that **ban**
+the address: all its open connections are closed at once, new ones are refused for `-ban-time`,
+the next ban within a day twice as long (10 min, 20 min, 40 min … up to `-ban-max`). The page
+shows "This address is blocked until 15:04 UTC (wrong passwords). Please try again later.";
+Ethernet ports and addresses that keep trying get a plain HTTP 403. Bans are logged
+(`guard: 203.0.113.7 banned for 10m0s (wrong passwords, ban 1 today), 2 connection(s) closed`) and
+kept in memory only; a restart forgets them. `-ban` blocks addresses for good, `-ban-exempt`
+never limits them (players behind one router share an address: a LAN party on its own relay can
+exempt its network).
+
+Normal play collects no strikes: tested with the multiplayer demos, Tiny Core and console games
+(`banned: 0` afterwards).
 
 ## Encryption
 
@@ -255,7 +294,7 @@ Over the limits a player's packets are dropped (the relay never blocks); a recei
 too slowly loses packets from its queue of 256.
 
 ```sh
-netplay -addr :8091 -msg-rate 1e9 -byte-rate 1e12 -create-rate 1e6 -join-rate 1e6 -max-rooms 100000
+netplay -addr :8091 -ban-exempt 127.0.0.0/8,::1 -msg-rate 1e9 -byte-rate 1e12 -create-rate 1e6 -join-rate 1e6 -max-rooms 100000
 go run ./loadtest -mode game -rooms 250 -members 4 -rate 35 -size 100
 ```
 
@@ -265,4 +304,4 @@ go run ./loadtest -mode game -rooms 250 -members 4 -rate 35 -size 100
 go vet ./... && go test ./...
 ```
 
-The tests start the relay in-process and check rooms, passwords, limits, packets and the switch.
+The tests start the relay in-process and check rooms, passwords, limits, bans, packets and the switch.
