@@ -292,10 +292,15 @@ Crypto API (`site/js/netcrypt.js`, `site/js/netplay.js`, `site/js/pc-net.js`), c
 with a pre-shared key and ECDHE, with the room password in place of a certificate.
 
 - **What the relay gets.** Never the room name, the password or the player names: the room is
-  found by a room ID (PBKDF2-SHA256 with 210,000 rounds of the room name in upper case, fixed salt,
+  found by a room ID (PBKDF2-SHA256 with 600,000 rounds of the room name in upper case, fixed salt,
   then HKDF), the password is checked with a check value derived from password and name (empty
   without a password), every player is called "Player". The real names travel encrypted. The relay
   only learns the ID; it can test guessed names against it, but not compute the name back.
+- **Guessing room names.** The relay can test guessed names against the room ID offline; nothing
+  computed from the name alone can prevent that. So guesses are slow (600,000 rounds) and *Random*
+  next to the room field makes names nobody can guess (`site/js/roomname.js`: four of 256 words and
+  a number, ~38 bits, e.g. `amber-otter-cloud-river-42`). Without a password, an easy name (rough
+  estimate below 36 bits) gets a hint under the field: use *Random* or a password.
 - **Room key.** From the password, or from the room name without one (HKDF of the PBKDF2 bits). It
   only seals the handshake: hello messages `{name, pub, know}` and key messages.
 - **Session keys.** Every connection makes an ECDH key pair (P-256) and a random sending key. Each

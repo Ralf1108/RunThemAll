@@ -79,8 +79,9 @@ through a **relay server** on the internet, a bit like a post office.
   players in your room get the key. The relay only passes the locked data on, and nobody can change
   it or send it again unnoticed.
 - **New keys every time** somebody enters the room: even a recording cannot be opened later.
-- **Use a password** that is hard to guess. Without a password the room name is the starting
-  point, and a relay server that guesses it could secretly put itself in between.
+- **Use a password**, or a room name from **Random** (like `amber-otter-cloud-river-42`). Without a
+  password the room name is the starting point, and a relay server that guesses a simple name
+  like "Doom night" could secretly put itself in between.
 - **Compare the safety code** (12 digits in the room), e.g. on the phone or in a chat. The same
   code for everybody means nobody sits in between.
 - The *?* next to "Encrypted" in the room explains it on the page. What the relay still sees: that

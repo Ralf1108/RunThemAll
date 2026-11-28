@@ -141,8 +141,8 @@ password. The relay gets neither:
 | player name | `"Player"`; the real names go to the members encrypted (hello messages, see below) |
 | room key, pair salt | nothing: `HKDF(secret, "packets")` and `HKDF(secret, "pair salt")`, secret = password-derived bits, or the name-derived bits without a password |
 
-PBKDF2-SHA256 with 210,000 rounds, separate HKDF labels for room ID, check value, room key and pair
-salt, so none of them gives away another. Names are compared like before (spaces collapsed, case
+PBKDF2-SHA256 with 600,000 rounds (the OWASP recommendation), separate HKDF labels (protocol "v2")
+for room ID, check value, room key and pair salt, so none of them gives away another. Names are compared like before (spaces collapsed, case
 ignored). The room key only seals the handshake.
 
 ### Session keys: what the data is sealed with
@@ -209,6 +209,27 @@ only with a higher number than the last one; anything else is dropped (`NetplayC
 counts it). So the relay can neither send a packet again nor play back a recorded session, even
 when it pretends that an old member is in the room.
 
+### Room names nobody can guess
+
+Without a password the room name is the secret, and the relay can test guessed names against the
+room ID, offline and as long as it likes. No hashing trick helps against that: anything computed
+from the name alone, the relay can compute too (a seed or salt from the relay is known to the
+relay; a secret seed would be a password). So the page makes guessing slow and names hard:
+
+- **600,000 PBKDF2 rounds per guess:** about 80 ms in the browser for the players (once when they
+  enter), about as long for every single guess of the relay; on a graphics card some ten thousand
+  guesses per second instead of millions.
+- **Random** next to the room field makes a name like `amber-otter-cloud-river-42` (`site/js/roomname.js`:
+  four of 256 words and a number, about 38 bits): months of work for a graphics card, and still easy
+  to read out on the phone.
+- Without a password, a name that is easy to guess (a rough estimate below 36 bits, e.g.
+  "Doom night") gets a hint under the room field: use *Random* or a password.
+
+Not done (yet): a memory-hard function (Argon2id) would make graphics cards much less useful for
+guessing, but the browser has none built in, so it needs a WebAssembly library. A PAKE (CPace,
+SPAKE2) between the players would turn offline guessing into one guess per connection the relay
+attacks, but needs elliptic curve code beyond the browser's.
+
 ### Limits
 
 What the relay still sees: who is in a room (peer IDs, IP addresses), when and how much they send,
@@ -216,8 +237,8 @@ the MAC addresses of PCs, and how long a room exists. It can drop or delay data,
 apart.
 
 - **Without a password** a relay that guesses the room name can sit in between (active, not by just
-  recording). The safety code shows it, if the players compare it. A password that is hard to
-  guess prevents it.
+  recording). The safety code shows it, if the players compare it. A password or a random room
+  name prevents it.
 - A weak password can be guessed offline from the password check value (the PBKDF2 rounds only
   make each guess slower). With the password the relay could then also sit in between.
 - Everybody in the room can read everything, and a member who works together with the relay could

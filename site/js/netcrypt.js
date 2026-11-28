@@ -17,10 +17,10 @@
 // The relay gets neither: it sees the room as an ID derived from the name (it cannot get the
 // name back, only guess names and compare), and a password check value instead of the password.
 //
-//   nameBits = PBKDF2-SHA256(NAME, "RunThemAll netplay v1", 210 000 rounds)   NAME: the room name
+//   nameBits = PBKDF2-SHA256(NAME, "RunThemAll netplay v2", 600 000 rounds)   NAME: the room name
 //              as the relay compares it (spaces collapsed, upper case)
 //   room ID  = HKDF(nameBits, "room id"), 16 bytes as hex: the room name the relay sees
-//   secret   = password ? PBKDF2-SHA256(password, nameBits, 210 000 rounds) : nameBits
+//   secret   = password ? PBKDF2-SHA256(password, nameBits, 600 000 rounds) : nameBits
 //   check    = HKDF(secret, "password check"), 16 bytes as hex: the password the relay sees
 //   key      = HKDF(secret, "packets"): AES-256-GCM, the room key
 //   pairSalt = HKDF(secret, "pair salt"), 32 bytes: salt of the ECDH pair keys
@@ -30,7 +30,7 @@
 // redirect it unnoticed. See netplay/README.md, section "Encryption".
 
 const enc = new TextEncoder();
-const ROUNDS = 210000;
+const ROUNDS = 600000; // OWASP recommendation for PBKDF2-SHA256 (2023); every guess of the relay costs as much
 const NONCE = 12;
 /** Bytes a sealed message is longer than the plain one. */
 export const OVERHEAD = NONCE + 16;
@@ -49,7 +49,7 @@ async function pbkdf2(secret, salt) {
 
 async function hkdf(bits, info) {
   return crypto.subtle.importKey('raw', bits, 'HKDF', false, ['deriveBits', 'deriveKey'])
-    .then((base) => ({ base, params: { name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(32), info: enc.encode(`RunThemAll netplay v1 ${info}`) } }));
+    .then((base) => ({ base, params: { name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(32), info: enc.encode(`RunThemAll netplay v2 ${info}`) } }));
 }
 
 async function hkdfBytes(bits, info, length) {
@@ -65,7 +65,7 @@ async function hkdfBytes(bits, info, length) {
  */
 export async function roomSecrets(name, password) {
   if (!crypto?.subtle) throw new Error('Encryption needs a secure page (https or localhost).');
-  const nameBits = await pbkdf2(enc.encode(cleanRoomName(name).toUpperCase()), enc.encode('RunThemAll netplay v1'));
+  const nameBits = await pbkdf2(enc.encode(cleanRoomName(name).toUpperCase()), enc.encode('RunThemAll netplay v2'));
   const roomId = hex(await hkdfBytes(nameBits, 'room id', 16));
   const secret = password ? await pbkdf2(enc.encode(password), nameBits) : nameBits;
   const check = password ? hex(await hkdfBytes(secret, 'password check', 16)) : '';
@@ -98,7 +98,7 @@ export async function pairCipher(privateKey, otherPub, pairSalt, sessionA, sessi
   const pub = await crypto.subtle.importKey('raw', otherPub, { name: 'ECDH', namedCurve: 'P-256' }, false, []);
   const shared = new Uint8Array(await crypto.subtle.deriveBits({ name: 'ECDH', public: pub }, privateKey, 256));
   const base = await crypto.subtle.importKey('raw', shared, 'HKDF', false, ['deriveKey']);
-  const info = enc.encode(`RunThemAll netplay v1 pair ${[sessionA, sessionB].sort().join(' ')}`);
+  const info = enc.encode(`RunThemAll netplay v2 pair ${[sessionA, sessionB].sort().join(' ')}`);
   const key = await crypto.subtle.deriveKey({ name: 'HKDF', hash: 'SHA-256', salt: pairSalt, info }, base,
     { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
   return new RoomCipher(key);

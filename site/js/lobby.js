@@ -10,6 +10,7 @@
 // room is entered again by itself (sessionStorage, this tab only).
 
 import { cleanRoomName, roomSecrets } from './netcrypt.js';
+import { STRONG_NAME_BITS, nameStrength, randomRoomName } from './roomname.js';
 import { NetplayClient, ethernetUrl, jsdosNet } from './netplay.js';
 import { wineAddress } from './wine-net.js';
 
@@ -112,6 +113,18 @@ export function initLobby($) {
     if (!client.connected) (name.value ? $('np-code') : name).focus({ preventScroll: true });
   };
   button.addEventListener('click', () => open(panel.hidden));
+  // Room names that nobody can guess (roomname.js), and a hint for easy ones without a password.
+  const checkName = () => {
+    const room = $('np-code').value.trim();
+    $('np-weak').hidden = !room || Boolean($('np-password').value) || nameStrength(room) >= STRONG_NAME_BITS;
+  };
+  $('np-code').addEventListener('input', checkName);
+  $('np-password').addEventListener('input', checkName);
+  $('np-random').addEventListener('click', () => {
+    $('np-code').value = randomRoomName();
+    checkName();
+    $('np-code').focus();
+  });
   // "How is this protected?": the encryption explained for everybody.
   for (const b of document.querySelectorAll('[data-mp-help]')) b.addEventListener('click', () => $('mp-help').showModal());
   $('mp-help-close').addEventListener('click', () => $('mp-help').close());
@@ -121,6 +134,7 @@ export function initLobby($) {
   const params = new URLSearchParams(location.search);
   if (params.get('room')) {
     $('np-code').value = params.get('room');
+    checkName();
     if (params.get('relay')) relay.value = params.get('relay');
     open(true);
   }
