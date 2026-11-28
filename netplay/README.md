@@ -12,8 +12,10 @@ Packets only go between the players of a room. The web page encrypts everything 
 names, player names, passwords or keys.
 
 Status: **beta**. Connected: DOS games with IPX network play (js-dos), whole PCs with a network
-card (v86, any protocol: TCP/IP, UDP, IPX …) and console games (EmulatorJS, shared inputs). Tested
-with two browsers each; a long real game session not yet.
+card (v86, any protocol: TCP/IP, UDP, IPX …), console games (EmulatorJS, shared inputs) and,
+experimental, Windows programs (Boxedwine, virtual LAN). Tested with two browsers each (Doom,
+Heretic and Duke Nukem 3D deathmatch, Tiny Core ping, NES lockstep); a long real game session not yet.
+Protected against abuse by rate limits and bans ([Limits and bans](#limits-and-bans)).
 
 ## Run it
 
@@ -225,10 +227,11 @@ relay; a secret seed would be a password). So the page makes guessing slow and n
 - Without a password, a name that is easy to guess (a rough estimate below 36 bits, e.g.
   "Doom night") gets a hint under the room field: use *Random* or a password.
 
-Not done (yet): a memory-hard function (Argon2id) would make graphics cards much less useful for
-guessing, but the browser has none built in, so it needs a WebAssembly library. A PAKE (CPace,
-SPAKE2) between the players would turn offline guessing into one guess per connection the relay
-attacks, but needs elliptic curve code beyond the browser's.
+Not done (yet), see the open points in [docs/specification.md](../docs/specification.md#8-open-points):
+a memory-hard function (Argon2id) would make graphics cards much less useful for guessing, but the
+browser has none built in, so it needs a WebAssembly library. A PAKE (CPace, SPAKE2) between the
+players would turn offline guessing into one guess per connection the relay attacks, but needs
+elliptic curve code beyond the browser's and a short room ID; planned once such libraries are mature.
 
 ### Limits
 

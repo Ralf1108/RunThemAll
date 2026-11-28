@@ -370,8 +370,16 @@ with a pre-shared key and ECDHE, with the room password in place of a certificat
 | Arrow keys, space, page down while a program runs | page does not scroll, the emulator still gets the keys |
 | Carousel: drag with the mouse, scroll bar, arrow buttons | scrolls and snaps; a drag never opens a platform |
 | Platform tile → demo list → demo info → *Start* (1440 and 400 px wide) | list and info open below, clicking the tile again closes both |
+| Multiplayer room, three browsers (local relay) | same room for any case of the name, names and "SkiFree · IP 192.168.78.2" in the list, rejoin after reload, "Wrong password." |
+| Doom and Heretic (shareware), two browser windows in one room | deathmatch over IPX; two tabs do not work (a hidden tab stops) |
+| Duke Nukem 3D (shareware), two browsers | COMMIT connects; the "master" picks *New Game*, both in E1L1 |
+| Tiny Core in two browsers, encrypted room | DHCP 192.168.77.10 / .11, ping ~1.9 ms |
+| NES game, two browsers, encrypted room | lockstep runs, frames advance on both |
+| `npm run test:netplay` (encryption, malicious relay) | all ok; with the malicious relay and no password the safety codes differ, with a password it reads nothing |
+| Relay `go test ./...` | rooms, limits, bans (guessing, wrong passwords, flooding, connection limits), proxy IP |
 
-Not tested yet: drag & drop of files, writing back into a folder, DOS/4GW programs, most consoles and
+Not tested yet: a long multiplayer session, more than two players in a game, multiplayer on phones,
+Windows programs (Boxedwine) in an encrypted room, drag & drop of files, writing back into a folder, DOS/4GW programs, most consoles and
 home computers, BIOS files, CD images with `.cue`, muting Boxedwine and v86 (their demos make no sound).
 
 ## 8. Open points
@@ -383,3 +391,21 @@ home computers, BIOS files, CD images with `.cue`, muting Boxedwine and v86 (the
 - No Amiga demo yet: the free games tested do not run with AROS or have unclear rights to their graphics.
 - Win16 programs built with Open Watcom crash in Boxedwine at start; cause unknown.
 - ZIP files packed with the old PKZIP method "Implode" cannot be opened.
+- Multiplayer:
+  - **PAKE, once the libraries are mature.** A password-authenticated key exchange (CPace, an IETF
+    draft; or SPAKE2) between every pair of players, with the room name or password as the secret,
+    would make offline guessing impossible: a relay could only try one guess per connection it
+    attacks, and a wrong guess breaks that connection visibly. Needed for it: elliptic curve code
+    beyond Web Crypto (hash-to-curve, e.g. ristretto255 from a reviewed library such as
+    noble-curves), and a short room ID (e.g. 16 bits) so the room ID itself no longer confirms a
+    guessed name; players of different rooms who share such an ID would have to ignore each other.
+    Pairwise for up to 8 players (28 exchanges). Worth it when the multiplayer is used publicly by
+    people who pick weak room names; until then *Random* and passwords cover it.
+  - **Argon2id** instead of PBKDF2 for room ID and password check: memory-hard, so graphics cards
+    help an attacker much less. Not in Web Crypto; needs a reviewed WebAssembly library (e.g.
+    hash-wasm, MIT, ~30 KB). Costs ~0.3–1 s when entering a room.
+  - No public relay is set as default yet: players enter a relay address under *Server*.
+  - OpenTTD (Boxedwine) over the virtual LAN: the client stops with its own crash report after
+    receiving the map.
+  - Doom shareware: the licence text is only in the original LHA-packed package, not checked yet.
+  - Duke Nukem 3D: whether *DukeMatch* (instead of cooperative) was chosen in the test is not confirmed.
