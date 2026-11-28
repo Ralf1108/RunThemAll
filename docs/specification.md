@@ -107,20 +107,12 @@ side the supported platforms and the emulators (3.3). The interface is in Englis
      characters, case does not matter) and an optional password, *Enter room*: whoever enters the
      same room name lands in the same room (the first one creates it, with the password). The relay
      address is under *Server* (remembered; `ws://localhost:8090` on localhost; open when empty).
-     Everything in the room is end-to-end encrypted (`js/netcrypt.js`, AES-256-GCM): the room key
-     comes from the password, or from the room name without one; the relay only gets a room ID and
-     a password check value derived from them (PBKDF2 + HKDF), "Player" as name (the real names go
-     encrypted to the members) and sealed packets and messages. The room key only seals the
-     handshake (hello with name and ECDH public key, key messages); every connection has its own
-     ECDH key pair and random sending key, handed to each member under the ECDH pair key, so data
-     is sealed with session keys (forward secrecy; without a password the relay cannot read along
-     by guessing the name). The room panel shows a 12-digit safety code over all public keys:
-     the same for everybody exactly when nobody sits in between. Replay protection: every sealed
-     packet carries a random session and a sequence number; data counts only from sessions that
-     proved they are live (their hello lists the receiver's own session) and with a new number.
-     A note at the password says that without a password a relay that guesses the room name
-     could sit in between, which the safety code shows.
-     In the room: room name, lock with "Encrypted" or "Encrypted (room name)" (tooltip explains), *Share link* (`?room=…&relay=…`,
+     Everything in the room is end-to-end encrypted, the relay server cannot read it (section 5.6).
+     A note at the password says that without a password a relay that guesses the room name could
+     sit in between, which the safety code shows, with a link *How is this protected?*.
+     In the room: room name, lock with "Encrypted" or "Encrypted (room name)" (tooltip explains) and
+     a *?* button, the safety code (12 digits, the same for everybody when nobody sits in between),
+     *Share link* (`?room=…&relay=…`,
      Web Share API or clipboard), *Leave room*, and the members with host/you and what they run:
      every page sends `{lobby: 'status', activity: {title, system, net}}` to the room when it starts
      a program and when members change, so the list shows who is on the network in an emulator
@@ -290,6 +282,50 @@ CD tracks next to a `.cue` are not listed; the `.cue` is started with all its tr
 - `changedFiles()` compares the current state in the emulator with it.
 - `downloadChanges()` creates a ZIP (`zip.js`), `writeBack()` writes into the original folder.
 - `supportsFileSync` tells whether saving/writing back is possible.
+
+### 5.6 Multiplayer: relay and encryption
+
+Browsers cannot connect to each other directly, so all players of a room talk through a relay
+server (`netplay/`, Go, a pure switch without game logic, see netplay/README.md). The relay must
+not be able to read anything: everything is end-to-end encrypted in the browser with the Web
+Crypto API (`site/js/netcrypt.js`, `site/js/netplay.js`, `site/js/pc-net.js`), comparable to TLS
+with a pre-shared key and ECDHE, with the room password in place of a certificate.
+
+- **What the relay gets.** Never the room name, the password or the player names: the room is
+  found by a room ID (PBKDF2-SHA256 with 210,000 rounds of the room name in upper case, fixed salt,
+  then HKDF), the password is checked with a check value derived from password and name (empty
+  without a password), every player is called "Player". The real names travel encrypted. The relay
+  only learns the ID; it can test guessed names against it, but not compute the name back.
+- **Room key.** From the password, or from the room name without one (HKDF of the PBKDF2 bits). It
+  only seals the handshake: hello messages `{name, pub, know}` and key messages.
+- **Session keys.** Every connection makes an ECDH key pair (P-256) and a random sending key. Each
+  pair of players derives a pair key (ECDH, HKDF with a salt from the room secret and both sessions)
+  and hands its sending key over with it. All packets, messages and Ethernet frames are sealed with
+  the sender's sending key (AES-256-GCM, random 12-byte nonce, sender and kind as additional data):
+  forward secrecy, and without a password a relay that guesses the name still cannot read along
+  passively.
+- **Safety code.** 12 digits from SHA-256 over the sessions and public keys of all players a page
+  exchanges data with; the same for everybody exactly when nobody replaced keys. Shown in the room.
+- **Replay protection.** Sealed data carries the receiver, a random session (8 bytes) and a sequence
+  number; data counts only from a session that proved to be live (its hello lists the receiver's own
+  fresh session) and only with a higher number than before.
+- **PCs (v86).** The frames go through `pc-net.js`: MAC addresses and the sender's session stay
+  readable (the relay switches by MAC), the rest is sealed; DHCP and ARP for 192.168.77.1 are
+  answered in the browser (192.168.77.<9 + number in the room>).
+- **For everybody.** The *?* in the room and *How is this protected?* at the password open a
+  dialog in plain words: the relay as a post office that passes on locked boxes, the browser locks
+  everything before sending, new keys every time, what a password changes, how to compare the
+  safety code, what the relay still sees (who, when, how much; not what).
+- **Limits.** Without a password a relay that guesses the room name can sit in between actively
+  (shown by the safety code). A weak password can be guessed offline from the check value. All
+  members can read everything. The relay can drop or delay data.
+- **Relay protection.** Rate limits per player and address, connection limits, strikes for
+  guessing and flooding, temporary bans (`netplay/guard.go`, see netplay/README.md).
+- **Tests.** `npm run test:netplay` against a running relay: `tests/netplay/encryption.test.mjs`
+  (names, order, safety codes, forward secrecy, replays, relay sees no plain text, PCs) and
+  `tests/netplay/mitm.test.mjs` with a malicious relay (`tests/netplay/mitm-relay.mjs`) that swaps
+  keys: without a password it reads along but the safety codes differ; with a password it reads
+  nothing. The relay itself: `go test ./...` in `netplay/`.
 
 ## 6. Build and delivery
 

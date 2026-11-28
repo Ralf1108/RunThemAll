@@ -69,6 +69,26 @@ Where they come from: [demos/README.md](demos/README.md)
   (and password). Then start the same game; the multiplayer demos connect by themselves. Several
   players on one computer: one browser window each, not tabs. Needs a relay server ([netplay/](netplay/)).
 
+## Playing together and encryption
+
+Browsers cannot connect to each other directly. So in a multiplayer room all game data goes
+through a **relay server** on the internet, a bit like a post office.
+
+- **The relay server cannot read anything.** Your browser (Chrome, Edge, Firefox …) locks
+  everything before it sends it: game data, your name, the room name. Only the browsers of the
+  players in your room get the key. The relay only passes the locked data on, and nobody can change
+  it or send it again unnoticed.
+- **New keys every time** somebody enters the room: even a recording cannot be opened later.
+- **Use a password** that is hard to guess. Without a password the room name is the starting
+  point, and a relay server that guesses it could secretly put itself in between.
+- **Compare the safety code** (12 digits in the room), e.g. on the phone or in a chat. The same
+  code for everybody means nobody sits in between.
+- The *?* next to "Encrypted" in the room explains it on the page. What the relay still sees: that
+  somebody is in a room, when and how much is sent, not what.
+
+Details for the technically minded: [netplay/README.md](netplay/README.md#encryption) (comparable to
+TLS with a pre-shared key: the room password takes the place of the certificate).
+
 ## Good to know
 
 - Emulation is slower than a real PC. It is made for older software.
@@ -82,10 +102,8 @@ Where they come from: [demos/README.md](demos/README.md)
 ## Privacy
 
 - Everything runs in your browser. Your files are **never uploaded**.
-- Multiplayer is **end-to-end encrypted** with fresh keys per session: the relay server only passes
-  on encrypted data and sees neither room name, player names nor game data. The room shows a
-  **safety code**: if everybody sees the same code, nobody sits in between. Without a password a
-  relay server that guesses the room name could try that, so pick a password that is hard to guess.
+- Multiplayer is **end-to-end encrypted**: the relay server only passes on locked data and sees
+  neither room name, player names nor game data (see [Playing together](#playing-together-and-encryption)).
 - Page visits are counted anonymously and without cookies ([GoatCounter](https://www.goatcounter.com)).
 
 ## Behind the scenes
@@ -103,6 +121,8 @@ For developers:
 
 - [docs/development.md](docs/development.md): run it locally, update the emulators, publish it
 - [docs/specification.md](docs/specification.md): how it works inside
+- [netplay/README.md](netplay/README.md): the relay server for multiplayer, its encryption and limits;
+  tests with `npm run test:netplay` (encryption and a man-in-the-middle attack, against a running relay)
 - [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md): all included projects and their licences
 
 ## Licence

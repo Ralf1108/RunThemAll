@@ -112,6 +112,9 @@ export function initLobby($) {
     if (!client.connected) (name.value ? $('np-code') : name).focus({ preventScroll: true });
   };
   button.addEventListener('click', () => open(panel.hidden));
+  // "How is this protected?": the encryption explained for everybody.
+  for (const b of document.querySelectorAll('[data-mp-help]')) b.addEventListener('click', () => $('mp-help').showModal());
+  $('mp-help-close').addEventListener('click', () => $('mp-help').close());
   $('mp-close').addEventListener('click', () => open(false));
 
   // A shared link: ?room=NAME (and &relay=...) opens the panel with the room filled in.

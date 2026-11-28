@@ -174,8 +174,10 @@ all see the same keys. If the relay put its own keys in between, the players see
 Comparing the code (aloud, in a chat) is the check that a certificate does in TLS, from person
 to person, like the safety numbers of Signal.
 
-Tested on 28 Nov 2026 with a malicious relay (a proxy in front of the relay that knows the room
-name, swaps the public keys in the hellos for its own and re-wraps the sending keys):
+Tested on 28 Nov 2026 with a malicious relay (`tests/netplay/mitm-relay.mjs`, a proxy in front of the
+relay that knows the room name, swaps the public keys in the hellos for its own and re-wraps the
+sending keys); repeat it with `npm run test:netplay`, or watch it with two browsers whose *Server*
+is the proxy (`node tests/netplay/mitm-relay.mjs 8096 "room name"`):
 
 | Room | Result |
 |---|---|

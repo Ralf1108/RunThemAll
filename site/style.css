@@ -631,6 +631,22 @@ select {
 .mp-lock { color: var(--accent); display: inline-flex; align-items: center; gap: .3rem;
   font-size: .75rem; font-weight: 600; white-space: nowrap; cursor: help; }
 .mp-note { margin: -.2rem 0 0; font-size: .75rem; color: var(--muted); }
+.mp-help-link { display: inline; padding: 0; border: 0; background: none; color: var(--accent);
+  font: inherit; text-decoration: underline; cursor: pointer; }
+.mp-help-btn { display: inline-grid; place-items: center; width: 1.15rem; height: 1.15rem; padding: 0;
+  border: 1px solid currentColor; border-radius: 50%; background: none; color: inherit;
+  font-size: .7rem; font-weight: 700; line-height: 1; cursor: pointer; }
+.mp-help-btn:hover, .mp-help-link:hover { color: var(--text); }
+.mp-help { width: min(620px, 100vw - 2rem); }
+.mp-help p { margin: 0 0 .65rem; font-size: .92rem; line-height: 1.45; }
+.mp-help .mp-help-small { font-size: .8rem; color: var(--muted); }
+.mp-flow { display: flex; align-items: stretch; gap: .4rem; margin: .4rem 0 1rem; }
+.mp-flow-box { flex: 1; display: flex; flex-direction: column; gap: .15rem; padding: .55rem .6rem;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--bg); font-size: .8rem; text-align: center; }
+.mp-flow-box span { color: var(--muted); }
+.mp-flow-relay { border-style: dashed; }
+.mp-flow-arrow { align-self: center; color: var(--muted); }
+@media (max-width: 560px) { .mp-flow { flex-direction: column; } .mp-flow-arrow { transform: rotate(90deg); } }
 .mp-safety { margin: .5rem 0 0; font-size: .8rem; color: var(--muted); }
 .mp-safety strong { font-family: ui-monospace, monospace; font-size: .95rem; color: var(--text); letter-spacing: .04em; }
 .mp-safety span { display: block; font-size: .72rem; margin-top: .15rem; }

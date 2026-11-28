@@ -15,6 +15,7 @@
     "update:apply": "node scripts/update-runtimes.mjs --apply",
     "serve": "node scripts/serve.mjs",
     "serve:no-coi": "node scripts/serve.mjs --no-coi",
-    "start": "node scripts/fetch-runtimes.mjs && node scripts/serve.mjs"
+    "start": "node scripts/fetch-runtimes.mjs && node scripts/serve.mjs",
+    "test:netplay": "node tests/netplay/encryption.test.mjs && node tests/netplay/mitm.test.mjs"
   }
 }

@@ -259,7 +259,8 @@
         <input type="password" id="np-password" autocomplete="off"></label>
       <p class="mp-note">Everything is end-to-end encrypted. <strong>Without a password</strong> a
         relay server that guesses the room name could put itself in between and read along; the
-        safety code in the room shows it. With a password it cannot.</p>
+        safety code in the room shows it. With a password it cannot.
+        <button type="button" class="mp-help-link" data-mp-help>How is this protected?</button></p>
       <button type="submit" id="np-enter" class="wx-btn wx-primary">Enter room</button>
       <details id="np-server" class="mp-server">
         <summary>Server</summary>
@@ -275,6 +276,7 @@
         <span id="np-lock" class="mp-lock">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
           <span id="np-lock-text">Encrypted</span>
+          <button type="button" class="mp-help-btn" data-mp-help aria-label="How is this protected?" title="How is this protected?">?</button>
         </span>
       </div>
       <p id="np-safety" class="mp-safety" hidden>Safety code <strong id="np-safety-code"></strong>
@@ -352,6 +354,35 @@
       </p>
     </div>
   </footer>
+
+  <!-- Multiplayer: how the encryption works, for everybody (opened by the ? in the room panel) -->
+  <dialog id="mp-help" class="msg-dialog mp-help" aria-labelledby="mp-help-title">
+    <h3 id="mp-help-title">How your game is protected</h3>
+    <div class="mp-flow" aria-hidden="true">
+      <div class="mp-flow-box"><strong>Your browser</strong><span>locks everything</span></div>
+      <div class="mp-flow-arrow">→</div>
+      <div class="mp-flow-box mp-flow-relay"><strong>Relay server</strong><span>passes on locked boxes, cannot open them</span></div>
+      <div class="mp-flow-arrow">→</div>
+      <div class="mp-flow-box"><strong>Your friends' browsers</strong><span>unlock</span></div>
+    </div>
+    <p><strong>Why a relay server?</strong> Browsers cannot connect to each other directly. So your
+      game goes through a relay server on the internet, a bit like a post office.</p>
+    <p><strong>Locked before it leaves.</strong> Your browser (Chrome, Edge, Firefox …) locks
+      everything before it sends it: the game data, your name, the room name. Only the browsers of the
+      players in your room get the key. The relay server only passes the locked boxes on and cannot
+      read anything. Nobody can change a box on the way unnoticed, or send it again.</p>
+    <p><strong>New keys every time.</strong> The browsers agree on new keys whenever somebody enters
+      the room. Even someone who records everything cannot open it later.</p>
+    <p><strong>With a password</strong> nobody without it can get into the conversation.
+      <strong>Without a password</strong> the room name is the starting point: a relay server that
+      guesses the name could secretly put itself in between and read along.</p>
+    <p><strong>The safety code</strong> shows that. Everybody in the room sees a code of 12 digits.
+      Compare it, e.g. on the phone or in a chat: the same code for everybody means nobody sits in
+      between. A different code: leave the room and use a password.</p>
+    <p class="mp-help-small">The relay server still sees that somebody is in a room, when and how much
+      is sent, but not what. <a href="https://github.com/Ralf1108/RunThemAll/blob/main/netplay/README.md#encryption" target="_blank" rel="noopener">Technical details</a></p>
+    <div class="msg-actions"><button type="button" class="wx-btn wx-primary wx-small" id="mp-help-close">OK</button></div>
+  </dialog>
 
   <!-- Message box -->
   <dialog id="msg-dialog" class="msg-dialog" aria-labelledby="msg-title">

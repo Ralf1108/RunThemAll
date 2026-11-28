@@ -16,6 +16,7 @@ npm run serve   # http://localhost:8080
 | `npm start` | `fetch` and `serve` in one go |
 | `npm run fetch:force` | downloads everything again, also what is already there |
 | `npm run serve:no-coi` | server without the COOP/COEP headers, like GitHub Pages |
+| `npm run test:netplay` | multiplayer encryption and man-in-the-middle tests; needs a relay on `ws://localhost:8090` (`cd netplay && go run . -ban-exempt 127.0.0.0/8,::1`, or `RELAY=…`) |
 
 ## Update the emulators
 
