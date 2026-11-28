@@ -135,6 +135,14 @@ all see the same keys. If the relay put its own keys in between, the players see
 Comparing the code (aloud, in a chat) is the check that a certificate does in TLS, from person
 to person, like the safety numbers of Signal.
 
+Tested on 28 Nov 2026 with a malicious relay (a proxy in front of the relay that knows the room
+name, swaps the public keys in the hellos for its own and re-wraps the sending keys):
+
+| Room | Result |
+|---|---|
+| without password | the attack works: the proxy reads the lobby messages and all IPX packets of a Doom deathmatch, the game runs normally, but the two players see **different safety codes** (e.g. 1199 5910 2763 and 0895 7412 2866) |
+| with password (proxy knows only the name) | the proxy cannot open a single handshake message, reads nothing; the game runs, both see the **same** code |
+
 ### What is sealed
 
 12 bytes random nonce + ciphertext + 16 bytes tag:
