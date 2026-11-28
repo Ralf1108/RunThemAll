@@ -122,7 +122,38 @@
 - The full version is not included: classicdosgames calls it freeware, but its `LICENSE.DOC` forbids sharing
   without Apogee's permission, and the author's website mentions no release.
 
-All DOS demos run (tested 25 Nov 2026).
+**Doom 1.9 (shareware)**: js-dos, multiplayer
+- Author: id Software (1993), https://classicdosgames.com/game/Doom.html
+- Download: https://classicdosgames.com/online/zip/doom19s.zip, the installed shareware of the online player
+  (the original https://classicdosgames.com/files/games/id/doom19s.zip only contains the DEICE installer)
+- File: `demos/dos/doom19s.zip` (2,357,553 bytes), starts `DOOM.EXE`
+- Licence: shareware of id Software, free to share. The installed ZIP has no licence file; the licence is in
+  the original package (LHA-packed, not checked yet).
+
+**Heretic 1.2 (shareware)**: js-dos, multiplayer
+- Authors: Raven Software, published by id Software (1994), https://classicdosgames.com/game/Heretic.html
+- Download: https://classicdosgames.com/online/zip/htic_v12.zip (installed shareware)
+- File: `demos/dos/htic_v12.zip` (2,794,877 bytes), starts `HERETIC.EXE`
+- Licence: `LICENSE.DOC`: "ID grants to you the right to distribute, royalty free and by electronic means only,
+  the Software; provided, however the Software must be so distributed only in compressed format." No money.
+
+**Duke Nukem 3D 1.3D (shareware)**: js-dos, multiplayer
+- Author: 3D Realms (Apogee Software, 1996), https://classicdosgames.com/game/Duke_Nukem_3D.html
+- Download: https://classicdosgames.com/online/zip/3dduke13.zip (installed shareware)
+- File: `demos/dos/3dduke13.zip` (5,691,448 bytes), starts `DUKE3D.EXE`
+- Licence: `LICENSE.TXT`: individuals may give copies away without charge, and free WWW and FTP sites may offer the
+  game for download, with all files unchanged and no copyright notices removed.
+
+**Multiplayer** (field `netplay`): in a room of the Multiplayer panel with two or more players, these demos start
+the network setup of the game instead of the game, with the number of players in the room: Doom and Heretic
+`IPXSETUP.EXE -nodes <n> -deathmatch`, Duke Nukem 3D `COMMIT.EXE` with a `COMMIT.DAT` written before
+(`COMMTYPE = 3` = IPX network, `NUMPLAYERS = <n>`). The host starts first, the others follow. In Duke Nukem 3D one
+player (COMMIT picks the "master", not always the room's host) chooses New Game → Start Game, the others see
+"Waiting for master". Tested 28 Nov 2026 with two browsers in one room (local relay): Doom and Heretic deathmatch
+and Duke Nukem 3D reach the first level together. Two windows of one browser work too; two tabs do not (the hidden
+tab is throttled and IPXSETUP never finds the other player).
+
+All DOS demos run (tested 25 Nov 2026, the multiplayer demos 28 Nov 2026).
 
 ### Consoles and home computers
 
@@ -199,6 +230,7 @@ Open questions:
 | `add` | optional: more files from other downloads to put into the ZIP (`url`, `entry`, `path`) |
 | `wine` | optional: Wine version the demo needs (`wine6` or `wine11`) |
 | `args` | optional: command line arguments for the DOS program, e.g. the sound card |
+| `netplay` | optional, DOS: in a multiplayer room with 2+ players start `start` with `args` instead, after the DOS commands in `prelude`; `{players}` becomes the number of players |
 | `cycles` | optional: fixed DOSBox speed (cycles) |
 | `memory` | optional: RAM in MB for v86 |
 | `chunk` | optional: split a large disk image into zstd-compressed parts of this size, loaded on demand by v86 |

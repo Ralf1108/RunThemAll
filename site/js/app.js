@@ -3,7 +3,7 @@ import { fromDataTransfer, fromDirectoryHandle, fromFileList, fromStoredFiles, f
 import { clearRestart, saveRestart, takeRestart } from './restart.js';
 import { KEY_BY_ID, VIRTUAL_KEYS } from './keys.js';
 import { createGamepad, loadMapping, PAD_BUTTONS, saveMapping } from './gamepad.js';
-import { initLobby, netplayForConsole, netplayForDos, netplayForPc, netplayForWindows, netplayStatus, setActivity } from './lobby.js';
+import { client as netplayClient, initLobby, netplayForConsole, netplayForDos, netplayForPc, netplayForWindows, netplayStatus, setActivity } from './lobby.js';
 import { fetchWithProgress } from './runner.js';
 import { WindowsRunner, canUseThreads, clearPersistentStorage } from './emulator.js';
 import { DosRunner } from './dos.js';
@@ -947,14 +947,14 @@ async function launchDemo(demo, button = el('button')) {
       const remote = { url: new URL(`demos/${demo.file}.zst`, document.baseURI).href, ...demo.image };
       const ws = { name, files: [{ path: name, size: demo.image.size, remote,
         read: async () => new Uint8Array(0), load: async () => { throw new Error('The image is loaded in parts.'); } }] };
-      await openWorkspace(async () => ws, { demo, program: demo.start, system: demo.system, options: demoOptions(demo) });
+      await openWorkspace(async () => ws, { demo, system: demo.system, ...demoStart(demo) });
       return;
     }
     const data = await fetchWithProgress(`demos/${demo.file}`, (loaded, total) => {
       button.textContent = total ? `Loading … ${Math.round((loaded / total) * 100)} %` : 'Loading …';
     });
     const file = new File([data], demo.file.split('/').pop());
-    await openWorkspace(() => fromFileList([file]), { demo, program: demo.start, system: demo.system, options: demoOptions(demo) });
+    await openWorkspace(() => fromFileList([file]), { demo, system: demo.system, ...demoStart(demo) });
   } catch (err) {
     showError(`Could not load the demo: ${err.message || err}`);
   } finally {
@@ -1001,6 +1001,23 @@ function demoOptions(demo) {
   if ('bpp' in merged) merged.bpp = Number(merged.bpp);
   if ('memory' in merged) merged.memory = Number(merged.memory);
   return merged;
+}
+
+/**
+ * What a demo starts. In a multiplayer room with at least two players, demos with `netplay`
+ * (demos.json) start the game's network setup instead, e.g. Doom's IPXSETUP.EXE; "{players}" in
+ * its arguments and DOS commands becomes the number of players in the room.
+ */
+function demoStart(demo) {
+  const options = demoOptions(demo);
+  const np = demo.netplay;
+  const players = netplayClient.connected ? netplayClient.members.length : 0;
+  if (!np || players < 2) return { program: demo.start, options };
+  const fill = (s) => s.replaceAll('{players}', String(players));
+  return {
+    program: np.start ?? demo.start,
+    options: { ...options, args: fill(np.args ?? ''), prelude: (np.prelude ?? []).map(fill) },
+  };
 }
 
 function storeDemoOption(demo, key, value) {

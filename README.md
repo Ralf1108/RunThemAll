@@ -47,7 +47,7 @@ Free games, programs and operating systems, ready to try:
 
 - **Operating systems**: Tiny Core Linux, KolibriOS, ReactOS, a DOS prompt
 - **Windows**: SkiFree, OpenTTD, Castle of the Winds 1 and 2
-- **DOS**: Keen Dreams, Dark Forces, Indiana Jones and the Fate of Atlantis, Boppin'
+- **DOS**: Keen Dreams, Dark Forces, Indiana Jones and the Fate of Atlantis, Boppin', and for multiplayer Doom, Heretic and Duke Nukem 3D (shareware)
 - **Retro**: T-Rex 64 (C64), Pink Wall and Horizontal Shooter (SNES), Nova the Squirrel (NES), µCity (Game Boy Color)
 
 Where they come from: [demos/README.md](demos/README.md)

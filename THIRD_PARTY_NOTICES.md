@@ -76,6 +76,9 @@ versions, licence texts and the games that were checked but not included: [demos
 | Star Wars: Dark Forces (demo) | LucasArts | demo, free distribution allowed | classicdosgames.com |
 | Indiana Jones and the Fate of Atlantis (demo) | LucasArts | demo, free distribution allowed | classicdosgames.com |
 | Boppin' 1.1 (shareware episode) | Accursed Toys / Apogee | shareware, sharing without charge allowed (VENDOR.DOC) | classicdosgames.com, preinstalled in demos/local |
+| Doom 1.9 (shareware) | id Software | shareware, free to share | classicdosgames.com |
+| Heretic 1.2 (shareware) | Raven Software / id Software | shareware, electronic distribution allowed (LICENSE.DOC) | classicdosgames.com |
+| Duke Nukem 3D 1.3D (shareware) | 3D Realms / Apogee | shareware, free sharing and free download sites allowed (LICENSE.TXT) | classicdosgames.com |
 | ReactOS 0.4.15 (live CD) | ReactOS project | GPL-2.0 | github.com/reactos/reactos |
 | T-Rex 64 1.0.2 | Maciej Małecki | MIT | github.com/maciejmalecki/trex64 |
 | Pink Wall 1.0.1 | Luciano C. Siqueira, BrunoRNS | GPL-3.0 (source in the linked repository) | github.com/LucianoCSiqueira/pinkwall |

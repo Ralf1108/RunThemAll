@@ -140,11 +140,13 @@ export function initLobby($) {
     $('np-count').textContent = `${members.length} in the room`
       + ` · ${members.filter((m) => activityOf(m.peer)).length} on the network`;
     $('np-members').replaceChildren(...members.map((m) => memberItem(m, activityOf(m.peer))));
-    $('np-role').textContent = client.isHost
-      ? 'You are the host: start the game first, the others follow. DOS games: choose IPX network play. '
-        + 'Console games: your game is copied to the others, you are player 1.'
-      : 'Start the same game as the host, after the host. DOS games: choose IPX network play. '
-        + 'Console games: you play as player 2, 3 or 4.';
+    $('np-role').textContent = (client.isHost
+      ? 'You are the host: start the game first, the others follow. '
+      : 'Start the same game as the host, after the host. ')
+      + 'The multiplayer demos (Doom, Heretic, Duke Nukem 3D) start their network game by themselves. '
+      + 'Other DOS games: choose IPX network play. '
+      + (client.isHost ? 'Console games: your game is copied to the others, you are player 1.' : 'Console games: you play as player 2, 3 or 4.')
+      + ' Several players on one computer: use one browser window each, not tabs (a hidden tab stops).';
   };
   const activityOf = (peer) => (peer === client.peer ? ownActivity : activities.get(peer));
 

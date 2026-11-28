@@ -174,6 +174,65 @@
     "local": "local/dos/boppin-sw11.zip"
   },
   {
+    "id": "doom",
+    "title": "Doom (Shareware)",
+    "platform": "DOS",
+    "emulator": "js-dos (DOSBox)",
+    "description": "Shooter by id Software (1993), episode 1 \"Knee-Deep in the Dead\". Multiplayer: everybody in the room starts it, then you play deathmatch over IPX (2 to 4 players).",
+    "author": "id Software",
+    "homepage": "https://classicdosgames.com/game/Doom.html",
+    "license": "shareware, free to share (licence in the original package)",
+    "url": "https://classicdosgames.com/online/zip/doom19s.zip",
+    "file": "dos/doom19s.zip",
+    "start": "DOOM.EXE",
+    "netplay": {
+      "start": "IPXSETUP.EXE",
+      "args": "-nodes {players} -deathmatch"
+    }
+  },
+  {
+    "id": "heretic",
+    "title": "Heretic (Shareware)",
+    "platform": "DOS",
+    "emulator": "js-dos (DOSBox)",
+    "description": "Fantasy shooter by Raven Software (1994), episode 1 \"City of the Damned\". Multiplayer: everybody in the room starts it, then you play deathmatch over IPX (2 to 4 players).",
+    "author": "Raven Software, published by id Software",
+    "homepage": "https://classicdosgames.com/game/Heretic.html",
+    "license": "shareware, electronic distribution allowed (LICENSE.DOC in the ZIP)",
+    "url": "https://classicdosgames.com/online/zip/htic_v12.zip",
+    "file": "dos/htic_v12.zip",
+    "start": "HERETIC.EXE",
+    "netplay": {
+      "start": "IPXSETUP.EXE",
+      "args": "-nodes {players} -deathmatch"
+    }
+  },
+  {
+    "id": "duke3d",
+    "title": "Duke Nukem 3D (Shareware)",
+    "platform": "DOS",
+    "emulator": "js-dos (DOSBox)",
+    "description": "Shooter by 3D Realms (1996), episode 1 \"L.A. Meltdown\". Multiplayer: everybody in the room starts it, then you play DukeMatch over IPX (2 to 8 players).",
+    "author": "3D Realms (Apogee Software)",
+    "homepage": "https://classicdosgames.com/game/Duke_Nukem_3D.html",
+    "license": "shareware, free to share and to offer for free download (LICENSE.TXT in the ZIP)",
+    "url": "https://classicdosgames.com/online/zip/3dduke13.zip",
+    "file": "dos/3dduke13.zip",
+    "start": "DUKE3D.EXE",
+    "netplay": {
+      "start": "COMMIT.EXE",
+      "args": "",
+      "prelude": [
+        "echo [Commit]> COMMIT.DAT",
+        "echo COMMTYPE = 3>> COMMIT.DAT",
+        "echo NUMPLAYERS = {players}>> COMMIT.DAT",
+        "echo PAUSE = 0>> COMMIT.DAT",
+        "echo SOCKETNUMBER = 34889>> COMMIT.DAT",
+        "echo LAUNCHNAME = \"DUKE3D.EXE\">> COMMIT.DAT"
+      ]
+    }
+  },
+  {
     "id": "trex64",
     "title": "T-Rex 64",
     "platform": "Commodore 64",

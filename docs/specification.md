@@ -112,7 +112,9 @@ side the supported platforms and the emulators (3.3). The interface is in Englis
      every page sends `{lobby: 'status', activity: {title, system, net}}` to the room when it starts
      a program and when members change, so the list shows who is on the network in an emulator
      (e.g. "SkiFree · IP 192.168.78.2"). The button turns green and shows room and number of members.
-     Quitting a program reloads the page; the tab enters the room again by itself (sessionStorage). While in a
+     Quitting a program reloads the page; the tab enters the room again by itself (sessionStorage).
+     Demos with `netplay` in demos.json (Doom, Heretic, Duke Nukem 3D) start their network setup in a room
+     with 2+ players (e.g. `IPXSETUP.EXE -nodes <players> -deathmatch`). While in a
      room, DOS programs start with IPX over the relay: the host with `startIpxServer`, guests with
      `connectIpxAddress` = host peer ID, js-dos' network replaced by `sharedNet` (`js/netplay.js`).
      Operating systems (v86) get an NE2000 network card whose cable is the relay's Ethernet port
