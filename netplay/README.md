@@ -9,7 +9,7 @@ by a password.
 The relay is a pure switch: no game logic, no file storage, and **no gateway to the internet**.
 Packets only go between the players of a room. The web page encrypts everything end to end
 (see [Encryption](#encryption)): the relay only passes on sealed bytes and never learns room
-names, player names or passwords.
+names, player names, passwords or keys.
 
 Status: **beta**. Connected: DOS games with IPX network play (js-dos), whole PCs with a network
 card (v86, any protocol: TCP/IP, UDP, IPX …) and console games (EmulatorJS, shared inputs). Tested
@@ -53,66 +53,6 @@ docker run -p 8090:8090 runthemall-netplay
 On the web page, click **Multiplayer** at the top right, enter the relay address under *Server*
 (`wss://relay.example.org`, or `ws://localhost:8090` for a local test), a name and a room.
 
-## Encryption
-
-Two layers protect the traffic:
-
-- **Transport (TLS):** run the relay with `wss://` (certificate or reverse proxy, see above).
-  This hides everything from the networks in between. Pages on https can only use `wss://`.
-- **End to end (in the browser, `site/js/netcrypt.js`):** everything the players send each other
-  is sealed with AES-256-GCM before it leaves the browser. The relay, its hoster and anybody who
-  reads its memory or logs see only random-looking bytes. The relay itself needs no change for
-  this: it never looks into packets and messages anyway.
-
-The key comes from the **room password**, or from the **room name** when the room has no
-password. The relay gets neither:
-
-| The page knows | The relay gets |
-|---|---|
-| room name "Doom night" | room ID `HKDF(PBKDF2(NAME))`, 32 hex digits (the name cannot be computed back, only guessed) |
-| password | a password check value `HKDF(PBKDF2(password, salt from the name))`, 32 hex digits (empty without a password) |
-| player name | `"Player"`; the real names go to the members encrypted (hello messages, see below) |
-| key | nothing: `HKDF(secret, "packets")`, secret = password-derived bits, or the name-derived bits without a password |
-
-PBKDF2-SHA256 with 210,000 rounds, separate HKDF labels for room ID, check value and key, so none
-of them gives away another. Names are compared like before (spaces collapsed, case ignored).
-
-What is sealed (12 bytes random nonce + ciphertext + 16 bytes tag):
-
-- **Packets** (`[4 bytes peer ID][sealed]`): plain text `[4 bytes receiver][8 bytes session][8 bytes
-  sequence number][payload]`, additional data `"p"` + sender peer ID. A packet the relay changes,
-  redirects to another member or claims to come from someone else does not open and is dropped.
-  48 bytes more per packet.
-- **Messages** (`{"type":"msg","data":"<base64 of sealed>"}`): plain text like packets with JSON as
-  payload, additional data `"m"` + sender peer ID. Packets and messages are opened in the order received.
-- **Ethernet frames** (v86, `/v1/eth`): the two MAC addresses (12 bytes) stay readable, because the
-  relay switches by them; `[8 bytes session][8 bytes sequence number]` + type and content of the
-  frame are sealed, with the MAC addresses as additional data.
-
-**Replay protection.** Every connection has a random session (8 bytes) and counts its sealed data
-(one counter for the control socket, one for the Ethernet port). A receiver takes data only from a
-sender whose session it knows as *live*, and only with a higher number than the last one; anything
-else is dropped (`NetplayClient.replayed` counts it). Sessions are learned from hello messages
-`{netplay: 'hello', name, know: [sessions]}`: a sender is live for a receiver once its hello lists the
-receiver's own session. That session is new and random, so a recording of an older session cannot
-contain it. Everybody sends a hello when somebody new joins and when it learns a new session; two
-rounds later all members know each other. So the relay can neither send a packet again nor play
-back a recorded session, even when it pretends that an old member is in the room. Since the relay cannot read the frames, its DHCP server is not used: every
-  browser answers DHCP and ARP of its own PC for the virtual server 192.168.77.1 and gives it
-  192.168.77.<9 + number in the room> (`site/js/pc-net.js`). `-lan` therefore only applies to
-  clients that do not encrypt.
-
-What the relay still sees: who is in a room (peer IDs, IP addresses), when and how much they send,
-the MAC addresses of PCs, and how long a room exists. Limits of the scheme:
-
-- **Without a password the room name is the key.** Whoever knows or guesses the room name can
-  read along, including a relay hoster who tries common names against the room ID. A password
-  that is hard to guess protects much better; the room panel says which of the two is in use.
-- A weak password can be guessed offline by somebody who recorded the traffic (the rounds of
-  PBKDF2 only make each guess slower).
-- Everybody with the password can read everything; there are no keys per session (no forward
-  secrecy). The relay can still drop or delay data, or keep players apart.
-
 ### Options
 
 | Flag | Environment | Default | Meaning |
@@ -135,6 +75,104 @@ Every member also gets a small number in the room (`num` in `joined` and `member
 smallest free one from 1); the Windows netplay derives the address 192.168.78.num from it.
 
 `GET /healthz` answers `{"ok":true,"rooms":…,"clients":…}` for monitoring.
+
+## Encryption
+
+Two layers protect the traffic:
+
+- **Transport (TLS):** run the relay with `wss://` (certificate or reverse proxy, see above).
+  This hides everything from the networks in between. Pages on https can only use `wss://`.
+- **End to end (in the browser, `site/js/netcrypt.js`, `site/js/netplay.js`):** everything the
+  players send each other is sealed with AES-256-GCM before it leaves the browser. The relay, its
+  hoster and anybody who reads its memory or logs see only random-looking bytes. The relay itself
+  needs no change for this: it never looks into packets and messages anyway.
+
+It works like TLS with a pre-shared key (TLS-PSK with ECDHE), only between the players instead of
+between browser and server: the room password takes the place of the certificate.
+
+### Room key: what the relay gets
+
+The room key comes from the **room password**, or from the **room name** when the room has no
+password. The relay gets neither:
+
+| The page knows | The relay gets |
+|---|---|
+| room name "Doom night" | room ID `HKDF(PBKDF2(NAME))`, 32 hex digits (the name cannot be computed back, only guessed) |
+| password | a password check value `HKDF(PBKDF2(password, salt from the name))`, 32 hex digits (empty without a password) |
+| player name | `"Player"`; the real names go to the members encrypted (hello messages, see below) |
+| room key, pair salt | nothing: `HKDF(secret, "packets")` and `HKDF(secret, "pair salt")`, secret = password-derived bits, or the name-derived bits without a password |
+
+PBKDF2-SHA256 with 210,000 rounds, separate HKDF labels for room ID, check value, room key and pair
+salt, so none of them gives away another. Names are compared like before (spaces collapsed, case
+ignored). The room key only seals the handshake.
+
+### Session keys: what the data is sealed with
+
+Every connection makes a new **ECDH key pair** (P-256, the private key cannot leave the browser), a
+random **sending key** and a random **session** (8 bytes). The handshake, sealed with the room key:
+
+1. **Hello** `{netplay: 'hello', name, pub, know: [sessions]}` to everybody: name, public key, and the
+   sessions this player already knows. Everybody sends one when somebody new joins and when it
+   learns a new session.
+2. With the other's public key both sides compute the same **pair key**: ECDH, then HKDF with the
+   pair salt (so it also needs the room secret) and both sessions.
+3. **Key** `{netplay: 'key', box}` to that player: the own sending key, sealed with the pair key.
+
+A sender is *ready* for a receiver once its hello lists the receiver's own session (that session
+is new and random, so a recording of an older session cannot contain it) and its sending key is
+there. Only then its data counts. All packets, messages and frames are sealed with the sender's
+sending key; a broadcast is sealed once for everybody.
+
+**Forward secrecy:** the sending keys only ever travel under ECDH pair keys, whose private halves
+disappear with the page. A recording of a room stays closed even if the password becomes known
+later. **Rooms without a password:** guessing the room name gives the relay the room key, but not
+the session keys; to read along it would have to replace the public keys in the hellos with its
+own (an active man-in-the-middle). The **safety code** shows that.
+
+**Safety code:** 12 digits (`1234 5678 9012`) from SHA-256 of the sessions and public keys of the
+player and of everybody it exchanges data with. All players see the same code exactly when they
+all see the same keys. If the relay put its own keys in between, the players see different codes.
+Comparing the code (aloud, in a chat) is the check that a certificate does in TLS, from person
+to person, like the safety numbers of Signal.
+
+### What is sealed
+
+12 bytes random nonce + ciphertext + 16 bytes tag:
+
+- **Packets** (`[4 bytes peer ID][sealed]`): plain text `[4 bytes receiver][8 bytes session][8 bytes
+  sequence number][payload]`, sending key of the sender, additional data `"p"` + sender peer ID.
+  A packet the relay changes, redirects to another member or claims to come from someone else does
+  not open and is dropped. 48 bytes more per packet.
+- **Messages** (`{"type":"msg","data":"S<base64 of sealed>"}`): like packets with JSON as payload,
+  additional data `"m"`. Handshake messages: `"R<base64>"`, room key, additional data `"h"`.
+  Everything from one sender is handled in the order received.
+- **Ethernet frames** (v86, `/v1/eth`): `[12 bytes MAC addresses][8 bytes session][sealed: 8 bytes
+  sequence number + type and content of the frame]`. The MAC addresses stay readable, the relay
+  switches by them; the session tells whose sending key opens the frame. Additional data: MAC
+  addresses and session. Since the relay cannot read the frames, its DHCP server is not used:
+  every browser answers DHCP and ARP of its own PC for the virtual server 192.168.77.1 and gives it
+  192.168.77.<9 + number in the room> (`site/js/pc-net.js`). `-lan` only applies to clients that
+  do not encrypt.
+
+**Replay protection:** every connection counts its sealed data (one counter for the control
+socket, one for the Ethernet port). A receiver takes data only from a ready sender's session and
+only with a higher number than the last one; anything else is dropped (`NetplayClient.replayed`
+counts it). So the relay can neither send a packet again nor play back a recorded session, even
+when it pretends that an old member is in the room.
+
+### Limits
+
+What the relay still sees: who is in a room (peer IDs, IP addresses), when and how much they send,
+the MAC addresses of PCs, and how long a room exists. It can drop or delay data, or keep players
+apart.
+
+- **Without a password** a relay that guesses the room name can sit in between (active, not by just
+  recording). The safety code shows it, if the players compare it. A password that is hard to
+  guess prevents it.
+- A weak password can be guessed offline from the password check value (the PBKDF2 rounds only
+  make each guess slower). With the password the relay could then also sit in between.
+- Everybody in the room can read everything, and a member who works together with the relay could
+  pretend to be another member (the sending keys are known to all receivers).
 
 ## Protocol
 

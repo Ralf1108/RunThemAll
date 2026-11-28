@@ -82,9 +82,10 @@ Where they come from: [demos/README.md](demos/README.md)
 ## Privacy
 
 - Everything runs in your browser. Your files are **never uploaded**.
-- Multiplayer is **end-to-end encrypted**: the relay server only passes on encrypted data and sees
-  neither room name, player names nor game data. The key is the room password, or the room name
-  when there is none, so pick a password that is hard to guess.
+- Multiplayer is **end-to-end encrypted** with fresh keys per session: the relay server only passes
+  on encrypted data and sees neither room name, player names nor game data. The room shows a
+  **safety code**: if everybody sees the same code, nobody sits in between. Without a password a
+  relay server that guesses the room name could try that, so pick a password that is hard to guess.
 - Page visits are counted anonymously and without cookies ([GoatCounter](https://www.goatcounter.com)).
 
 ## Behind the scenes

@@ -107,13 +107,19 @@ side the supported platforms and the emulators (3.3). The interface is in Englis
      characters, case does not matter) and an optional password, *Enter room*: whoever enters the
      same room name lands in the same room (the first one creates it, with the password). The relay
      address is under *Server* (remembered; `ws://localhost:8090` on localhost; open when empty).
-     Everything in the room is end-to-end encrypted (`js/netcrypt.js`, AES-256-GCM): the key comes
-     from the password, or from the room name without one; the relay only gets a room ID and a
-     password check value derived from them (PBKDF2 + HKDF), "Player" as name (the real names go
-     encrypted to the members) and sealed packets and messages. Replay protection: every sealed
+     Everything in the room is end-to-end encrypted (`js/netcrypt.js`, AES-256-GCM): the room key
+     comes from the password, or from the room name without one; the relay only gets a room ID and
+     a password check value derived from them (PBKDF2 + HKDF), "Player" as name (the real names go
+     encrypted to the members) and sealed packets and messages. The room key only seals the
+     handshake (hello with name and ECDH public key, key messages); every connection has its own
+     ECDH key pair and random sending key, handed to each member under the ECDH pair key, so data
+     is sealed with session keys (forward secrecy; without a password the relay cannot read along
+     by guessing the name). The room panel shows a 12-digit safety code over all public keys:
+     the same for everybody exactly when nobody sits in between. Replay protection: every sealed
      packet carries a random session and a sequence number; data counts only from sessions that
      proved they are live (their hello lists the receiver's own session) and with a new number.
-     A note at the password says that without a password the relay could read along.
+     A note at the password says that without a password a relay that guesses the room name
+     could sit in between, which the safety code shows.
      In the room: room name, lock with "Encrypted" or "Encrypted (room name)" (tooltip explains), *Share link* (`?room=…&relay=…`,
      Web Share API or clipboard), *Leave room*, and the members with host/you and what they run:
      every page sends `{lobby: 'status', activity: {title, system, net}}` to the room when it starts

@@ -257,9 +257,9 @@
       <label>Room <input type="text" id="np-code" maxlength="32" placeholder="e.g. 4711 or Doom night" spellcheck="false" autocomplete="off" required></label>
       <label><span>Password <span class="mp-optional">(optional)</span></span>
         <input type="password" id="np-password" autocomplete="off"></label>
-      <p class="mp-note">With a password, everything is end-to-end encrypted with it: the relay
-        server cannot read anything. <strong>Without a password</strong> the room name is the key,
-        so the relay server could read along if it guesses the name.</p>
+      <p class="mp-note">Everything is end-to-end encrypted. <strong>Without a password</strong> a
+        relay server that guesses the room name could put itself in between and read along; the
+        safety code in the room shows it. With a password it cannot.</p>
       <button type="submit" id="np-enter" class="wx-btn wx-primary">Enter room</button>
       <details id="np-server" class="mp-server">
         <summary>Server</summary>
@@ -277,6 +277,9 @@
           <span id="np-lock-text">Encrypted</span>
         </span>
       </div>
+      <p id="np-safety" class="mp-safety" hidden>Safety code <strong id="np-safety-code"></strong>
+        <span>Everybody in the room sees the same code. A different code means that somebody
+        (e.g. the relay server) sits in between.</span></p>
       <h3 class="mp-sub"><span id="np-count"></span></h3>
       <ul id="np-members" class="mp-members"></ul>
       <p id="np-role" class="hint"></p>

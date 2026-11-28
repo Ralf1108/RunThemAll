@@ -139,9 +139,12 @@ export function initLobby($) {
     $('np-room-code').textContent = client.room;
     $('np-lock-text').textContent = withPassword ? 'Encrypted' : 'Encrypted (room name)';
     $('np-lock').title = withPassword
-      ? 'End-to-end encrypted with the room password: the relay server cannot read anything.'
-      : 'Encrypted with the room name as key: whoever guesses the room name, the relay server too, '
-        + 'could read along. Use a password to prevent that.';
+      ? 'End-to-end encrypted with keys of this session, protected by the room password: '
+        + 'the relay server cannot read anything.'
+      : 'End-to-end encrypted with keys of this session. Without a password, a relay server that '
+        + 'guesses the room name could put itself in between: compare the safety code, or use a password.';
+    $('np-safety').hidden = !client.safetyCode;
+    $('np-safety-code').textContent = client.safetyCode;
     $('np-count').textContent = `${members.length} in the room`
       + ` · ${members.filter((m) => activityOf(m.peer)).length} on the network`;
     $('np-members').replaceChildren(...members.map((m) => memberItem(m, activityOf(m.peer))));
@@ -195,9 +198,9 @@ export function initLobby($) {
       // End-to-end encryption (netcrypt.js): the relay gets a room ID and a password check
       // instead of name and password, and "Player" instead of the player's name.
       $('np-enter').textContent = 'Encrypting …';
-      const { roomId, check, cipher } = await roomSecrets(room, password);
+      const { roomId, check, cipher, pairSalt } = await roomSecrets(room, password);
       await client.open(relayUrl, { type: 'enter', room: roomId, password: check, name: 'Player' },
-        { cipher, room: cleanRoomName(room), name: who || 'Player' });
+        { cipher, pairSalt, room: cleanRoomName(room), name: who || 'Player' });
       withPassword = !!password;
       sessionStorage.setItem(REJOIN_KEY, JSON.stringify({ relayUrl, room, password, who }));
       render();
